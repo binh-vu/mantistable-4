@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  web:
+    container_name: mantistable4_web
+    build:
+      context: ./django
+      dockerfile: Dockerfile-dev
+    command: bash -c "python manage.py collectstatic --noinput &&
+                      python manage.py makemigrations &&
+                      python manage.py migrate &&
+                      python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./django:/mantistable
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    env_file:
+      - ./django/.env-dev
+  mongo:
+    container_name: mantistable4_mongo
+    image: mongo
+    command: mongod --port 27017
+    ports:
+      - "27017:27017"

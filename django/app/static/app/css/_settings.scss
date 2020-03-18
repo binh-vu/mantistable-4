@@ -1,0 +1,52 @@
+/* ===============
+   GENERAL SETTINGS
+   =============== */
+
+// font
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap');
+$font: 'Roboto', sans-serif;
+
+// colors
+$skin-color: #15711f;
+$skin-color-darker:darken($skin-color, 5%);
+$secondary-color: #222d32;
+$secondary-color-darker: darken($secondary-color, 2%);
+$danger: #b8001d;
+$danger-darker: darken($danger, 2%);
+$light-gray: #818690;
+$dark-gray: #212121;
+
+
+/* ===============
+   HOME SETTINGS
+   =============== */
+
+// background
+$home-up-bg: #222d32;
+$home-bottom-bg: $skin-color;
+
+$home-bg-deg: -184;
+// 180 = horizontal
+// +/- 4deg
+// > 180 top to bottom
+// < 180 bottom to top
+
+//text color
+$home-title-color: white;
+$home-text-color: white;
+// button
+$home-btn-color: white;
+$home-btn-hover-color: $skin-color;
+$home-btn-hover-bg: white;
+
+// anchor
+$anchor-color: $skin-color;
+$anchor-color-hover: $skin-color-darker;
+
+
+/* ===============
+   TEMPLATE SETTINGS
+   =============== */
+
+$logo-color: white;
+$infoTable-color: white; //$secondary-color;

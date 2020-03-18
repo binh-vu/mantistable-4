@@ -1,0 +1,44 @@
+/* ===============
+   BOOTSTRAP DEFAULT
+   MEDIA QUERY
+   =============== */
+
+// Defining values
+$screen-sm-min: 768px;
+$screen-xs-max: ($screen-sm-min - 1);
+$screen-md-min: 992px;
+$screen-sm-max: ($screen-md-min - 1);
+$screen-lg-min: 1200px;
+$screen-md-max: ($screen-lg-min - 1);
+
+
+$breakpoints: (
+        'small' : '(min-width: #{$screen-sm-min})',
+        'medium' : '(min-width: #{ $screen-md-min})',
+        'large' : '(min-width: #{$screen-lg-min})',
+        'xsmall only': '(max-width: #{$screen-xs-max})',
+        'small only': '( min-width:  #{$screen-sm-min}) and (max-width:#{($screen-sm-max)})',
+        'medium only': '( min-width: #{$screen-md-min}) and (max-width:#{$screen-md-max})',
+);
+
+@mixin breakpoint($name) {
+  // If the key exists in the map
+  @if map-has-key($breakpoints, $name) {
+    // Prints a media query based on the value
+    //@warn ("@media #{(map-get($breakpoints, $name))}");
+    @media #{map-get($breakpoints, $name)} {
+      @content;
+    }
+  }
+    // If the key doesn't exist in the map
+  @else {
+    @warn "Unfortunately, no value could be retrieved from `#{$breakpoints}`. "
+        + "Please make sure it is defined in `$breakpoints` map.";
+  }
+}
+
+
+// how to use
+//@include breakpoint(small){
+//  ...
+//}

@@ -1,0 +1,410 @@
+/* ===============
+  LIST TABLES
+   =============== */
+
+#list-table {
+
+  max-height: calc(100vh - 60px); //header+padding
+
+  table {
+    margin: 0;
+  }
+
+  th {
+    background-color: #f3f3f3;
+    border-color: #CCC;
+
+
+    .btn-group {
+      text-transform: initial;
+      margin-top: 15px;
+    }
+  }
+
+
+  .status {
+    display: block;
+    font-size: 11px;
+  }
+
+  .globalStatus {
+    width: 8px;
+    max-width: 8px;
+    min-width: 8px;
+    padding: 0;
+    border-right: 0;
+
+    + th {
+      border-left: 0;
+    }
+  }
+
+  .table-name {
+    max-width: 300px;
+    min-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table-gs {
+    text-align: center;
+    min-width: 150px;
+  }
+
+  .table-date {
+    min-width: 120px;
+  }
+
+  .table-status {
+    min-width: 195px;
+  }
+
+  .table-time {
+    min-width: 150px;
+
+  }
+
+  .table-buttons {
+    min-width: 200px;
+  }
+
+  .table-entry {
+    text-align: center;
+  }
+
+  td.table-count,
+  td.table-buttons {
+    text-align: center;
+  }
+
+  td.table-date {
+    font-size: 11px;
+    color: #717171;
+    text-align: center;
+  }
+
+  td.table-time {
+
+    text-align: center;
+    font-size: 20px;
+  }
+
+  .form-group.material {
+    margin-bottom: 0;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+
+    label {
+      background: #f3f3f3; /*background page color*/
+    }
+  }
+
+  // search
+  .search {
+    input {
+      padding-right: 30px;
+    }
+
+    .btn-cancel {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $light-gray;
+      font-size: 14px;
+      display: none;
+      cursor: pointer;
+      z-index: 999;
+    }
+  }
+
+  // filter
+  .filter {
+    border-radius: 3px;
+
+    .btn {
+      border: unset;
+      cursor: pointer;
+      width: 40px;
+      height: 25px;
+
+      &.all {
+        background-color: white;
+      }
+
+      &.active {
+        position: relative;
+        box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.66);
+      }
+
+      &:hover
+      &.active {
+        &:after {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, .1);
+        }
+      }
+
+    }
+  }
+}
+
+// color status
+#list-table,
+.filter {
+  .done {
+    background-color: #195d3d; /*#008d4c;*/
+    color: white;
+  }
+
+  .doing {
+    background-color: rgb(240, 189, 49);
+  }
+
+  .processing {
+    background-color: rgb(240, 189, 49);
+    animation: move 1.5s linear infinite;
+    background-image: linear-gradient(45deg,
+            rgba(255, 255, 255, .45) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, .45) 50%,
+            rgba(255, 255, 255, .45) 75%,
+            transparent 75%,
+            transparent);
+    background-size: 40px 40px;
+  }
+
+  .todo {
+    background-color: rgb(185, 185, 185);
+  }
+
+  .error {
+    background-color: rgb(201, 9, 9);
+  }
+}
+
+@keyframes move {
+  0% {
+    background-position: 40px 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* ===============
+   DOWNLOAD
+   =============== */
+
+#download {
+  table {
+    width: auto;
+    margin: auto;
+
+    th, td {
+      border: 1px solid #b3b2b2;
+    }
+
+    .progress {
+      min-width: 250px;
+    }
+
+    .download {
+      min-width: 50px;
+      text-align: center;
+
+      i {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+
+/* ===============
+   RDF METRICS
+   =============== */
+
+#rdfMetrics {
+
+  #accordionMetrics {
+    margin-bottom: 30px;
+
+    .form-group.material {
+      label {
+        background-color: white;
+      }
+    }
+
+    .config {
+      max-width: 150px;
+      margin-left: 20px;
+      display: none;
+    }
+  }
+
+  .selectedMetrics {
+
+    .intro {
+      margin: 20px 0;
+
+    }
+
+    #process-metrics.btn {
+      //margin-left: 20px;
+      padding: 3px 20px;
+      position: relative;
+      margin-top: 8px;
+      margin-bottom: 6px;
+
+      span {
+        position: relative;
+        transition: all .2s;
+        left: 0px;
+      }
+
+      i {
+        transition: all .2s;
+        display: none;
+        right: 5px;
+        position: absolute;
+        top: calc(50% - 7px);
+
+
+      }
+
+      &.isProcessing {
+        span {
+          left: -10px;
+
+        }
+
+        i {
+          display: block;
+        }
+      }
+    }
+
+    .accordion {
+      .panel {
+        border-radius: 0;
+      }
+
+      .panel + .panel {
+        margin-top: 0;
+      }
+
+      .panel-title {
+        a {
+          font-size: 14px;
+          color: $secondary-color-darker;
+          padding: 6px;
+
+          &:after {
+            content: "\f057"; // X
+            font-size: 20px;
+            color: $secondary-color;
+          }
+
+          &.collapsed {
+            &:after {
+              content: "\f05a"; // I
+            }
+          }
+
+          &.disabled {
+            cursor: not-allowed;
+
+            &:after {
+              content: "\f05a"; // I
+              color: $light-gray;
+            }
+          }
+        }
+      }
+    }
+
+    table {
+
+      .results {
+        min-width: 200px;
+      }
+
+      .actions {
+        min-width: 170px;
+      }
+
+      .remove {
+
+        cursor: pointer;
+      }
+
+      .progress {
+        position: relative;
+
+        .total {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+#rdfUpload {
+
+  .addSelectOption {
+    display: flex;
+
+
+    .form-group {
+      width: 85%;
+    }
+  }
+
+  .select-input-switch {
+    font-size: 26px;
+    cursor: pointer;
+    color: $skin-color;
+
+    border-left: 1px solid rgba($light-gray, 0.4);
+    display: flex;
+    align-items: center;
+    margin: 15px 0 35px 20px;
+    padding-left: 10px;
+
+    i {
+      transition: all .2s;
+    }
+
+    &.rotate {
+      i {
+        transform: rotate(45deg);
+      }
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    &:not(.disabled):hover {
+      color: $skin-color-darker;
+    }
+  }
+
+  #addNewLabelInputWrapper,
+  #backToSelectLabel {
+    display: none;
+  }
+}

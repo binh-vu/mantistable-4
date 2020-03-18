@@ -1,0 +1,61 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+{% load static %}
+
+<head>
+
+    <meta charset="utf-8">
+    <title>{% block title %}Title Project{% endblock %}</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {% block favicon %}
+        <link rel="shortcut icon" href="{% static '/app/favicon.png' %}"/>
+    {% endblock %}
+
+    {% block css %}
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+              integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
+              crossorigin="anonymous">
+
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="{% static '/bootstrap/dist/css/bootstrap.css' %}">
+
+        <!-- AdminLTE -->
+        <link rel="stylesheet" href="{% static '/admin-lte/dist/css/AdminLTE.css' %}">
+
+        <!-- AdminLTE Skins -->
+        <link rel="stylesheet" href="{% static '/admin-lte/dist/css/skins/_all-skins.css' %}">
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="{% static '/app/css/style.css' %}">
+
+    {% endblock %}
+
+</head>
+
+<body class="skin-green sde-fixed sidebar-mini sidebar-collapse">
+
+{% block container %}{% endblock %}
+
+{% block modal %}{% endblock %}
+
+{% block javascript %}
+    <!-- jQuery -->
+    <script src="{% static '/jquery/dist/jquery.min.js' %}"></script>
+    <!-- Bootstrap -->
+    <script src="{% static '/bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <!-- SlimScroll -->
+    <script src="{% static '/jquery-slimscroll/jquery.slimscroll.min.js' %}"></script>
+    <!-- AdminLTE -->
+    <script src="{% static '/admin-lte/dist/js/adminlte.min.js' %}"></script>
+    <!-- Custom JS -->
+    <script src="{% static '/app/js/app.js' %}"></script>
+
+{% endblock %}
+
+</body>
+
+</html>

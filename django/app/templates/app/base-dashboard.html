@@ -1,0 +1,69 @@
+{% extends "app/base.html" %}
+
+{% block container %}
+    {% load static %}
+    <div class="wrapper">
+
+        <header class="main-header">
+            <a href="{% url 'home' %}" class="logo">
+                <span class="logo-mini"><b>T</b>N</span>
+                <span class="logo-lg"><b>Tool</b>Name</span>
+            </a>
+
+            <nav class="navbar navbar-static-top">
+                <a href="{% url 'home' %}" class="sidebar-toggle" data-toggle="push-menu" role="button">
+                    <span class="panel-icon"> </span>
+                </a>
+
+                {% block table_info %}
+                    {{ block.super }}
+
+                    <ul class="tableInfo">
+                        <li id="tables_count" class="stats">
+                            <span class="number">#</span>
+                            <span class="description">Dispaly</span>
+                        </li>
+                        <li id="processing_tables_completed" class="stats">
+                            <span class="number">#</span>
+                            <span class="description">some</span>
+                        </li>
+                        <li id="processing_tables_count" class="stats">
+                            <span class="number">#</span>
+                            <span class="description">info</span>
+                        </li>
+                    </ul>
+                {% endblock %}
+
+            </nav>
+        </header>
+
+        <aside class="main-sidebar">
+            <section class="sidebar">
+                <ul class="sidebar-menu" data-widget="tree">
+                    {% with request.resolver_match.url_name as url_name %}
+                        <li {% if url_name == 'home' %}class="active"{% endif %}>
+                            <a href="{% url 'home' %}">
+                                <i class="fas fa-home"></i>
+                                <span>Home</span>
+                            </a>
+                        </li>
+
+                        {#   add all menu items here. #}
+                        {#   icon from font awesome https://fontawesome.com/icons #}
+
+                        </ul>
+                    {% endwith %}
+                </ul>
+
+            </section>
+        </aside>
+
+        <div class="content-wrapper">
+            {% block process %}{% endblock %}
+
+            <section class="content">
+                {% block content %}{% endblock %}
+            </section>
+        </div>
+    </div>
+{% endblock %}

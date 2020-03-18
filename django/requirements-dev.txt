@@ -1,0 +1,8 @@
+# Django + mongo related
+django==2.2.10
+djongo[json]==1.2.38
+jsonfield==2.1.1
+sqlparse==0.2.4
+
+# Rest api
+djangorestframework

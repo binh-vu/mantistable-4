@@ -1,0 +1,54 @@
+{% extends "app/base.html" %}
+{% load static %}
+
+{% block container %}
+    <div id="login-register">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col col-md-5 background">
+
+                    <div>
+                        <img class="logo" src="{% static 'app/images/logo.png' %}" alt="STILTool"/>
+                        <div>
+                            {% if challenge %}
+                                <div class="head">Challenge Edition</div>
+                            {% endif %}
+
+                            <h1 class="title">
+                                <span class="bold">STILT</span>ool
+                            </h1>
+                        </div>
+                        <div class="subhead">Semantic Table Interpretation Evaluation Tool</div>
+
+
+                    </div>
+
+                <div>
+                      <div class="sidecol-main-text">
+                            {% block sideColumnMainText %} {% endblock %}
+                        </div>
+                </div>
+                    <div>
+                        <div class="sidecol-cta">
+                            {% block sideColumnCTA %}{% endblock %}
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="col col-md-7">
+                    {% block content %}{% endblock %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script>
+        $('body').removeClass('sde-fixed');
+    </script>
+{% endblock %}
