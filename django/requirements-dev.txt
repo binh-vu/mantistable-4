@@ -7,3 +7,6 @@ sqlparse==0.2.4
 # Rest api
 djangorestframework
 requests
+
+# Utils
+Pillow

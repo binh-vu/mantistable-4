@@ -1,80 +1,106 @@
 from django.shortcuts import render
-from .forms import RegistrationForm, ImageUploadForm, LoginForm
 from django.contrib.auth import authenticate, login, logout
+from django.views import View
+from django.utils.http import urlsafe_base64_encode
+from django.http import JsonResponse
 
-def register(request):
-    if request.method == "POST":
-        form = RegistrationForm(data=request.POST)
+import mantistable.settings
+from account.tokengen import account_activation_token
+from account.forms import RegistrationForm, ImageUploadForm, LoginForm
+import json
+
+class RegisterView(View):
+    template_name = 'account/register.html'
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            "registration_form": RegistrationForm(),
+            "image_form": ImageUploadForm(),
+            "smtp": json.dumps(self.__has_smtp(mantistable.settings.EMAIL_HOST_USER)),
+        })
+
+    def post(self, request):
+        registration_form = RegistrationForm(data=request.POST)
         image_form = ImageUploadForm(request.POST, request.FILES)
 
-        if form.is_valid() and image_form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False
-            user.save()
-
+        if registration_form.is_valid() and image_form.is_valid():
+            # Create user profile
+            user = registration_form.save(commit=False)
             avatar = image_form.cleaned_data["avatar"]
+            self.__create_user_profile(user, avatar)
 
-            if avatar is not None:
-                UserProfile(
-                    user=user,
-                    avatar=avatar
-                ).save()
+            # Send email activation
+            if self.__has_smtp(mantistable.settings.EMAIL_HOST_USER):
+                mail_subject = mantistable.settings.ACCOUNT_SETTINGS["registration"]["mail_subject"]
+                to_email = registration_form.cleaned_data.get('email')
+                self.__send_email(to_email, mail_subject, user, self.__get_host())
             else:
-                UserProfile(
-                    user=user,
-                ).save()
+                user.is_active = True
+                user.save()
 
-
-            # Email send
-            current_site = get_current_site(request)
-            mail_subject = 'Mantistable Account Activation'
-            message = render_to_string('account/email_activation.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-            to_email = form.cleaned_data.get('email')
-            email = EmailMessage(
-                mail_subject, message, to=[to_email]
-            )
-            email.send()
-            # ----------------
-
-            redirect = reverse("annotations")
+            redirect = reverse(mantistable.settings.ACCOUNT_SETTINGS["registration"]["redirect"])
             return JsonResponse({
                 "redirect": redirect
             })
-        else:
-            errors = {}
-            if not form.is_valid():
-                errors.update(form.errors)
 
-            if not image_form.is_valid():
-                errors.update(image_form.errors)
+        # Invalid login
+        errors = {}
+        if not registration_form.is_valid():
+            errors.update(registration_form.errors)
 
-            data = errors
-            return JsonResponse(data, status=400)
+        if not image_form.is_valid():
+            errors.update(image_form.errors)
 
-    registration_form = RegistrationForm()
-    image_form = ImageUploadForm()
-    return render(
-        request, 
-        "account/register.html", {
-            "registration_form": registration_form,
-            "image_form": image_form,
-        }
-    )
+        return JsonResponse(errors, status=400)
+
+    def __create_user_profile(self, user, avatar):
+        user.is_active = False
+        user.save()
+
+        profile = UserProfile(user=user)
+        if avatar is not None:
+            profile.avatar = avatar
+
+        profile.save()
+
+    def __has_smtp(self, email_host):
+        return email_host != '' and "@" in email_host
+
+    def __send_email(to_email, mail_subject, user, host):
+        message = render_to_string('app/email_activation.html', {
+            'user': user,
+            'domain': host,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': account_activation_token.make_token(user),
+        })
+        email = EmailMessage(mail_subject, message, to=[to_email])
+        email.send()
+
+    def __get_host():
+        if mantistable.settings.PORT != '443' and mantistable.settings.PORT != '80':
+            return "%s:%s" % (mantistable.settings.HOST, mantistable.settings.PORT)
+        
+        return mantistable.settings.HOST
 
 
-def login_view(request):
-    if request.method == 'POST':
-        form = LoginForm(data=request.POST)
+class LoginView(View):
+    form_class = LoginForm
+    template_name = 'account/login.html'
+
+    def get(self, request):
+        form = self.form_class()
+        return render(request, self.template_name, {
+            'login_form': form
+        })
+
+    def post(self, request):
+        form = self.form_class(data=request.POST)
         
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
             user = authenticate(username=username, password=password)
+
             if user is not None:
                 login(request, user)
                 next_url = request.POST.get('next')
@@ -82,7 +108,7 @@ def login_view(request):
                 if next_url:
                     redirect = next_url
                 else:
-                    redirect = reverse("index")
+                    redirect = reverse(mantistable.settings.ACCOUNT_SETTINGS["login"]["redirect"])
 
                 return JsonResponse({
                     "redirect": redirect
@@ -91,14 +117,9 @@ def login_view(request):
                 return JsonResponse({}, status=400)
         else:
             return JsonResponse(form.errors, status=400)
-
-    return render(
-        request, 
-        "account/login.html", {
-            "login_form": LoginForm(),
-        }
-    )
         
-def logout_view(request):
-    logout(request)
-    return redirect("index")
+
+class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        return redirect(mantistable.settings.ACCOUNT_SETTINGS["logout"]["redirect"])

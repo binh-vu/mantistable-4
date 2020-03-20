@@ -7,10 +7,6 @@
 
 {% block sideColumnMainText %}
     Hello!
-    {% if challenge %}
-        <span class="small block">Want to join the challenge?</span>
-        <span class="small block"> Create an account!</span>
-    {% endif %}
 {% endblock %}
 
 {% block sideColumnCTA %}
@@ -163,6 +159,8 @@
                 $(submitButton).addClass('loading');
                 $(submitButton).addClass('disabled');
 
+                let isSmtpRegistration = {{ smtp | safe }};
+
                 $.ajax({
                     url: form.attr('action'),
                     type: 'POST',
@@ -172,9 +170,11 @@
                         $(submitButton).addClass('success');
                         $(submitButton).removeClass('disabled');
 
-                        $("#message-registration").append($('<div class="alert alert-success" role="alert">Check your email to complete the registration</div>'));
-
-                        //window.location.href = response['redirect'];
+                        if (isSmtpRegistration) {
+                            $("#message-registration").html($('<div class="alert alert-success" role="alert">Check your email to complete the registration</div>'));
+                        }else{
+                            window.location.href = response['redirect'];
+                        }
                     },
                     error: function (request) {
                         const data = request["responseJSON"];

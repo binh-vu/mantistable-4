@@ -12,17 +12,10 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'hpf%js#5+y!zhm!64!i#g#vqys(nxz(fxv-u-@lu894@z1@erg')  # NOTE: Fake key for development
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG_MODE', '') != 'False'
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", '')
@@ -34,7 +27,6 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST", '')
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD", '')
 EMAIL_PORT = 587
 
-#ALLOWED_HOSTS = ["localhost", "0.0.0.0"]
 HOST = os.environ.get("HOST", "localhost")
 PORT = os.environ.get("PORT", "80")
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
@@ -121,9 +113,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-    
-LOGIN_URL = "/login"
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
@@ -148,3 +137,18 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [
     'node_modules',
 ]
+
+# Account app settings
+LOGIN_URL = "/login"
+ACCOUNT_SETTINGS = {
+    "registration": {
+        "redirect": "index",
+        "mail_subject": "ToolName Account Activation"
+    },
+    "login": {
+        "redirect": "index",
+    },
+    "logout": {
+        "redirect": "index",
+    }
+}

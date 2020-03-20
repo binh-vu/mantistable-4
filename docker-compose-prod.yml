@@ -5,11 +5,12 @@ services:
     container_name: mantistable4_nginx
     build: ./nginx
     ports:
-      - 80:80
+      - ${PORT}:80
     depends_on:
       - web
     volumes:
-      - static_volume:/app/staticfiles
+      - ./django/staticfiles:/app/staticfiles
+      - ./django/media:/app/media
       
   web:
     container_name: mantistable4_web
@@ -21,7 +22,8 @@ services:
                       python manage.py migrate &&
                       gunicorn mantistable.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - static_volume:/app/staticfiles
+      - ./django/staticfiles:/mantistable/staticfiles
+      - ./media:/mantistable/media
     expose:
       - 8000
     depends_on:
@@ -33,6 +35,3 @@ services:
     container_name: mantistable4_mongo
     image: mongo
     command: mongod --port 27017
-
-volumes:
-  static_volume:

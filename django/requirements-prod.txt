@@ -8,5 +8,8 @@ sqlparse==0.2.4
 djangorestframework
 requests
 
+# Utils
+Pillow
+
 # Deployment
 gunicorn
