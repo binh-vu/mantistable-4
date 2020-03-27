@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   web:
-    container_name: mantistable4_web
+    container_name: mantistable4web
     build:
       context: ./django
       dockerfile: Dockerfile-dev

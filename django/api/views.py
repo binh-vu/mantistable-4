@@ -19,6 +19,11 @@ class JobView(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         job = serializer.save()
+        job.progress = {
+            "current": 0,
+            "total": 1
+        }
+        job.save()
         
         # Call celery here
         tasks.test_task.apply_async(
