@@ -16,11 +16,33 @@ services:
       - "8000:8000"
     depends_on:
       - mongo
+      - redis
+      - celery
+    environment:
+      - REDIS_URI=redis://stiltool_redis_1:6379
     env_file:
       - ./django/.env-dev
+      
   mongo:
     container_name: mantistable4_mongo
     image: mongo
     command: mongod --port 27017
     ports:
       - "27017:27017"
+      
+  redis:
+    container_name: mantistable4_redis
+    image: redis:alpine
+    
+  celery:
+    container_name: mantistable4_celery
+    build:
+      context: ./django
+      dockerfile: Dockerfile-dev
+    command: celery -A mantistable worker --loglevel=info --autoscale=10,4 -Ofair -Qcelery
+    volumes:
+      - ./django:/mantistable
+    ports: []
+    depends_on:
+      - redis
+      - mongo

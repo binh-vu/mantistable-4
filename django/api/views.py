@@ -4,8 +4,7 @@ from rest_framework import generics
 
 from api.serializers import JobSerializer
 from api.models import Job
-
-import requests
+import api.tasks as tasks
 
 class JobView(generics.ListCreateAPIView):
     queryset = Job.objects.all()
@@ -19,16 +18,10 @@ class JobView(generics.ListCreateAPIView):
     """
     
     def perform_create(self, serializer):
-        serializer.save()
+        job = serializer.save()
         
         # Call celery here
-        
-        # Debug: remove
-        callback = serializer.validated_data["callback"]
-        print(callback)
-        r = requests.post(callback, data= {
-            'number': 12524,
-            'type': 'issue',
-            'action': 'test'
-        })
-        print(r.status_code, r.reason)
+        tasks.test_task.apply_async(
+            args=(5, job.id),
+            link=[tasks.rest_hook.s()]
+        )
