@@ -6,7 +6,16 @@
 
 {% block content %}
     {{ block.super }}
-    Insert anything you need.
+    <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
+        {% csrf_token %}
+
+        <table>
+            {{ form.as_table }}
+        </table>
+        <button class="btn btn-primary">Import</button>
+    </form>
+
+    <a href="{% url 'process-all' %}" class="btn btn-warning">Process All</a>
 {% endblock %}
 
 

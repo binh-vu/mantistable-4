@@ -1,0 +1,12 @@
+[
+    {
+        "pippo$": "Bill Smith",
+        "birth": "20/02/1990",
+        "$asd": "Washington"
+    },
+    {
+        "pippo$": "Ping pong",
+        "birth": "20/02/1960",
+        "$asd": "Wuhan"
+    }
+]
