@@ -1,21 +1,184 @@
 {% extends "app/base-dashboard.html" %}
 
+{% load crispy_forms_tags %}
+
 {% block title %}
-    Insert a title here |  {{ block.super }}
+    Dashboard |  {{ block.super }}
 {% endblock %}
 
 {% block content %}
     {{ block.super }}
-    <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
-        {% csrf_token %}
 
-        <table>
-            {{ form.as_table }}
-        </table>
-        <button class="btn btn-primary">Import</button>
-    </form>
+    <div class="container">
+        <h2>Dashboard</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
+                    {% csrf_token %}
 
-    <a href="{% url 'process-all' %}" class="btn btn-warning">Process All</a>
+                    <div class="box box-solid">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Import</h3>
+                        </div>
+                        <div class="box-body">
+                            {{ form | crispy }}
+
+                            <div class="box-footer">
+                                <div class="btn-wrapper">
+                                    <button type="submit" class="btn btn-primary">
+                                        Submit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-6">
+                <form id="export-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
+                    {% csrf_token %}
+                    <div class="box box-solid">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Export</h3>
+                        </div>
+                        <div class="box-body">
+                            {{ export_form | crispy }}
+
+                            <div class="box-footer">
+                                <div class="btn-wrapper">
+                                    <button type="submit" class="btn btn-info">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Jobs <span class="badge badge-primary">{{current_jobs_count}}</span></h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="table-responsive table-wrapper">
+                            <table class="table table-bordered sde-table">
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>created</th>
+                                        <th>tables</th>
+                                        <th>progress</th>
+                                        <th>callback</th>
+                                    </tr>
+                                </thead>
+    
+                                <tbody>
+                                    {% for job in jobs_list %}
+                                        <tr>
+                                            <td>
+                                                {{ job.id }}
+                                            </td>
+                                            <td>
+                                                {{ job.created }}
+                                            </td>
+                                            <td>
+                                                {{ job.table_ids | length }}
+                                            </td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar progress-bar-green"
+                                                         role="progressbar"
+                                                         aria-valuenow="{{job.progress.current}}"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="{{job.progress.total}}"
+                                                         style="width: 50%"
+                                                    ></div>
+                                                  </div>
+                                                <div class="progress-bar progress-bar-green" role="progressbar" aria-valuenow="{{job.progress.current}}" aria-valuemin="0" aria-valuemax="{{job.progress.total}}" style="width: 40%">
+                                                    <span class="sr-only">40% Complete (success)</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {{ job.callback }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                        <div class="box-footer">
+                            <div class="btn-wrapper">
+                                <a id="process-btn" href="#" class="btn btn-warning">
+                                    Add job <span id="last-status-code" class="badge badge-light"></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Tables <span class="badge badge-primary">{{loaded_tables}}</span></h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="table-responsive table-wrapper">
+                            <table class="table table-bordered sde-table">
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>name</th>
+                                    </tr>
+                                </thead>
+    
+                                <tbody>
+                                    {% for table in tables_list %}
+                                        <tr>
+                                            <td>
+                                                {{ table.id }}
+                                            </td>
+                                            <td>
+                                                {{ table.name }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
+{% block javascript %}
+    {{ block.super }}
 
+    <script>
+        $(function() {
+            $("#process-btn").click(function() {
+                $('#last-status-code').empty();
+                $.ajax({
+                    url: "{% url 'process-all' %}",
+                    type: 'GET',
+                    success: function(result) {
+                        $('#last-status-code').text(result.status + " (" + result.phrase + ")");
+                    }
+                });
+            });
+        });
+    </script>
+
+{% endblock %}

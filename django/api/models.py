@@ -3,6 +3,7 @@ from djongo.models.json import JSONField
 
 class Job(models.Model):
     created = models.DateTimeField(auto_now_add=True)
+    table_ids = JSONField(default=[]) 
     progress = JSONField(default={})
     callback = models.CharField(max_length=255, blank=False)    # TODO: use models.URLField
 

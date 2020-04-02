@@ -10,13 +10,6 @@ class JobView(generics.ListCreateAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
     
-    """ TODO: useful to hide callback field in get request
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return WriteJobSerializer
-        return ReadJobSerializer
-    """
-    
     def perform_create(self, serializer):
         job = serializer.save()
         job.progress = {
@@ -27,6 +20,6 @@ class JobView(generics.ListCreateAPIView):
         
         # Call celery here
         tasks.test_task.apply_async(
-            args=(5, job.id),
+            args=(job.id,),
             link=[tasks.rest_hook.s()]
         )

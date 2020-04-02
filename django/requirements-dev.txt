@@ -11,3 +11,4 @@ requests
 # Utils
 Pillow
 celery[redis]
+django-crispy-forms

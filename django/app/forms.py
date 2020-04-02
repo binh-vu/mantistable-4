@@ -4,11 +4,19 @@ from app.models import Table
 
 
 class ImportForm(forms.Form):
-    table_name = forms.CharField(max_length=255)
     table_file = forms.FileField(
         widget=forms.FileInput(attrs={'accept': '.json, .zip'}),
         validators=[FileExtensionValidator(allowed_extensions=['json', 'zip'])],
         label="Table file",
         required=True,
         label_suffix=""
+    )
+
+class ExportForm(forms.Form):
+    export_type = forms.ChoiceField(
+        choices=(
+            ("CEA", "CEA"),
+            ("CPA", "CPA"),
+            ("CTA", "CTA"),
+        )
     )

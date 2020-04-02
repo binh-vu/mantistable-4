@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -145,6 +146,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [
     'node_modules',
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # Account app settings
 LOGIN_URL = "/login"
