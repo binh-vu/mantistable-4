@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 from django.urls import reverse, reverse_lazy, get_script_prefix
+from django.contrib import messages
 
 from app.forms import ImportForm, ExportForm
 from app.models import Table
@@ -27,16 +28,18 @@ class HomeView(FormView):
 
     def post(self, request, *args, **kwargs):
         if 'form' in request.POST:
-            form_class = self.get_form_class()
-            form_name = 'form'
-        else:
-            form_class = self.export_form_class
-            form_name = 'form2'
+            if request.POST.get('form') == 'import':
+                form_class = self.get_form_class()
+                form_name = 'form'
+            else:
+                form_class = self.export_form_class
+                form_name = 'form2'
 
         form = self.get_form(form_class)
 
         # validate
         if form.is_valid():
+            messages.success(request, 'Added')
             return self.form_valid(form)
         else:
             return self.form_invalid(**{form_name: form})
@@ -62,8 +65,6 @@ class HomeView(FormView):
     def get_context_data(self, **kwargs):
         context = super(HomeView, self).get_context_data(**kwargs)
         context['loaded_tables'] = Table.objects.all().count()
-        context['current_jobs_count'] = Job.objects.all().count()
-        context['jobs_list'] = Job.objects.all()
         context['tables_list'] = Table.objects.all()
         if 'form' not in context:
             context['form'] = self.form_class()
@@ -106,6 +107,40 @@ class ProcessAllView(View):
 
     def _build_url(self, request, view_name):
         return request.build_absolute_uri(reverse(view_name)).replace("0.0.0.0", "mantistable4web")
+
+
+class JobView(View):
+    def get(self, request):
+        jobs = Job.objects.all()
+
+        return JsonResponse([
+            self._serialize_job(job)
+            for job in jobs
+        ], safe=False)
+
+    def _serialize_job(self, job):
+        return {
+            "id": job.id,
+            "created": job.created,
+            "tables": len(job.table_ids),
+            "progress": json.dumps(job.progress),
+            "callback": job.callback
+        }
+
+class TableView(View):
+    def get(self, request):
+        tables = Table.objects.all()
+
+        return JsonResponse([
+            self._serialize_table(table)
+            for table in tables
+        ], safe=False)
+
+    def _serialize_table(self, table):
+        return {
+            "id": table.id,
+            "name": table.name,
+        }
 
 
 class JobHandler(View):

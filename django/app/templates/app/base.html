@@ -32,6 +32,9 @@
         <!-- CSS -->
         <link rel="stylesheet" href="{% static '/app/css/style.css' %}">
 
+        <!-- Fast way to get bootstrap table-->
+        <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css">
+
     {% endblock %}
 
 </head>
@@ -53,6 +56,34 @@
     <script src="{% static '/admin-lte/dist/js/adminlte.min.js' %}"></script>
     <!-- Custom JS -->
     <script src="{% static '/app/js/app.js' %}"></script>
+
+    <script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/locale/bootstrap-table-it-IT.min.js"></script>
+
+    <script>
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+    </script>
 
 {% endblock %}
 

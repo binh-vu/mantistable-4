@@ -1,5 +1,6 @@
 {% extends "app/base-dashboard.html" %}
 
+{% load static %}
 {% load crispy_forms_tags %}
 
 {% block title %}
@@ -10,11 +11,15 @@
     {{ block.super }}
 
     <div class="container">
-        <h2>Dashboard</h2>
+        <h2>
+            Dashboard
+            <canvas id="joke" style="width: 84.8%; height:1em"></canvas>
+        </h2>
         <div class="row">
             <div class="col-md-6">
                 <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
                     {% csrf_token %}
+                    <input type='hidden' name='form' value='import'> 
 
                     <div class="box box-solid">
                         <div class="box-header with-border">
@@ -22,6 +27,15 @@
                         </div>
                         <div class="box-body">
                             {{ form | crispy }}
+
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible">
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
 
                             <div class="box-footer">
                                 <div class="btn-wrapper">
@@ -62,56 +76,20 @@
             <div class="col-md-12">
                 <div class="box box-solid">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Jobs <span class="badge badge-primary">{{current_jobs_count}}</span></h3>
+                        <h3 class="box-title">Jobs <span id="jobs-count" class="badge badge-primary"></span></h3>
                     </div>
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
-                            <table class="table table-bordered sde-table">
-                                <thead>
-                                    <tr>
-                                        <th>id</th>
-                                        <th>created</th>
-                                        <th>tables</th>
-                                        <th>progress</th>
-                                        <th>callback</th>
-                                    </tr>
-                                </thead>
-    
-                                <tbody>
-                                    {% for job in jobs_list %}
-                                        <tr>
-                                            <td>
-                                                {{ job.id }}
-                                            </td>
-                                            <td>
-                                                {{ job.created }}
-                                            </td>
-                                            <td>
-                                                {{ job.table_ids | length }}
-                                            </td>
-                                            <td>
-                                                <div class="progress">
-                                                    <div class="progress-bar progress-bar-green"
-                                                         role="progressbar"
-                                                         aria-valuenow="{{job.progress.current}}"
-                                                         aria-valuemin="0"
-                                                         aria-valuemax="{{job.progress.total}}"
-                                                         style="width: 50%"
-                                                    ></div>
-                                                  </div>
-                                                <div class="progress-bar progress-bar-green" role="progressbar" aria-valuenow="{{job.progress.current}}" aria-valuemin="0" aria-valuemax="{{job.progress.total}}" style="width: 40%">
-                                                    <span class="sr-only">40% Complete (success)</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {{ job.callback }}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
+                            <table
+                                id="job-table"
+                                data-search="false"
+                                data-show-refresh="true"
+                                data-show-pagination-switch="true"
+                                data-pagination="true"
+                                data-id-field="id"
+                                data-page-list="[10, 25, 50, 100, all]">
                             </table>
                         </div>
-
 
                         <div class="box-footer">
                             <div class="btn-wrapper">
@@ -132,6 +110,18 @@
                         <h3 class="box-title">Tables <span class="badge badge-primary">{{loaded_tables}}</span></h3>
                     </div>
                     <div class="box-body">
+                        <div class="table-responsive table-wrapper">
+                            <table
+                                id="tables-table"
+                                data-search="false"
+                                data-show-refresh="true"
+                                data-show-pagination-switch="true"
+                                data-pagination="true"
+                                data-id-field="id"
+                                data-page-list="[10, 25, 50, 100, all]">
+                            </table>
+                        </div>
+                        {% comment %}
                         <div class="table-responsive table-wrapper">
                             <table class="table table-bordered sde-table">
                                 <thead>
@@ -155,6 +145,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        {% endcomment %}
                     </div>
                 </div>
             </div>
@@ -175,9 +166,134 @@
                     type: 'GET',
                     success: function(result) {
                         $('#last-status-code').text(result.status + " (" + result.phrase + ")");
+                        $('#job-table').bootstrapTable("refresh");
                     }
                 });
             });
+
+            function progressFormatter(value, row, index) {
+                let current = value.current;
+                let total = value.total;
+                let percent = 100 * (current / total);
+                return [
+                    '<div class="progress">',
+                        '<div class="progress-bar progress-bar-green"',
+                            'role="progressbar"',
+                            'aria-valuenow="' + current  +'"',
+                            'aria-valuemin="0"',
+                            'aria-valuemax="' + total +'"',
+                            'style="width: ' + percent + '%">',
+                        '</div>',
+                    '</div>'
+                ].join('');
+            }
+
+            $('#job-table').bootstrapTable({
+                url: "{% url 'jobs' %}",
+                locale: "it-IT",
+                onPostBody: function (data) {
+                    $('#jobs-count').text(data.length)
+                },
+                columns:[
+                    [
+                        {
+                            field: "id",
+                            title: "id",
+                            sortable: true,
+                        },
+                        {
+                            field: "created",
+                            title: "created",
+                            sortable: true,
+                        },
+                        {
+                            field: "tables",
+                            title: "tables",
+                            align: 'center',
+                        },
+                        {
+                            field: "progress",
+                            title: "progress",
+                            align: 'center',
+                            formatter: progressFormatter
+                        },
+                        {
+                            field: "callback",
+                            title: "callback",
+                        },
+                    ]
+                ]
+            });
+
+            
+            $('#tables-table').bootstrapTable({
+                url: "{% url 'tables' %}",
+                locale: "it-IT",
+                onPostBody: function (data) {
+                    $('#tables-count').text(data.length)
+                },
+                columns:[
+                    [
+                        {
+                            field: "id",
+                            title: "id",
+                            sortable: true,
+                        },
+                        {
+                            field: "name",
+                            title: "name",
+                            sortable: true,
+                        },
+                    ]
+                ]
+            });
+
+            (function() {
+                function resizeCanvasToDisplaySize(canvas) {
+                    const width = canvas.clientWidth;
+                    const height = canvas.clientHeight;
+                
+                    if (canvas.width !== width || canvas.height !== height) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    }
+                }
+
+                let canvas = $("#joke")[0];
+                let ctx = canvas.getContext('2d');
+                resizeCanvasToDisplaySize(canvas);
+                let mario = new Image();
+                let marioSpeed = 0.085;
+                let marioX = -1000 * marioSpeed * 10;
+                let marioSprite = 0;
+
+                mario.onload = function() {
+                    start();
+                }
+                mario.src = "{% static 'app/images/mario.png' %}";
+
+                var then = Date.now();
+                function start() {
+
+                    var now = Date.now();
+                    var delta = now - then;
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.save();
+                    ctx.drawImage(mario, Math.floor(marioSprite) * 17, 0, 17, 24, marioX, 5, 17, 24);
+                    ctx.restore();
+
+                    marioX += Math.abs(marioSpeed)*delta;
+                    marioSprite = (marioSprite + 0.01*delta) % 2;
+
+                    if (marioX > canvas.width) {
+                        marioX = -10000 * marioSpeed * 10;
+                    }
+
+                    then = now;
+                    requestAnimationFrame(start);
+                }
+            }());
         });
     </script>
 
