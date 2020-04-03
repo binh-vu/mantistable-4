@@ -2,6 +2,7 @@ from mantistable.celery import app
 from api.models import Job
 from api.serializers import TableSerializer
 from api.process.utils import table
+from api.process.utils.mongo.repository import Repository
 from api.process.normalization import normalizer
 from app.models import Table
 
@@ -15,7 +16,7 @@ def sync_group_task(task_sig, data: list):
 
     with allow_join_result():
         task = group([
-            task_sig(d)
+            task_sig(d["id"], d["rows"])
             for d in data
         ]).apply_async()
         result = task.join()
@@ -37,34 +38,42 @@ def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
     tables = Table.objects.filter(id__in=job.table_ids)
     rows = [
-        table.rows
+        {
+            "id": table.id,
+            "rows": table.rows
+        }
         for table in tables
     ]
 
     # TODO: Insert here cron for ETA
-    norm_result        = sync_group_task(normalization_phase.si, rows)
-    colan_result       = sync_group_task(column_analysis_phase.si, rows)
-    #dr_result          = sync_chunk_task(data_retrieval_phase, rows) # TODO: Not rows...
-    computation_result = sync_group_task(computation_phase.si, rows)
+    norm_result  = sync_group_task(normalization_phase.si, rows)
+    colan_result = sync_group_task(column_analysis_phase.si, rows)
+    
+    #dr_result    = sync_chunk_task(data_retrieval_phase, rows) # TODO: Not rows...
+    comp_result  = sync_group_task(computation_phase.si, rows)
+
+    # TODO: save to db with pymongo
+    Repository().write_cols(norm_result)
 
     return job_id
 
 @app.task(name="normalization_phase")
-def normalization_phase(data):
-    table_model = table.Table(data)
+def normalization_phase(table_id, data):
+    table_model = table.Table(table_id=table_id, table=data)
     metadata = normalizer.Normalizer(table_model).normalize()
+
     return metadata
 
 @app.task(name="column_analysis_phase")
-def column_analysis_phase(data):
+def column_analysis_phase(table_id, data):
     return None
 
 @app.task(name="data_retrieval_phase")
-def data_retrieval_phase(data):
+def data_retrieval_phase(table_id, data):
     return None
 
 @app.task(name="computation_phase")
-def computation_phase(data):
+def computation_phase(table_id, data):
     return None
 
 @app.task(name="rest_hook")

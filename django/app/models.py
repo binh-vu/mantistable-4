@@ -66,5 +66,7 @@ class SafeJSONField(JSONField):
 
 class Table(models.Model):
     name = models.CharField(max_length=255)
+    original = SafeJSONField(default=[])
     cols = SafeJSONField(default=[])
-    rows = SafeJSONField(default=[])
+    predicates = SafeJSONField(default=[])
+    concepts = SafeJSONField(default=[])

@@ -1,8 +1,9 @@
 class Table:
-    def __init__(self, table: list):
+    def __init__(self, table_id, table: list):
         assert(isinstance(table, list))
         assert(len(table) > 0)
 
+        self._table_id = table_id
         self._table = table
 
     def get_headers(self):
@@ -17,3 +18,7 @@ class Table:
                 cols[header].append(row[header])
 
         return cols
+
+    @property
+    def table_id(self):
+        return self._table_id

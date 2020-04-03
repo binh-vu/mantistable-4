@@ -13,18 +13,28 @@ class Normalizer:
     def normalize(self):
         metadata = {}
         for header, cells in self._table.get_cols().items():
-            metadata[header] = []
+            stats = {}
+            metadata[header] = {
+                'stats': {},
+                'values': []
+            }
             for value in cells:
                 datatype   = self._get_datatype(value)
                 clean_text = self._get_clean_text(value)
                 clean_text = self._get_uniform_datatype(datatype, clean_text)
 
-                metadata[header].append({
+                if datatype.name not in stats:
+                    stats[datatype.name] = 0
+                stats[datatype.name] += 1
+
+                metadata[header]['values'].append({
                     "datatype": datatype.name,
                     "norm_cell": clean_text
                 })
 
-        return metadata        
+            metadata[header]['stats'] = stats
+
+        return (self._table.table_id, metadata)
 
     def _get_clean_text(self, value):
         return Cleaner(value).clean()
