@@ -12,6 +12,9 @@ requests
 Pillow
 celery[redis]
 django-crispy-forms
+python-dateutil
+nltk
+isbnlib
 
 # Deployment
 gunicorn

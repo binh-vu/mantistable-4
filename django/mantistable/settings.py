@@ -163,3 +163,7 @@ ACCOUNT_SETTINGS = {
         "redirect": "index",
     }
 }
+
+# Mantistable settings
+# Private resource directory (Domain specific resources)
+MANTIS_RES_DIR = os.path.join(BASE_DIR, os.path.join('api', 'resources'))

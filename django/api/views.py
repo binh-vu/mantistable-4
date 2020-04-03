@@ -16,7 +16,7 @@ class JobView(generics.ListCreateAPIView):
             "current": 0,
             "total": 1
         }
-        job.task_id = tasks.test_task.apply_async(
+        job.task_id = tasks.job_slot.apply_async(
             args=(job.id,),
             link=[tasks.rest_hook.s()]
         )

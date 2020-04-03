@@ -1,0 +1,19 @@
+class Table:
+    def __init__(self, table: list):
+        assert(isinstance(table, list))
+        assert(len(table) > 0)
+
+        self._table = table
+
+    def get_headers(self):
+        return list(self._table[0].keys())
+
+    def get_cols(self):
+        headers = self.get_headers()
+        cols = {}
+        for header in headers:
+            cols[header] = []
+            for row in self._table:
+                cols[header].append(row[header])
+
+        return cols

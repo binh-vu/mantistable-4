@@ -16,3 +16,6 @@ WORKDIR /mantistable
 
 # Install python requiremensts
 RUN pip install -r requirements-dev.txt
+
+# Install python nltk corporas
+RUN python -c 'import nltk; nltk.download("stopwords"); nltk.download("punkt")'
