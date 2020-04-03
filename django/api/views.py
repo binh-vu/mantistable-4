@@ -16,10 +16,9 @@ class JobView(generics.ListCreateAPIView):
             "current": 0,
             "total": 1
         }
-        job.save()
-        
-        # Call celery here
-        tasks.test_task.apply_async(
+        job.task_id = tasks.test_task.apply_async(
             args=(job.id,),
             link=[tasks.rest_hook.s()]
         )
+        
+        job.save()

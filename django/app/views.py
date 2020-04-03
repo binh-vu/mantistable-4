@@ -82,9 +82,16 @@ class HomeView(FormView):
             return "cta"
 
 
-class ProcessAllView(View):
-    def get(self, request):
-        tables = Table.objects.all()
+class ProcessView(View):
+    def post(self, request):
+        ids = request.POST.getlist("ids[]", [])
+
+        if len(ids) == 0:
+            tables = Table.objects.all()
+        else:
+            tables = Table.objects.filter(id__in=ids)
+
+        print(tables)
 
         rows = [
             table.id
@@ -124,6 +131,7 @@ class JobView(View):
             "created": job.created,
             "tables": len(job.table_ids),
             "progress": json.dumps(job.progress),
+            "eta": str(job.eta),
             "callback": job.callback
         }
 

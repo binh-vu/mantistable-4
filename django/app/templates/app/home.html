@@ -52,6 +52,7 @@
             <div class="col-md-6">
                 <form id="export-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
                     {% csrf_token %}
+                    <input type='hidden' name='form' value='export'> 
                     <div class="box box-solid">
                         <div class="box-header with-border">
                             <h3 class="box-title">Export</h3>
@@ -75,77 +76,48 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="box box-solid">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">Jobs <span id="jobs-count" class="badge badge-primary"></span></h3>
-                    </div>
                     <div class="box-body">
-                        <div class="table-responsive table-wrapper">
-                            <table
-                                id="job-table"
-                                data-search="false"
-                                data-show-refresh="true"
-                                data-show-pagination-switch="true"
-                                data-pagination="true"
-                                data-id-field="id"
-                                data-page-list="[10, 25, 50, 100, all]">
-                            </table>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <h4 class="box-title">Tables <span class="badge badge-primary">{{loaded_tables}}</span></h4>
+                                <div class="table-responsive table-wrapper">
+                                    <table
+                                        id="tables-table"
+                                        data-search="false"
+                                        data-show-refresh="true"
+                                        data-show-pagination-switch="true"
+                                        data-pagination="true"
+                                        data-id-field="id"
+                                        data-page-list="[10, 25, 50, 100, all]">
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <h4 class="box-title">Jobs <span id="jobs-count" class="badge badge-primary"></span></h4>
+                                <div class="table-responsive table-wrapper">
+                                    <table
+                                        id="job-table"
+                                        data-search="false"
+                                        data-show-refresh="true"
+                                        data-show-pagination-switch="true"
+                                        data-pagination="true"
+                                        data-id-field="id"
+                                        data-page-list="[10, 25, 50, 100, all]">
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="box-footer">
                             <div class="btn-wrapper">
-                                <a id="process-btn" href="#" class="btn btn-warning">
-                                    Add job <span id="last-status-code" class="badge badge-light"></span>
+                                <a id="process-selected-btn" href="#" class="btn btn-warning">
+                                    Process selected <span id="selected-count" class="badge badge-light"></span> <span id="last-status-code" class="badge badge-light"></span>
+                                </a>
+                                <a id="process-btn" href="#" class="btn btn-danger">
+                                    Process all <span id="last-status-code-all" class="badge badge-light"></span>
                                 </a>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-12">
-                <div class="box box-solid">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">Tables <span class="badge badge-primary">{{loaded_tables}}</span></h3>
-                    </div>
-                    <div class="box-body">
-                        <div class="table-responsive table-wrapper">
-                            <table
-                                id="tables-table"
-                                data-search="false"
-                                data-show-refresh="true"
-                                data-show-pagination-switch="true"
-                                data-pagination="true"
-                                data-id-field="id"
-                                data-page-list="[10, 25, 50, 100, all]">
-                            </table>
-                        </div>
-                        {% comment %}
-                        <div class="table-responsive table-wrapper">
-                            <table class="table table-bordered sde-table">
-                                <thead>
-                                    <tr>
-                                        <th>id</th>
-                                        <th>name</th>
-                                    </tr>
-                                </thead>
-    
-                                <tbody>
-                                    {% for table in tables_list %}
-                                        <tr>
-                                            <td>
-                                                {{ table.id }}
-                                            </td>
-                                            <td>
-                                                {{ table.name }}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% endcomment %}
                     </div>
                 </div>
             </div>
@@ -158,17 +130,51 @@
     {{ block.super }}
 
     <script>
+
+        $(function () {
+            var csrftoken = getCookie('csrftoken');
+  
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script>
         $(function() {
+            $("#process-selected-btn").attr('disabled', true);
+            let selections = [];
             $("#process-btn").click(function() {
                 $('#last-status-code').empty();
                 $.ajax({
-                    url: "{% url 'process-all' %}",
-                    type: 'GET',
+                    url: "{% url 'process' %}",
+                    type: 'POST',
                     success: function(result) {
-                        $('#last-status-code').text(result.status + " (" + result.phrase + ")");
+                        $('#last-status-code-all').text(result.status + " (" + result.phrase + ")");
                         $('#job-table').bootstrapTable("refresh");
                     }
                 });
+            });
+
+            $("#process-selected-btn").click(function() {
+                if ($("#process-selected-btn").attr("disabled") === undefined) {
+                    $('#last-status-code').empty();
+                    $.ajax({
+                        url: "{% url 'process' %}",
+                        type: 'POST',
+                        data: {
+                            "ids": selections
+                        },
+                        success: function(result) {
+                            $('#last-status-code').text(result.status + " (" + result.phrase + ")");
+                            $('#job-table').bootstrapTable("refresh");
+                        }
+                    });
+                }
             });
 
             function progressFormatter(value, row, index) {
@@ -198,34 +204,37 @@
                     [
                         {
                             field: "id",
-                            title: "id",
+                            title: "#",
                             sortable: true,
                         },
                         {
                             field: "created",
-                            title: "created",
+                            title: "Created",
                             sortable: true,
                         },
                         {
                             field: "tables",
-                            title: "tables",
+                            title: "Tables",
                             align: 'center',
                         },
                         {
                             field: "progress",
-                            title: "progress",
+                            title: "Progress",
                             align: 'center',
                             formatter: progressFormatter
                         },
                         {
+                            field: "eta",
+                            title: "ETA",
+                        },
+                        {
                             field: "callback",
-                            title: "callback",
+                            title: "Callback",
                         },
                     ]
                 ]
             });
 
-            
             $('#tables-table').bootstrapTable({
                 url: "{% url 'tables' %}",
                 locale: "it-IT",
@@ -235,17 +244,66 @@
                 columns:[
                     [
                         {
+                            field: 'state',
+                            checkbox: true,
+                            
+                            align: 'center',
+                            valign: 'middle'
+                        },
+                        {
                             field: "id",
-                            title: "id",
+                            title: "#",
                             sortable: true,
                         },
                         {
                             field: "name",
-                            title: "name",
+                            title: "Name",
                             sortable: true,
                         },
                     ]
                 ]
+            });
+
+            $('#tables-table').on('check-all.bs.table', function (e, row) {
+                selections = $.map(row, function(item) {
+                    return item.id;
+                });
+                if (selections.length > 0) {
+                    $("#process-selected-btn").attr('disabled', false);
+                } else {
+                    $("#process-selected-btn").attr('disabled', true);
+                }
+                $("#selected-count").text(selections.length)
+            });
+
+            $('#tables-table').on('uncheck-all.bs.table', function (e, row) {
+                selections = [];
+                $("#process-selected-btn").attr('disabled', true);
+                $("#selected-count").text(selections.length)
+            });
+
+            $('#tables-table').on('check.bs.table', function (e, row) {
+                selections.push(row.id);
+                if (selections.length > 0) {
+                    $("#process-selected-btn").attr('disabled', false);
+                } else {
+                    $("#process-selected-btn").attr('disabled', true);
+                }
+                $("#selected-count").text(selections.length)
+            });
+
+            $('#tables-table').on('uncheck.bs.table', function (e, row) {
+                $.each(selections, function(index, value) {
+                    if (value === row.id) {
+                        selections.splice(index,1);
+                    }
+                });
+                if (selections.length > 0) {
+                    $("#process-selected-btn").attr('disabled', false);
+                } else {
+                    $("#process-selected-btn").attr('disabled', true);
+                }
+                $("#selected-count").text(selections.length)
             });
 
             (function() {
@@ -254,8 +312,8 @@
                     const height = canvas.clientHeight;
                 
                     if (canvas.width !== width || canvas.height !== height) {
-                    canvas.width = width;
-                    canvas.height = height;
+                        canvas.width = width;
+                        canvas.height = height;
                     }
                 }
 
@@ -274,7 +332,6 @@
 
                 var then = Date.now();
                 function start() {
-
                     var now = Date.now();
                     var delta = now - then;
 
