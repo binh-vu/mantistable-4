@@ -5,8 +5,8 @@ from app.models import Table
 
 class ImportForm(forms.Form):
     table_file = forms.FileField(
-        widget=forms.FileInput(attrs={'accept': '.json, .zip'}),
-        validators=[FileExtensionValidator(allowed_extensions=['json', 'zip'])],
+        widget=forms.FileInput(attrs={'accept': '.json, .zip, .csv'}),
+        validators=[FileExtensionValidator(allowed_extensions=['json', 'zip','csv'])],
         label="Table file",
         required=True,
         label_suffix=""

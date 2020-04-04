@@ -6,10 +6,11 @@ services:
     build:
       context: ./django
       dockerfile: Dockerfile-dev
-    command: bash -c "python manage.py collectstatic --noinput &&
-                      python manage.py makemigrations &&
+    command: bash -c "python manage.py makemigrations &&
                       python manage.py migrate &&
                       python manage.py runserver 0.0.0.0:8000"
+                      #echo 'collecting static files..' &&
+                      #python manage.py collectstatic --noinput &&
     volumes:
       - ./django:/mantistable
     ports:

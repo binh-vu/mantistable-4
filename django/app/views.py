@@ -12,7 +12,7 @@ from app.models import Table
 from api.models import Job
 
 from http import HTTPStatus
-import json
+import json,csv,zipfile
 import requests
 
 def index(request):
@@ -44,16 +44,46 @@ class HomeView(FormView):
         else:
             return self.form_invalid(**{form_name: form})
 
+    def csv2json(self,file):
+        f = []
+        for row in csv.DictReader(file):
+            f.append(row)
+        f = json.dumps(f)
+        print(f)
+        return f
+
+    def save(self,name,content):
+        print(content)
+        Table(
+                name=name,
+                cols=[],
+                original=content
+            ).save()
     def form_valid(self, form):
         if isinstance(form, self.get_form_class()):
             table_file = form.cleaned_data.get('table_file')
-            content = json.loads(table_file.read())
-            Table(
-                name=table_file.name,
-                cols=[],
-                rows=content
-            ).save()
-
+            ext = str(table_file).split(".")[-1]
+            content = {}
+            if ext == "zip":
+                unzipped = zipfile.ZipFile(table_file)
+                print("ZIP")
+                print(unzipped.namelist())
+                for libitem in unzipped.namelist():
+                    if libitem.startswith('__'):
+                        continue
+                    if libitem.endswith('csv'):
+                        content = self.csv2json(unzipped.read(libitem).decode('utf-8'))
+                    elif libitem.endswith('json'):
+                        content = json.loads(unzipped.read(libitem).decode('utf-8'))
+                    else:
+                        continue
+                    self.save(libitem,content)
+            elif ext == "csv":
+                content = json.loads(self.csv2json(table_file.read().decode('utf-8')))
+                self.save(table_file.name,content)
+            else:
+                content = json.loads(table_file.read())
+                self.save(table_file.name,content)
             return super().form_valid(form)
         else:
             export_type = form.cleaned_data.get('export_type')
