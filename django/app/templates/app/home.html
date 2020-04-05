@@ -76,36 +76,21 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Datasets <span class="badge badge-primary">{{loaded_dataset}}</span></h3>
+                    </div>
                     <div class="box-body">
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="box-title">Tables <span class="badge badge-primary">{{loaded_tables}}</span></h4>
-                                <div class="table-responsive table-wrapper">
-                                    <table
-                                        id="tables-table"
-                                        data-search="false"
-                                        data-show-refresh="true"
-                                        data-show-pagination-switch="true"
-                                        data-pagination="true"
-                                        data-id-field="id"
-                                        data-page-list="[10, 25, 50, 100, all]">
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="col-md-7">
-                                <h4 class="box-title">Jobs <span id="jobs-count" class="badge badge-primary"></span></h4>
-                                <div class="table-responsive table-wrapper">
-                                    <table
-                                        id="job-table"
-                                        data-search="false"
-                                        data-show-refresh="true"
-                                        data-show-pagination-switch="true"
-                                        data-pagination="true"
-                                        data-id-field="id"
-                                        data-page-list="[10, 25, 50, 100, all]">
-                                    </table>
-                                </div>
-                            </div>
+                        <div class="table-responsive table-wrapper">
+                            <table
+                                id="dataset-table"
+                                data-search="false"
+                                data-show-refresh="true"
+                                data-show-pagination-switch="true"
+                                data-pagination="true"
+                                data-side-pagination="server"
+                                data-id-field="id"
+                                data-page-list="[10, 25, 50, 100, all]">
+                            </table>
                         </div>
 
                         <div class="box-footer">
@@ -122,12 +107,48 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-7">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Jobs <span id="jobs-count" class="badge badge-primary"></span></h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="table-responsive table-wrapper">
+                            <table
+                                id="job-table"
+                                data-search="false"
+                                data-show-refresh="true"
+                                data-show-pagination-switch="true"
+                                data-pagination="true"
+                                data-id-field="id"
+                                data-page-list="[10, 25, 50, 100, all]">
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Tasks</h3>
+                    </div>
+                    <div class="box-body">
+                        <canvas id="celery-stats"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 {% endblock %}
 
 {% block javascript %}
     {{ block.super }}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@latest/dist/chartjs-plugin-streaming.min.js"></script>
 
     <script>
 
@@ -194,6 +215,10 @@
                 ].join('');
             }
 
+            function floatFormatter(value, row, index) {
+                return (value).toFixed(3);
+            }
+
             $('#job-table').bootstrapTable({
                 url: "{% url 'jobs' %}",
                 locale: "it-IT",
@@ -224,10 +249,6 @@
                             formatter: progressFormatter
                         },
                         {
-                            field: "eta",
-                            title: "ETA",
-                        },
-                        {
                             field: "callback",
                             title: "Callback",
                         },
@@ -235,8 +256,8 @@
                 ]
             });
 
-            $('#tables-table').bootstrapTable({
-                url: "{% url 'tables' %}",
+            $('#dataset-table').bootstrapTable({
+                url: "{% url 'datasets' %}",
                 locale: "it-IT",
                 onPostBody: function (data) {
                     $('#tables-count').text(data.length)
@@ -251,22 +272,34 @@
                             valign: 'middle'
                         },
                         {
-                            field: "id",
-                            title: "#",
-                            sortable: true,
-                        },
-                        {
                             field: "name",
                             title: "Name",
                             sortable: true,
+                        },
+                        {
+                            field: "table_count",
+                            title: "Tables",
+                            sortable: true,
+                        },
+                        {
+                            field: "average_rows",
+                            title: "Avg. Rows",
+                            sortable: true,
+                            formatter: floatFormatter
+                        },
+                        {
+                            field: "average_cols",
+                            title: "Avg. Cols",
+                            sortable: true,
+                            formatter: floatFormatter
                         },
                     ]
                 ]
             });
 
-            $('#tables-table').on('check-all.bs.table', function (e, row) {
+            $('#dataset-table').on('check-all.bs.table', function (e, row) {
                 selections = $.map(row, function(item) {
-                    return item.id;
+                    return item.name;
                 });
                 if (selections.length > 0) {
                     $("#process-selected-btn").attr('disabled', false);
@@ -276,14 +309,14 @@
                 $("#selected-count").text(selections.length)
             });
 
-            $('#tables-table').on('uncheck-all.bs.table', function (e, row) {
+            $('#dataset-table').on('uncheck-all.bs.table', function (e, row) {
                 selections = [];
                 $("#process-selected-btn").attr('disabled', true);
                 $("#selected-count").text(selections.length)
             });
 
-            $('#tables-table').on('check.bs.table', function (e, row) {
-                selections.push(row.id);
+            $('#dataset-table').on('check.bs.table', function (e, row) {
+                selections.push(row.name);
                 if (selections.length > 0) {
                     $("#process-selected-btn").attr('disabled', false);
                 } else {
@@ -292,10 +325,10 @@
                 $("#selected-count").text(selections.length)
             });
 
-            $('#tables-table').on('uncheck.bs.table', function (e, row) {
+            $('#dataset-table').on('uncheck.bs.table', function (e, row) {
                 $.each(selections, function(index, value) {
-                    if (value === row.id) {
-                        selections.splice(index,1);
+                    if (value === row.name) {
+                        selections.splice(index, 1);
                     }
                 });
                 if (selections.length > 0) {
@@ -304,6 +337,53 @@
                     $("#process-selected-btn").attr('disabled', true);
                 }
                 $("#selected-count").text(selections.length)
+            });
+
+            // Celery stats
+            var ctx = document.getElementById('celery-stats').getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        data: [],
+                        label: 'Active',
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        lineTension: 0,
+                    }, {
+                        data: [],
+                        label: 'Reserved',
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        lineTension: 0,
+                    }]
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'realtime',
+                            realtime: {
+                                delay: 2000,
+                                onRefresh: function(chart) {
+                                    $.ajax({
+                                        url: "{% url 'celery-stats' %}",
+                                        type: 'GET',
+                                        success: function(result) {
+                                            chart.data.datasets[0].data.push({
+                                                x: Date.now(),
+                                                y: result["active"]
+                                            });
+                                            chart.data.datasets[1].data.push({
+                                                x: Date.now(),
+                                                y: result["reserved"]
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        }]
+                    }
+                }
             });
 
             (function() {
@@ -352,6 +432,7 @@
                 }
             }());
         });
+
     </script>
 
 {% endblock %}

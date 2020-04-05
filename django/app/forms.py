@@ -4,10 +4,11 @@ from app.models import Table
 
 
 class ImportForm(forms.Form):
-    table_file = forms.FileField(
+    name = forms.CharField(max_length=255)
+    dataset = forms.FileField(
         widget=forms.FileInput(attrs={'accept': '.json, .zip, .csv'}),
         validators=[FileExtensionValidator(allowed_extensions=['json', 'zip','csv'])],
-        label="Table file",
+        label="Dataset",
         required=True,
         label_suffix=""
     )

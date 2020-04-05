@@ -64,9 +64,19 @@ class SafeJSONField(JSONField):
     def __str__(self):
         return json.dumps(super.__str__(), indent=4)
 
+class Dataset(models.Model):
+    name = models.CharField(max_length=255, primary_key=True)
+    table_count = models.PositiveIntegerField()
+    average_rows = models.FloatField()
+    average_cols = models.FloatField()
+
 class Table(models.Model):
     name = models.CharField(max_length=255)
+    dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE)   # TODO: check this
     original = SafeJSONField(default=[])
     cols = SafeJSONField(default=[])
     predicates = SafeJSONField(default=[])
     concepts = SafeJSONField(default=[])
+
+    rows_count = models.PositiveIntegerField()
+    cols_count = models.PositiveIntegerField()

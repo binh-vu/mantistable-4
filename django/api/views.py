@@ -14,7 +14,7 @@ class JobView(generics.ListCreateAPIView):
         job = serializer.save()
         job.progress = {
             "current": 0,
-            "total": 1
+            "total": 4
         }
         job.task_id = tasks.job_slot.apply_async(
             args=(job.id,),

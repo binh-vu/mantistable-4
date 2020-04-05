@@ -7,12 +7,15 @@ from django.views.generic.edit import FormView
 from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
 
+from app.imports.dataset import DatasetImport
 from app.forms import ImportForm, ExportForm
-from app.models import Table
+from app.models import Table, Dataset
 from api.models import Job
 
+from celery import current_app
+
 from http import HTTPStatus
-import json,csv,zipfile
+import json
 import requests
 
 def index(request):
@@ -44,46 +47,12 @@ class HomeView(FormView):
         else:
             return self.form_invalid(**{form_name: form})
 
-    def csv2json(self,file):
-        f = []
-        for row in csv.DictReader(file):
-            f.append(row)
-        f = json.dumps(f)
-        print(f)
-        return f
-
-    def save(self,name,content):
-        print(content)
-        Table(
-                name=name,
-                cols=[],
-                original=content
-            ).save()
     def form_valid(self, form):
         if isinstance(form, self.get_form_class()):
-            table_file = form.cleaned_data.get('table_file')
-            ext = str(table_file).split(".")[-1]
-            content = {}
-            if ext == "zip":
-                unzipped = zipfile.ZipFile(table_file)
-                print("ZIP")
-                print(unzipped.namelist())
-                for libitem in unzipped.namelist():
-                    if libitem.startswith('__'):
-                        continue
-                    if libitem.endswith('csv'):
-                        content = self.csv2json(unzipped.read(libitem).decode('utf-8'))
-                    elif libitem.endswith('json'):
-                        content = json.loads(unzipped.read(libitem).decode('utf-8'))
-                    else:
-                        continue
-                    self.save(libitem,content)
-            elif ext == "csv":
-                content = json.loads(self.csv2json(table_file.read().decode('utf-8')))
-                self.save(table_file.name,content)
-            else:
-                content = json.loads(table_file.read())
-                self.save(table_file.name,content)
+            dataset_name = form.cleaned_data.get('name')
+            table_file = form.cleaned_data.get('dataset')
+
+            DatasetImport(dataset_name, table_file).load()
             return super().form_valid(form)
         else:
             export_type = form.cleaned_data.get('export_type')
@@ -94,8 +63,7 @@ class HomeView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super(HomeView, self).get_context_data(**kwargs)
-        context['loaded_tables'] = Table.objects.all().count()
-        context['tables_list'] = Table.objects.all()
+        context['loaded_dataset'] = Dataset.objects.all().count()
         if 'form' not in context:
             context['form'] = self.form_class()
         if 'export_form' not in context:
@@ -117,18 +85,20 @@ class ProcessView(View):
         ids = request.POST.getlist("ids[]", [])
 
         if len(ids) == 0:
-            tables = Table.objects.all()
+            datasets = Dataset.objects.all()
         else:
-            tables = Table.objects.filter(id__in=ids)
+            datasets = Dataset.objects.filter(name__in=ids)
 
-        print(tables)
+        print(datasets)
+        table_ids = []
+        for dataset in datasets:
+            for table in dataset.table_set.all():
+                table_ids.append(table.id)
 
-        rows = [
-            table.id
-            for table in tables
-        ]
+        assert(len(table_ids) == len(set(table_ids)))
+        
         data = {
-            "table_ids": json.dumps(rows),
+            "table_ids": json.dumps(table_ids),
             "callback": self._build_url(request, 'job-handler')
         }
 
@@ -160,24 +130,43 @@ class JobView(View):
             "id": job.id,
             "created": job.created,
             "tables": len(job.table_ids),
-            "progress": json.dumps(job.progress),
-            "eta": str(job.eta),
+            "progress": job.progress,
             "callback": job.callback
         }
 
-class TableView(View):
+class DatasetView(View):
     def get(self, request):
-        tables = Table.objects.all()
+        offset_filter = int(request.GET.get("offset", "0"))
+        limit_filter = int(request.GET.get("limit", "0"))
+        sort_filter = request.GET.get("sort", "name")
+        order_filter = {
+            "asc": "",
+            "desc": "-"
+        }.get(request.GET.get("order", "asc"))
 
-        return JsonResponse([
-            self._serialize_table(table)
-            for table in tables
-        ], safe=False)
+        datasets = Dataset.objects.all()
+        datasets_count = datasets.count()
+        datasets = datasets.order_by(order_filter + sort_filter)
 
-    def _serialize_table(self, table):
+        if limit_filter > 0:
+            datasets = datasets[offset_filter:offset_filter+limit_filter]
+        else:
+            datasets = datasets[offset_filter:]
+
+        return JsonResponse({
+            "total": datasets_count,
+            "rows": [
+                self._serialize_datasets(dataset)
+                for dataset in datasets
+            ]
+        }, safe=False)
+
+    def _serialize_datasets(self, dataset):
         return {
-            "id": table.id,
-            "name": table.name,
+            "name": dataset.name,
+            "average_rows": dataset.average_rows,
+            "average_cols": dataset.average_cols,
+            "table_count": dataset.table_count
         }
 
 
@@ -192,3 +181,16 @@ class JobHandler(View):
         print(data["current"], data["total"])
 
         return JsonResponse({"status": "ok"})
+
+
+class CeleryLoadView(View):
+    def get(self, request):
+        worker_name = "celery@main"
+        inspector = current_app.control.inspect([worker_name])
+        active = len(inspector.active()[worker_name])
+        reserved = len(inspector.reserved()[worker_name])
+
+        return JsonResponse({
+            "active": active,
+            "reserved": reserved
+        })

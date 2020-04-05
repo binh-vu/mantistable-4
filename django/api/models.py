@@ -7,7 +7,6 @@ class Job(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     table_ids = JSONField(default=[]) 
     progress = JSONField(default={})
-    eta = models.DurationField(default=timedelta(seconds=0))
     callback = models.CharField(max_length=255, blank=False)    # TODO: use models.URLField
 
     class Meta:

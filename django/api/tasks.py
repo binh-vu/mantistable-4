@@ -8,6 +8,7 @@ from app.models import Table
 
 from celery.result import allow_join_result
 from celery import group
+
 import requests
 import json
 
@@ -40,17 +41,21 @@ def job_slot(job_id: int):
     rows = [
         {
             "id": table.id,
-            "rows": table.rows
+            "rows": table.original
         }
         for table in tables
     ]
 
-    # TODO: Insert here cron for ETA
+    # TODO: Do not make sync tasks, make it async (use chains)
     norm_result  = sync_group_task(normalization_phase.si, rows)
+    rest_hook.delay(job_id)
+
     colan_result = sync_group_task(column_analysis_phase.si, rows)
-    
+    rest_hook.delay(job_id)
+
     #dr_result    = sync_chunk_task(data_retrieval_phase, rows) # TODO: Not rows...
     comp_result  = sync_group_task(computation_phase.si, rows)
+    rest_hook.delay(job_id)
 
     # TODO: save to db with pymongo
     Repository().write_cols(norm_result)
