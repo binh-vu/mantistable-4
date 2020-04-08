@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3'
 
 services:
   web:
@@ -9,8 +9,6 @@ services:
     command: bash -c "python manage.py makemigrations &&
                       python manage.py migrate &&
                       python manage.py runserver 0.0.0.0:8000"
-                      #echo 'collecting static files..' &&
-                      #python manage.py collectstatic --noinput &&
     volumes:
       - ./django:/mantistable
     ports:
@@ -19,8 +17,6 @@ services:
       - mongo
       - redis
       - celery
-    environment:
-      - REDIS_URI=redis://stiltool_redis_1:6379
     env_file:
       - ./django/.env-dev
       
