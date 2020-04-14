@@ -166,7 +166,7 @@ class DatasetView(View):
             "name": dataset.name,
             "average_rows": dataset.average_rows,
             "average_cols": dataset.average_cols,
-            "table_count": dataset.table_count
+            "table_count": dataset.table_count,
         }
 
 
