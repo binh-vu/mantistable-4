@@ -34,7 +34,7 @@ class Normalizer:
 
             metadata[header]['stats'] = stats
 
-        return (self._table.table_id, metadata)
+        return metadata
 
     def _get_clean_text(self, value):
         return Cleaner(value).clean()

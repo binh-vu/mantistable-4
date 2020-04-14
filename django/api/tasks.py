@@ -4,6 +4,7 @@ from api.serializers import TableSerializer
 from api.process.utils import table
 from api.process.utils.mongo.repository import Repository
 from api.process.normalization import normalizer
+from api.process.column_analysis import column_classifier
 from app.models import Table
 
 from celery.result import allow_join_result
@@ -17,7 +18,7 @@ def sync_group_task(task_sig, data: list):
 
     with allow_join_result():
         task = group([
-            task_sig(d["id"], d["rows"])
+            task_sig(*d)
             for d in data
         ]).apply_async()
         result = task.join()
@@ -39,10 +40,7 @@ def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
     tables = Table.objects.filter(id__in=job.table_ids)
     rows = [
-        {
-            "id": table.id,
-            "rows": table.original
-        }
+        (table.id, table.original)
         for table in tables
     ]
 
@@ -50,15 +48,14 @@ def job_slot(job_id: int):
     norm_result  = sync_group_task(normalization_phase.si, rows)
     rest_hook.delay(job_id)
 
-    colan_result = sync_group_task(column_analysis_phase.si, rows)
+    colan_result = sync_group_task(column_analysis_phase.si, norm_result)
     rest_hook.delay(job_id)
 
     #dr_result    = sync_chunk_task(data_retrieval_phase, rows) # TODO: Not rows...
     comp_result  = sync_group_task(computation_phase.si, rows)
     rest_hook.delay(job_id)
 
-    # TODO: save to db with pymongo
-    Repository().write_cols(norm_result)
+    Repository().write_cols(colan_result)
 
     return job_id
 
@@ -67,11 +64,23 @@ def normalization_phase(table_id, data):
     table_model = table.Table(table_id=table_id, table=data)
     metadata = normalizer.Normalizer(table_model).normalize()
 
-    return metadata
+    return (table_id, metadata)
 
 @app.task(name="column_analysis_phase")
 def column_analysis_phase(table_id, data):
-    return None
+    stats = {
+        col_name: d["stats"]
+        for col_name, d in data.items()
+    }
+    cc = column_classifier.ColumnClassifier(stats)
+    tags = cc.get_columns_tags()
+    
+    metadata = {
+        col_name: {**prev_meta, **tags[col_name]}
+        for col_name, prev_meta in data.items()
+    }
+
+    return (table_id, metadata)
 
 @app.task(name="data_retrieval_phase")
 def data_retrieval_phase(table_id, data):
