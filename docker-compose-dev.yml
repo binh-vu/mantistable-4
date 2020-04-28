@@ -3,9 +3,7 @@ version: '3'
 services:
   web:
     container_name: mantistable4web
-    build:
-      context: ./django
-      dockerfile: Dockerfile-dev
+    image: cremarco/mantis4
     command: bash -c "echo 'Making migrations...' &&
                       python manage.py makemigrations &&
                       echo 'Migrating...' &&
@@ -36,9 +34,7 @@ services:
     
   celery:
     container_name: mantistable4_celery
-    build:
-      context: ./django
-      dockerfile: Dockerfile-dev
+    image: cremarco/mantis4
     command: celery -A mantistable worker --loglevel=info --autoscale=10,4 -Ofair -Qcelery -n main
     volumes:
       - ./django:/mantistable

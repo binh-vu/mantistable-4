@@ -14,9 +14,7 @@ services:
       
   web:
     container_name: mantistable4_web
-    build:
-      context: ./django
-      dockerfile: Dockerfile-prod
+    image: cremarco/mantis4
     command: bash -c "python manage.py collectstatic --noinput &&
                       python manage.py makemigrations &&
                       python manage.py migrate &&
