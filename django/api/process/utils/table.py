@@ -19,6 +19,11 @@ class Table:
 
         return cols
 
+    def get_rows(self):
+        return self._table
+
+
+    # TODO: I hate this
     @property
     def table_id(self):
         return self._table_id

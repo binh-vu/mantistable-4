@@ -1,12 +1,10 @@
-class Singleton(type):
-    """
-    Utility class that implement the Singleton pattern.
-    Use with care
-    """
-    _objects = {}
+def Singleton(_class):
+    instances = {}
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._objects:
-            cls._objects[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+    def getinstance(*args, **kwargs):
+        if _class not in instances:
+            instances[_class] = _class(*args, **kwargs)
 
-        return cls._objects[cls]
+        return instances[_class]
+
+    return getinstance

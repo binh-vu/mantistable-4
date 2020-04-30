@@ -4,7 +4,8 @@ import mantistable.settings
 from pymongo import MongoClient
 from pymongo import UpdateOne
 
-class MongoWrapper(metaclass=Singleton):
+@Singleton
+class MongoWrapper():
     def __init__(self):
         host = mantistable.settings.DATABASES["default"]["HOST"]
         port = mantistable.settings.DATABASES["default"]["PORT"]
@@ -22,7 +23,8 @@ class MongoWrapper(metaclass=Singleton):
             ])
 
 
-class Repository(metaclass=Singleton):
+@Singleton
+class Repository():
     def __init__(self):
         self._mongo = MongoWrapper()
 

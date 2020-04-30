@@ -4,7 +4,8 @@ from api.process.utils.singleton import Singleton
 import os
 import json
 
-class Assets(metaclass=Singleton):
+@Singleton
+class Assets():
     resource_dir = mantistable.settings.MANTIS_RES_DIR
 
     def get_asset(self, path):
@@ -13,7 +14,7 @@ class Assets(metaclass=Singleton):
         :param path:
         :return string:
         """
-        p = os.path.join(Assets.resource_dir, path)
+        p = os.path.join(self.resource_dir, path)
         with open(p, 'r') as asset:
             data = asset.read()
 
