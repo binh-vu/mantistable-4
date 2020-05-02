@@ -9,6 +9,9 @@ from repository.solr import is_person
 from api.process.cea.models.cell import Cell
 from api.process.cea.models.row import Row
 from api.process.cea.models.link import Link
+from api.process.utils.lamapi import LamAPIWrapper
+
+import mantistable.settings
     
 # Edit distance
 def edit_distance(s1, s2):
@@ -40,6 +43,7 @@ def convert_to(value, xsd):
 class Linkage:
     def __init__(self, row):
         self.row = row
+        self.lamapi = LamAPIWrapper(mantistable.settings.LAMAPI_HOST, mantistable.settings.LAMAPI_PORT)
 
     def get_links(self):
         subj_cell = self.row.get_subject_cell()
@@ -89,7 +93,7 @@ class Linkage:
         cand_objects = set()
         os_map = {}
         for cand1_uri in subj_cell.candidates:
-            for sub_obj in set(self.store.get_objects(cand1_uri)):
+            for sub_obj in set(self.lamapi.objects([cand1_uri]).values()):   # TODO: change algorithm to query lists, also check algorithm: literals or ne?
                 cand_objects.add(sub_obj)
                 if sub_obj not in os_map:
                     os_map[sub_obj] = []
@@ -112,8 +116,9 @@ class Linkage:
         cand_objects = set()
         os_map = {}
         for cand1 in cell1.candidates:
-            for sub_obj in set(self.store.get_objects(cand1)):
-                # TODO: With the redis implementation this is different
+            for sub_obj in set(self.lamapi.objects([cand1]).values()):  # TODO: change algorithm to query lists
+                # TODO: With the redis implementation this is different: lamapi.objects return always literals
+                # TODO: Also redis implemetation have dbo and foaf
                 if not sub_obj.startswith("http://dbpedia.org/resource/"):  # TODO: This is a simple way to discriminate between entities and literals
                     cand_objects.add(sub_obj)
                     if sub_obj not in os_map:
@@ -209,11 +214,12 @@ class Linkage:
 
         return res
 
+    # TODO: Change api signature _match(s, o) -> [(s, p, o)]
     def _match(self, triple):
         s, p, o = triple
 
         results = []
-        predicates = self.store.match(s, o)
+        predicates = self.lamapi.predicates([" ".join([s, o])])
         for p in predicates:
             results.append(
                 (s, p, o)

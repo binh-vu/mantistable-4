@@ -29,6 +29,10 @@ EMAIL_PORT = 587
 
 HOST = os.environ.get("HOST", "localhost")
 PORT = os.environ.get("PORT", "80")
+
+LAMAPI_HOST = os.environ.get("LAMAPI_HOST", "localhost")
+LAMAPI_PORT = os.environ.get("LAMAPI_PORT", "8093")
+
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "mantistable4web"]
 if HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(HOST)
