@@ -5,7 +5,7 @@ from api.process.utils import table
 from api.process.utils.mongo.repository import Repository
 from api.process.normalization import normalizer
 from api.process.column_analysis import column_classifier
-from app.models import Table
+#from app.models import Table
 
 from celery.result import allow_join_result
 from celery import group
@@ -38,10 +38,12 @@ def sync_chunk_task(task_sig, data: list, chunk_size=10):
 @app.task(name="job_slot")
 def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
-    tables = Table.objects.filter(id__in=job.table_ids)
+    #tables = Table.objects.filter(id__in=job.table_ids)
+    tables = job.tables
     rows = [
-        (table.id, table.original)
-        for table in tables
+        #(table.id, table.original)
+        (idx, table)
+        for idx, table in enumerate(tables)
     ]
 
     # TODO: Do not make sync tasks, make it async (use chains)

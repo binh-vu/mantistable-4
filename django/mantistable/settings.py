@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_swagger',
     'crispy_forms',
 ]
 
@@ -84,6 +85,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mantistable.wsgi.application'
 
+REST_FRAMEWORK = { 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema' }
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },  # setting to pass token in header
+    'USE_SESSION_AUTH': False,
+    # set to True if session based authentication needed
+    'JSON_EDITOR': True,
+    'api_path': 'api/',
+    'api_version': 'v0',
+
+    "is_authenticated": False,  # Set to True to enforce user authentication,
+    "is_superuser": False,  # Set to True to enforce admin only access
+    'unauthenticated_user': 'django.contrib.auth.models.AnonymousUser',
+    # unauthenticated user will be shown as Anonymous user in swagger UI.
+}
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
