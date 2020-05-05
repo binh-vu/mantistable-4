@@ -1,0 +1,74 @@
+{% extends "app/base-dashboard.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Service |  {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+
+    <div class="container">
+        <h2>
+            Service
+        </h2>
+        <div class="row">
+            <div class="col-md-12">
+                <form id="query-form-id" enctype="multipart/form-data" method="post" action="{% url 'service' %}">
+                    {% csrf_token %}
+                    <div class="box box-solid">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Raw query</h3>
+                        </div>
+                        <div class="box-body">
+                            {{ form | crispy }}
+
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible">
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+
+                            <div class="box-footer">
+                                <div class="btn-wrapper">
+                                    <button type="submit" class="btn btn-primary">
+                                        Submit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+
+    <script>
+
+        $(function () {
+            var csrftoken = getCookie('csrftoken');
+  
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script>
+    </script>
+
+{% endblock %}

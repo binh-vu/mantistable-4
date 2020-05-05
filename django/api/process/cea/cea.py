@@ -1,4 +1,4 @@
-from api.process.cea.models.cell import Row
+from api.process.cea.models.row import Row
 from api.process.cea.linkage import Linkage
 from api.utils.table import Table
 
@@ -51,37 +51,3 @@ class CEAProcess:
 
     def _is_subject(self, table, pos):
         raise NotImplementedError()
-
-
-
-""" OLD Implementation
-def compute_cea(table, candidates, store, cd, resources, entropy):
-    results = []
-    
-    for row_idx, table_row in enumerate(table[1]):
-        row = rm.Row()
-        for pos, cell in enumerate(table_row.values()):
-            norm = Normalizer([]).normalize_cell(cell)  # TODO: BAD api
-            
-            cands = [
-                f"http://dbpedia.org/resource/{uri}"
-                for uri in candidates.get(norm, [])
-            ]
-                
-            if cd.is_necol(table[0], pos, row_idx + 1):
-                row.add_ne_cell(cell, norm, cands, is_subject=cd.is_subjectcol(table[0], pos, row_idx + 1))
-            else:
-                row.add_lit_cell(cell, cell, cands) # TODO
-                
-        # TODO: if subject col is not in column 0
-        if row.get_subject_cell() is None:
-            print("WARNING: subject col is not 0. Ignoring...")
-            continue
-                
-        table_rm = rm.RowMatcher(row, store)
-
-        subjects, linkages = table_rm.compute_linked_entities(resources, entropy)
-        results.append((subjects, linkages))
-            
-    return results 
-"""

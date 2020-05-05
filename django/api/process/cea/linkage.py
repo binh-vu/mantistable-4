@@ -3,7 +3,7 @@ import collections
 import editdistance
 from itertools import groupby
 
-import normalize.cleaner as cleaner
+import api.process.normalization.cleaner as cleaner
 from repository.solr import is_person
 
 from api.process.cea.models.cell import Cell

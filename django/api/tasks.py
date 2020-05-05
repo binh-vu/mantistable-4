@@ -3,8 +3,12 @@ from api.models import Job
 from api.serializers import TableSerializer
 from api.process.utils import table
 from api.process.utils.mongo.repository import Repository
-from api.process.normalization import normalizer
+
+from api.process.normalization import normalizer, cleaner
 from api.process.column_analysis import column_classifier
+
+#from api.process.cea import cea
+
 #from app.models import Table
 
 from celery.result import allow_join_result
@@ -13,23 +17,23 @@ from celery import group
 import requests
 import json
 
-def sync_group_task(task_sig, data: list):
+def sync_group_task(task_ref, data: list):
     assert(isinstance(data, list))
 
     with allow_join_result():
         task = group([
-            task_sig(*d)
+            task_ref.si(*d)
             for d in data
         ]).apply_async()
         result = task.join()
 
     return result
 
-def sync_chunk_task(task_sig, data: list, chunk_size=10):
+def sync_chunk_task(task_ref, data: list, chunk_size=10):
     assert(isinstance(data, list))
 
     with allow_join_result():
-        task = task_sig.chunks(data, min(len(data), chunk_size)).group().apply_async()
+        task = task_ref.chunks(data, min(len(data), chunk_size)).group().apply_async()
         result = task.join()
 
     return result
@@ -38,28 +42,27 @@ def sync_chunk_task(task_sig, data: list, chunk_size=10):
 @app.task(name="job_slot")
 def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
-    #tables = Table.objects.filter(id__in=job.table_ids)
-    tables = job.tables
     rows = [
-        #(table.id, table.original)
         (idx, table)
-        for idx, table in enumerate(tables)
+        for idx, table in enumerate(job.tables)
     ]
 
     # TODO: Do not make sync tasks, make it async (use chains)
-    norm_result  = sync_group_task(normalization_phase.si, rows)
-    rest_hook.delay(job_id)
+    norm_result  = sync_group_task(normalization_phase, rows)
+    rest_hook(job_id, norm_result)
 
-    colan_result = sync_group_task(column_analysis_phase.si, norm_result)
-    rest_hook.delay(job_id)
+    colan_result = sync_group_task(column_analysis_phase, norm_result)
+    rest_hook(job_id, colan_result)
 
-    #dr_result    = sync_chunk_task(data_retrieval_phase, rows) # TODO: Not rows...
-    comp_result  = sync_group_task(computation_phase.si, rows)
-    rest_hook.delay(job_id)
+    dr_result    = sync_chunk_task(data_retrieval_phase, norm_result)
+    rest_hook(job_id, dr_result)
 
-    Repository().write_cols(colan_result)
+    #comp_result  = sync_group_task(computation_phase.si, colan_result, dr_result)
+    #rest_hook(job_id, comp_result)
 
-    return job_id
+    #Repository().write_cols(colan_result)
+
+    return job_id, None
 
 @app.task(name="normalization_phase")
 def normalization_phase(table_id, data):
@@ -86,27 +89,57 @@ def column_analysis_phase(table_id, data):
 
 @app.task(name="data_retrieval_phase")
 def data_retrieval_phase(table_id, data):
-    return None
+    # NOTE: Mockup
+    solr_result = [
+        ("Batman (mass measure)", "Batman_(unit)"),
+        ("Batman car", "Batmobile"),
+        ("List of municipalities in Batman Province", "List_of_municipalities_in_Batman_Province"),
+        ("Batman Knight Flight", "Dominator_(roller_coaster)"),
+        ("Batman", "Batman"),
+        ("Gary Nolan (radio host)", "Gary_Nolan_(radio_host)"),
+        ("David Nolan (libertarian)", "David_Nolan_(libertarian)"),
+        ("Christopher Nolan", "Christopher_Nolan"),
+        ("9537 Nolan", "9537_Nolan"),
+    ]
+
+    results = {}
+    for label, entity in solr_result:
+        normal_label = cleaner.Cleaner(label).clean()
+        if normal_label not in results:
+            results[normal_label] = []
+
+        results[normal_label].append(entity)
+
+    return results
+
 
 @app.task(name="computation_phase")
-def computation_phase(table_id, data):
-    return None
+def computation_phase(table_id, columns, candidates):
+    cea.CEAProcess(
+        normalized_map=normalized,
+        candidates_map=candidates
+    )
 
 @app.task(name="rest_hook")
-def rest_hook(job_id):
+def rest_hook_task(data):
+    rest_hook(*data)
+
+def rest_hook(job_id, results):
     job = Job.objects.get(id=job_id)
-    job.progress["current"] += 1
-    job.save()
 
     try:
         requests.post(job.callback, data={
             'job_id': job.id,
             'progress': json.dumps(job.progress),
+            'results': results
         })
     except requests.exceptions.InvalidSchema as e:
         print(e)
     except requests.exceptions.ConnectionError as e:
         print(e)
+
+    job.progress["current"] += 1
+    job.save()
 
     if job.progress["total"] <= 0 or (job.progress["total"] > 0 and job.progress["current"] == job.progress["total"]):
         job.delete()

@@ -56,12 +56,11 @@ class JobView(generics.ListCreateAPIView):
     serializer_class = JobSerializer
     
     def perform_create(self, serializer):
-        serializer.data
         job = Job(
             tables=serializer.data["tables"],
             callback=serializer.data["callback"],
             progress={
-                "current": 1,
+                "current": 0,
                 "total": 5
             }
         )
@@ -69,20 +68,6 @@ class JobView(generics.ListCreateAPIView):
 
         job.task_id = tasks.job_slot.apply_async(
             args=(job.id,),
-            link=[tasks.rest_hook.s()]
+            link=[tasks.rest_hook_task.s()]
         )
         job.save()
-        """
-        job = serializer.save()
-        job.progress = {
-            "current": 1,
-            "total": 5
-        }
-        job.save()
-
-        job.task_id = tasks.job_slot.apply_async(
-            args=(job.id,),
-            link=[tasks.rest_hook.s()]
-        )
-        job.save()
-        """

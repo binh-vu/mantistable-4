@@ -29,7 +29,8 @@ class Normalizer:
 
                 metadata[header]['values'].append({
                     "datatype": datatype.name,
-                    "norm_cell": clean_text
+                    "original": value,
+                    "normalized": clean_text
                 })
 
             metadata[header]['stats'] = stats

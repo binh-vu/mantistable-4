@@ -18,6 +18,7 @@
                 {% block table_info %}
                     {{ block.super }}
 
+                    <!--
                     <ul class="tableInfo">
                         <li id="tables_count" class="stats">
                             <span class="number">#</span>
@@ -32,6 +33,7 @@
                             <span class="description">info</span>
                         </li>
                     </ul>
+                    -->
                 {% endblock %}
 
             </nav>
@@ -48,10 +50,16 @@
                             </a>
                         </li>
 
+                        <li {% if url_name == 'service' %}class="active"{% endif %}>
+                            <a href="{% url 'service' %}">
+                                <i class="fas fa-server"></i>
+                                <span>Service</span>
+                            </a>
+                        </li>
+
                         {#   add all menu items here. #}
                         {#   icon from font awesome https://fontawesome.com/icons #}
-
-                        </ul>
+                        
                     {% endwith %}
                 </ul>
 

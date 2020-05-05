@@ -8,7 +8,7 @@ from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
 
 from app.imports.dataset import DatasetImport
-from app.forms import ImportForm, ExportForm
+from app.forms import ImportForm, ExportForm, QueryServiceForm
 from app.models import Table, Dataset
 from api.models import Job
 
@@ -17,6 +17,11 @@ from celery import current_app
 from http import HTTPStatus
 import json
 import requests
+
+#NOTE: This is really bad:
+#NOTE: 0.0.0.0 is not always in the url...
+def _build_url(request, view_name):
+        return request.build_absolute_uri(reverse(view_name)).replace("0.0.0.0", "mantistable4web")
 
 def index(request):
     context = {}
@@ -59,7 +64,6 @@ class HomeView(FormView):
             response = HttpResponse(self._export(export_type), content_type="text/csv")
             response['Content-Disposition'] = f'inline; filename={export_type}.csv'
             return response
-        
 
     def get_context_data(self, **kwargs):
         context = super(HomeView, self).get_context_data(**kwargs)
@@ -102,7 +106,7 @@ class ProcessView(View):
             "callback": self._build_url(request, 'job-handler')
         }
 
-        uri = self._build_url(request, 'api_job')
+        uri = _build_url(request, 'api_job')
         response = requests.post(uri, json=data)
         status = response.status_code
 
@@ -111,9 +115,6 @@ class ProcessView(View):
             "phrase": HTTPStatus(status).phrase,
             "message": response.json()
         })
-
-    def _build_url(self, request, view_name):
-        return request.build_absolute_uri(reverse(view_name)).replace("0.0.0.0", "mantistable4web")
 
 
 class JobView(View):
@@ -194,3 +195,48 @@ class CeleryLoadView(View):
             "active": active,
             "reserved": reserved
         })
+
+
+class ServiceView(FormView):
+    template_name = 'app/service.html'
+    form_class = QueryServiceForm
+    success_url = reverse_lazy('service')
+
+    def form_valid(self, form):
+        query = form.cleaned_data.get('json')
+
+        callback_url = _build_url(self.request, "search-result")
+        data = {
+            "tables": [
+                [
+                    {
+                        f"col_{idx}": value
+                        for idx, value in enumerate(query)
+                    }
+                ]
+            ],
+            "callback": callback_url
+        }
+
+        api_url = _build_url(self.request, "api_job")
+        response = requests.post(api_url, json=data)
+
+        return super().form_valid(form)
+
+
+class SearchResultView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SearchResultView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        job_id = request.POST.get("job_id")
+        progress = request.POST.get("progress")
+        results = request.POST.get("results")
+
+        print()
+        print(job_id)
+        print(progress)
+        print(results)
+
+        return JsonResponse({"status": "Received"}, safe=False)
