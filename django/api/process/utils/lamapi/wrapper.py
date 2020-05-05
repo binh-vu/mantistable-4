@@ -14,7 +14,8 @@ class LamAPIWrapper:
     def labels(self, query):
         response = self.make_request(
             lambda: requests.get(self._api_url("labels"),
-                params={"query": query, "token": self.ACCESS_TOKEN}
+                params={"query": query, "token": self.ACCESS_TOKEN}, 
+                timeout=30
             )
         )
 
@@ -28,7 +29,8 @@ class LamAPIWrapper:
         return self.make_request(
             lambda: requests.post(self._api_url("predicates"),
                 json={"json": data},
-                params={"token": self.ACCESS_TOKEN}
+                params={"token": self.ACCESS_TOKEN},
+                timeout=30
             )
         )
 
@@ -37,7 +39,8 @@ class LamAPIWrapper:
         return self.make_request(
             lambda: requests.post(self._api_url("objects"),
                 json={"json": subjects},
-                params={"token": self.ACCESS_TOKEN}
+                params={"token": self.ACCESS_TOKEN},
+                timeout=30
             )
         )
 
@@ -46,7 +49,8 @@ class LamAPIWrapper:
         return self.make_request(
             lambda: requests.post(self._api_url("concepts"),
                 json={"json": entities},
-                params={"token": self.ACCESS_TOKEN}
+                params={"token": self.ACCESS_TOKEN},
+                timeout=30 
             )
         )
 
