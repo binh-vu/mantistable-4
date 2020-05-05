@@ -7,7 +7,7 @@ from api.process.utils.mongo.repository import Repository
 from api.process.normalization import normalizer, cleaner
 from api.process.column_analysis import column_classifier
 
-#from api.process.cea import cea
+from api.process.cea import cea
 
 #from app.models import Table
 
@@ -17,12 +17,12 @@ from celery import group
 import requests
 import json
 
-def sync_group_task(task_ref, data: list):
+def sync_group_task(task_ref, data: list, *args):
     assert(isinstance(data, list))
 
     with allow_join_result():
         task = group([
-            task_ref.si(*d)
+            task_ref.si(*d, *args)
             for d in data
         ]).apply_async()
         result = task.join()
@@ -57,8 +57,8 @@ def job_slot(job_id: int):
     dr_result    = sync_chunk_task(data_retrieval_phase, norm_result)
     rest_hook(job_id, dr_result)
 
-    #comp_result  = sync_group_task(computation_phase.si, colan_result, dr_result)
-    #rest_hook(job_id, comp_result)
+    comp_result  = sync_group_task(computation_phase, colan_result, dr_result)
+    rest_hook(job_id, comp_result)
 
     #Repository().write_cols(colan_result)
 
@@ -69,10 +69,10 @@ def normalization_phase(table_id, data):
     table_model = table.Table(table_id=table_id, table=data)
     metadata = normalizer.Normalizer(table_model).normalize()
 
-    return (table_id, metadata)
+    return table_id, data, metadata
 
 @app.task(name="column_analysis_phase")
-def column_analysis_phase(table_id, data):
+def column_analysis_phase(table_id, table, data):
     stats = {
         col_name: d["stats"]
         for col_name, d in data.items()
@@ -85,10 +85,10 @@ def column_analysis_phase(table_id, data):
         for col_name, prev_meta in data.items()
     }
 
-    return (table_id, metadata)
+    return table_id, table, metadata
 
 @app.task(name="data_retrieval_phase")
-def data_retrieval_phase(table_id, data):
+def data_retrieval_phase(table_id, table, data):
     # NOTE: Mockup
     solr_result = [
         ("Batman (mass measure)", "Batman_(unit)"),
@@ -114,11 +114,20 @@ def data_retrieval_phase(table_id, data):
 
 
 @app.task(name="computation_phase")
-def computation_phase(table_id, columns, candidates):
+def computation_phase(table_id, table, columns, candidates):
+    normalized = {
+        values["original"]: values["normalized"]
+        for col_val in columns.values()
+        for values in col_val["values"]
+    }
+
     cea.CEAProcess(
+        table.Table(table_id=table_id, table=table),
         normalized_map=normalized,
         candidates_map=candidates
     )
+
+    return table_id, table, normalized
 
 @app.task(name="rest_hook")
 def rest_hook_task(data):
