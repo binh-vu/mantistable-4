@@ -1,15 +1,16 @@
 from api.process.cea.models.row import Row
 from api.process.cea.linkage import Linkage
-from api.utils.table import Table
+from api.process.utils.table import Table
 
 
 class CEAProcess:
     # TODO: What data is table??
     # TODO: I need rows and column analysis results
-    def __init__(self, table, normalized_map: dict, candidates_map: dict):
+    def __init__(self, table, tags: list, normalized_map: dict, candidates_map: dict):
         self._table = table
         self._normalized_map = normalized_map   # { <original_cell>: <norm_cell> }
         self._candidates_map = candidates_map   # { <norm_cell>: [<entity>, <entity>,...] }
+        self._tags = tags                       # e.g. [SUBJ, NE, LIT, NE]
 
     def compute(self):
         results = []
@@ -39,6 +40,7 @@ class CEAProcess:
 
             if self._is_necol(self._table, pos):
                 is_subject = self._is_subject(self._table, pos)
+                print(cell, norm, cands)
                 row.add_ne_cell(cell, norm, cands, is_subject=is_subject)
             else:
                 # TODO: Is cands always empty list???
@@ -47,7 +49,10 @@ class CEAProcess:
         return row
 
     def _is_necol(self, table, pos):
-        raise NotImplementedError()
+        assert (pos >= 0 and pos < len(self._tags))
+        return  self._tags[pos] != "LIT"
 
     def _is_subject(self, table, pos):
-        raise NotImplementedError()
+        assert (pos >= 0 and pos < len(self._tags))
+        #return  self._tags[pos] == "SUBJ"      # TODO
+        return pos == 0

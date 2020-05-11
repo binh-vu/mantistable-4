@@ -12,8 +12,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def labels(self, query):
-        response = self.make_request(
-            lambda: requests.get(self._api_url("labels"),
+        response = self._make_request(
+            lambda: requests.get(
+                self._api_url("labels"),
                 params={"query": query, "token": self.ACCESS_TOKEN}, 
                 timeout=30
             )
@@ -26,8 +27,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def predicates(self, data):
-        return self.make_request(
-            lambda: requests.post(self._api_url("predicates"),
+        return self._make_request(
+            lambda: requests.post(
+                self._api_url("predicates"),
                 json={"json": data},
                 params={"token": self.ACCESS_TOKEN},
                 timeout=30
@@ -36,8 +38,20 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def objects(self, subjects):
-        return self.make_request(
-            lambda: requests.post(self._api_url("objects"),
+        return self._make_request(
+            lambda: requests.post(
+                self._api_url("objects"),
+                json={"json": subjects},
+                params={"token": self.ACCESS_TOKEN},
+                timeout=30
+            )
+        )
+
+    @retry_on_exception(max_retries=5)
+    def literals(self, subjects):
+        return self._make_request(
+            lambda: requests.post(
+                self._api_url("literals"),
                 json={"json": subjects},
                 params={"token": self.ACCESS_TOKEN},
                 timeout=30
@@ -46,8 +60,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def concepts(self, entities):
-        return self.make_request(
-            lambda: requests.post(self._api_url("concepts"),
+        return self._make_request(
+            lambda: requests.post(
+                self._api_url("concepts"),
                 json={"json": entities},
                 params={"token": self.ACCESS_TOKEN},
                 timeout=30 
@@ -57,7 +72,7 @@ class LamAPIWrapper:
     def _api_url(self, suburl):
         return f"http://{self._endpoint}:{self._port}/{suburl}"
 
-    def make_request(self, requester):
+    def _make_request(self, requester):
         response = requester()
         if response.status_code != 200:
             return {}

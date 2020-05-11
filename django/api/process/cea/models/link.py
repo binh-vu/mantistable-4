@@ -1,3 +1,5 @@
+import json
+
 class Link:
     def __init__(self, triple: tuple, confidence: float):
         assert(len(triple) == 3)
@@ -22,6 +24,12 @@ class Link:
 
     def get_confidence(self):
         return self.confidence
+
+    def toJSON(self):   # TODO.... remove
+        return json.dumps(
+            self,
+            default=lambda o: (self.triple, self.confidence), 
+            sort_keys=True)
 
     def __str__(self):
         return f"{{{str(self.triple)}, {str(self.confidence)}}}"

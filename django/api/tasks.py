@@ -36,7 +36,7 @@ def sync_chunk_task(task_ref, data: list, chunk_size=10):
         task = task_ref.chunks(data, min(len(data), chunk_size)).group().apply_async()
         result = task.join()
 
-    return result
+    return result[0][0] # Wat the heck?
 
 
 @app.task(name="job_slot")
@@ -95,7 +95,8 @@ def data_retrieval_phase(table_id, table, data):
         ("Batman car", "Batmobile"),
         ("List of municipalities in Batman Province", "List_of_municipalities_in_Batman_Province"),
         ("Batman Knight Flight", "Dominator_(roller_coaster)"),
-        ("Batman", "Batman"),
+        ("Batman", "Batman_Begins"),
+        ("Nolan", "Christopher_Nolan"),
         ("Gary Nolan (radio host)", "Gary_Nolan_(radio_host)"),
         ("David Nolan (libertarian)", "David_Nolan_(libertarian)"),
         ("Christopher Nolan", "Christopher_Nolan"),
@@ -114,20 +115,29 @@ def data_retrieval_phase(table_id, table, data):
 
 
 @app.task(name="computation_phase")
-def computation_phase(table_id, table, columns, candidates):
+def computation_phase(table_id, table_data, columns, candidates):
+    print(columns)
+    tags = [
+        col_val["tags"]["col_type"]
+        for col_val in columns.values()
+    ]
+
     normalized = {
         values["original"]: values["normalized"]
         for col_val in columns.values()
         for values in col_val["values"]
     }
 
-    cea.CEAProcess(
-        table.Table(table_id=table_id, table=table),
+    results = cea.CEAProcess(
+        table.Table(table_id=table_id, table=table_data),
+        tags=tags,
         normalized_map=normalized,
         candidates_map=candidates
-    )
+    ).compute()
 
-    return table_id, table, normalized
+    print(results)
+
+    return table_id, table_data, results
 
 @app.task(name="rest_hook")
 def rest_hook_task(data):

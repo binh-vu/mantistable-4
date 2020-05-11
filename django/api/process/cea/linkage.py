@@ -4,7 +4,9 @@ import editdistance
 from itertools import groupby
 
 import api.process.normalization.cleaner as cleaner
-from repository.solr import is_person
+
+# TODO
+#from repository.solr import is_person
 
 from api.process.cea.models.cell import Cell
 from api.process.cea.models.row import Row
@@ -54,8 +56,8 @@ class Linkage:
             if cell != subj_cell:
                 if not cell.is_lit_cell:
                     link = self._match_ne_cells(subj_cell, cell)
-                else:
-                    link = self._match_lit_cells(subj_cell, cell)
+                #else:  # TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    #link = self._match_lit_cells(subj_cell, cell)
                 
                 links.append(link)
 
@@ -93,7 +95,16 @@ class Linkage:
         cand_objects = set()
         os_map = {}
         for cand1_uri in subj_cell.candidates:
-            for sub_obj in set(self.lamapi.objects([cand1_uri]).values()):   # TODO: change algorithm to query lists, also check algorithm: literals or ne?
+
+            # TODO: Extraction of proper data from lamapi -> move into lamapi wrapper
+            cand_lamapi_objects = []
+            for po in self.lamapi.objects([cand1_uri]).values():
+                for objs in po.values():
+                    cand_lamapi_objects.extend(objs)
+
+            cand_lamapi_objects = set(cand_lamapi_objects)
+
+            for sub_obj in cand_lamapi_objects:   # TODO: change algorithm to query lists, also check algorithm: literals or ne?
                 cand_objects.add(sub_obj)
                 if sub_obj not in os_map:
                     os_map[sub_obj] = []
@@ -219,7 +230,11 @@ class Linkage:
         s, p, o = triple
 
         results = []
-        predicates = self.lamapi.predicates([" ".join([s, o])])
+        # TODO: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        predicates_lamapi = self.lamapi.predicates([" ".join([s, o])]).values()
+        predicates = []
+        for p in predicates_lamapi:
+            predicates.extend(p)
         for p in predicates:
             results.append(
                 (s, p, o)
@@ -237,6 +252,7 @@ class Linkage:
         norm_labels = []
         
         # Replace this piece of code with the resources map (label is normalized label)
+        """ TODO
         if is_person(cell.content):
             tokens = candidate[28:].split("_")
             if len(tokens[0]) > 0:
@@ -245,7 +261,9 @@ class Linkage:
             label = " ".join(tokens).lower()          
         else:
             label = candidate[28:].lower().replace("_", " ")
+        """
             
+        label = candidate[28:].lower().replace("_", " ")
         norm_labels.append(label)
 
         winning_conf = 0.0
