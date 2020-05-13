@@ -1,5 +1,5 @@
 from mantistable.settings import LAMAPI_HOST, LAMAPI_PORT
-from utils.lamapi.wrapper import LamAPIWrapper
+from api.process.utils.lamapi.wrapper import LamAPIWrapper
 
 class CandidatesRetrieval:
     def __init__(self, cells):

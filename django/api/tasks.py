@@ -6,6 +6,7 @@ from api.process.utils.mongo.repository import Repository
 
 from api.process.normalization import normalizer, cleaner
 from api.process.column_analysis import column_classifier
+from api.process.data_retrieval import cells as data_retrieval
 
 from api.process.cea import cea
 
@@ -54,7 +55,7 @@ def job_slot(job_id: int):
     colan_result = sync_group_task(column_analysis_phase, norm_result)
     rest_hook(job_id, colan_result)
 
-    dr_result    = sync_chunk_task(data_retrieval_phase, norm_result)
+    dr_result    = sync_chunk_task(data_retrieval_phase, colan_result)
     rest_hook(job_id, dr_result)
 
     comp_result  = sync_group_task(computation_phase, colan_result, dr_result)
@@ -89,34 +90,36 @@ def column_analysis_phase(table_id, table, data):
 
 @app.task(name="data_retrieval_phase")
 def data_retrieval_phase(table_id, table, data):
-    # NOTE: Mockup
-    solr_result = [
-        ("Batman (mass measure)", "Batman_(unit)"),
-        ("Batman car", "Batmobile"),
-        ("List of municipalities in Batman Province", "List_of_municipalities_in_Batman_Province"),
-        ("Batman Knight Flight", "Dominator_(roller_coaster)"),
-        ("Batman", "Batman_Begins"),
-        ("Nolan", "Christopher_Nolan"),
-        ("Gary Nolan (radio host)", "Gary_Nolan_(radio_host)"),
-        ("David Nolan (libertarian)", "David_Nolan_(libertarian)"),
-        ("Christopher Nolan", "Christopher_Nolan"),
-        ("9537 Nolan", "9537_Nolan"),
+    tags = [
+        col_val["tags"]["col_type"]
+        for col_val in data.values()
     ]
+    cells = [
+        values["normalized"]
+        for col_idx, col_val in enumerate(data.values())
+        for values in col_val["values"]
+        if tags[col_idx] != "LIT"
+    ]
+    solr_result = data_retrieval.CandidatesRetrieval(cells).get_candidates()
 
     results = {}
-    for label, entity in solr_result:
-        normal_label = cleaner.Cleaner(label).clean()
-        if normal_label not in results:
-            results[normal_label] = []
+    for cell in solr_result.keys():
+        for res in solr_result[cell]:
+            label = res["label"]     # TODO: I need this information
+            entity = res["uri"]
 
-        results[normal_label].append(entity)
+            norm_label = cleaner.Cleaner(label).clean()
+            if cell not in results:
+                results[cell] = []
+
+            results[cell].append((norm_label, entity))
 
     return results
 
 
 @app.task(name="computation_phase")
 def computation_phase(table_id, table_data, columns, candidates):
-    print(columns)
+    print(candidates)
     tags = [
         col_val["tags"]["col_type"]
         for col_val in columns.values()

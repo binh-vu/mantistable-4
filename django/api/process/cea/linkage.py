@@ -56,7 +56,8 @@ class Linkage:
             if cell != subj_cell:
                 if not cell.is_lit_cell:
                     link = self._match_ne_cells(subj_cell, cell)
-                #else:  # TODO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                else:
+                    link = []   # TODO: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     #link = self._match_lit_cells(subj_cell, cell)
                 
                 links.append(link)
@@ -68,9 +69,10 @@ class Linkage:
 
         subjects = {}
         for link in links:
-            s_tmp = []
-            for l in link:
-                s_tmp.append(l.subject())
+            s_tmp = [
+                l.subject()
+                for l in link    
+            ]
 
             l_subj = {
                 k: step(v)
@@ -93,31 +95,39 @@ class Linkage:
         links = []
 
         cand_objects = set()
-        os_map = {}
-        for cand1_uri in subj_cell.candidates:
+        cand_subjects = {}
 
-            # TODO: Extraction of proper data from lamapi -> move into lamapi wrapper
-            cand_lamapi_objects = []
-            for po in self.lamapi.objects([cand1_uri]).values():
-                for objs in po.values():
-                    cand_lamapi_objects.extend(objs)
+        cand_lamapi_objects = self._get_candidates_objects(subj_cell.candidates_entities())
 
-            cand_lamapi_objects = set(cand_lamapi_objects)
-
-            for sub_obj in cand_lamapi_objects:   # TODO: change algorithm to query lists, also check algorithm: literals or ne?
+        for cand1_uri, candidates_objects in cand_lamapi_objects.items():
+            for sub_obj in candidates_objects:   # TODO: change algorithm to query lists, also check algorithm: literals or ne?
                 cand_objects.add(sub_obj)
-                if sub_obj not in os_map:
-                    os_map[sub_obj] = []
+                if sub_obj not in cand_subjects:
+                    cand_subjects[sub_obj] = []
                     
-                os_map[sub_obj].append(cand1_uri)
+                cand_subjects[sub_obj].append(cand1_uri)
         
-        for co in cand_objects.intersection(set(cell2.candidates)):
-            for uri in os_map[co]:
-                for s, p, o in self._match((uri, None, co)):         
+        # Intersection between subject candidates objects and object's candidates
+        for candidate_obj in cand_objects.intersection(set(cell2.candidates_entities())):
+            for candidate_subj in cand_subjects[candidate_obj]:
+                for s, p, o in self._match(candidate_subj, candidate_obj):
                     confidence = self._get_candidate_confidence(o, cell2)
-                    #confidence = labels_confidence[o]
                     
                     links.append( Link(triple=(s, p, o), confidence=confidence) )
+
+        # Calculate max confidence for the same triple (different labels)
+        max_conf_links = {}
+        for link in set(links):
+            if link.triple not in max_conf_links:
+                max_conf_links[link.triple] = link.confidence
+
+            if max_conf_links[link.triple] < link.confidence:
+                max_conf_links[link.triple] = link.confidence
+
+        links = [
+            Link(triple=triple, confidence=confidence)
+            for triple, confidence in max_conf_links.items()
+        ]
                     
         return links
 
@@ -139,7 +149,7 @@ class Linkage:
                 
         for co in cand_objects:
             for cand1 in os_map[co]:
-                for s, p, o in self._match((cand1, None, co)):
+                for s, p, o in self._match(cand1, co):
                     links.append( Link(triple=(s, p, o), confidence=0.0) )
                     
         xsd_cell = get_xsd(cell2.normalized)
@@ -225,16 +235,15 @@ class Linkage:
 
         return res
 
-    # TODO: Change api signature _match(s, o) -> [(s, p, o)]
-    def _match(self, triple):
-        s, p, o = triple
-
+    def _match(self, s, o):
         results = []
         # TODO: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         predicates_lamapi = self.lamapi.predicates([" ".join([s, o])]).values()
+
         predicates = []
         for p in predicates_lamapi:
             predicates.extend(p)
+
         for p in predicates:
             results.append(
                 (s, p, o)
@@ -242,15 +251,21 @@ class Linkage:
 
         return results
 
+    def _get_candidates_objects(self, candidates):
+        cand_lamapi_objects = {}
+        for candidate, po in self.lamapi.objects(candidates).items():
+            cand_lamapi_objects[candidate] = []
+            for objs in po.values():
+                cand_lamapi_objects[candidate].extend(objs)
+            
+            cand_lamapi_objects[candidate] = set(cand_lamapi_objects[candidate])
+
+        return cand_lamapi_objects
+
     def _get_candidate_confidence(self, candidate, cell):
         """
             Compute the max confidence of a given candidate by matching candidate's labels with cell content
-        """
-        # TODO: What about redirections?
-        # TODO: I need a map <entity> -> [<norm_label>, <norm_label>,...]
-        #labels = resources.get(candidate[28:], [])
-        norm_labels = []
-        
+        """     
         # Replace this piece of code with the resources map (label is normalized label)
         """ TODO
         if is_person(cell.content):
@@ -262,10 +277,8 @@ class Linkage:
         else:
             label = candidate[28:].lower().replace("_", " ")
         """
-            
-        label = candidate[28:].lower().replace("_", " ")
-        norm_labels.append(label)
 
+        norm_labels = cell.candidates_labels(candidate)
         winning_conf = 0.0
         for norm_label in norm_labels:
             confidence = 1.0 - edit_distance(cell.normalized, norm_label)
@@ -274,10 +287,9 @@ class Linkage:
                 winning_conf = confidence
 
         return confidence
-        #1.0 - edit_distance(cell.normalized, nor_label)
 
 # ------------------------------------------------------------------------------
-# TODO: Bad utility function that must be replaced with phase 2 datatype
+# TODO: Bad utilities functions that must be replaced with phase 2 datatype
 #       extraction
 
 """
