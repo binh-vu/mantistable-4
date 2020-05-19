@@ -8,6 +8,7 @@ from api.process.normalization import cleaner
 from api.process.cea.models.cell import Cell
 from api.process.cea.models.link import Link
 from api.process.cea.models.row import Row
+import api.process.cea.literals_confidence as lit_utils
 from api.process.utils.lamapi import LamAPIWrapper
 from api.process.utils.math_utils import edit_distance, step
 
@@ -127,7 +128,6 @@ class Linkage:
         ]
         
         # Filter candidates by datatype
-        # TODO: Filter by xsd not datatype, also should I use column analysis xsd datatype??
         datatype_cell = datatype.get_datatype(cell2.normalized)
         xsd_datatype = datatype_cell.get_xsd_type()
         cell_python_value = datatype_cell.to_python()
@@ -168,8 +168,9 @@ class Linkage:
             if len(candidates_value) == 0:
                 return []
             
-            # TODO: Implement single-dispatch pattern
             # Compute the confidence score
+            res.extend(lit_utils.literal_confidence(xsd_datatype, cell_python_value, candidates_value))
+            """
             if xsd_datatype.label() == "xsd:float":
                 # confidence = (value - upper) / (lower - upper)
                 dummy_subject = candidates_value[0][0]
@@ -194,6 +195,13 @@ class Linkage:
                             # res.append(Link(triple=lower_triple, confidence=confidence_lower))    
                             # TODO: I don't use membership function confidence anymore for a problem in the revision,
                             #       but this new score is technically bugged...
+                            # TODO: The reason is in the following example:
+                            #       1.0 - (abs(-2 - 5) / max(-2, 5, 1)) = -0.39999
+                            #       while confidence should always be between 0.0 and 1.0
+                            # PROPOSAL: A modification of gaussian probability density function without the normalization factor
+                            #           in this way confidence is 1.0 when the distance between values is zero
+                            #           and we are able to adjust the spread by editing the standard deviation
+                            #           e^-0.5*((a - b)/σ)^2
                             conf = 1.0 - (abs(cell_python_value - lower_value) / max(cell_python_value, lower_value, 1.0))
                             res.append(Link(triple=lower_triple, confidence=conf))
 
@@ -214,6 +222,7 @@ class Linkage:
                     confidence = 1.0 - edit_distance(cv[2], cell_python_value)
                     if confidence > 0.0:
                         res.append(Link(triple=cv, confidence=confidence))
+            """
 
         return res
 
