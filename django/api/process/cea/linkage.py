@@ -1,6 +1,7 @@
 import collections
 import sys
 import datatype
+import functools
 
 from itertools import groupby
 
@@ -14,6 +15,30 @@ from api.process.utils.math_utils import edit_distance, step
 
 import mantistable.settings
 
+import celery.utils.functional as functional
+
+@functional.memoize(maxsize=None)
+def _get_candidate_confidence(candidate, cell):
+    """
+        Compute the max confidence of a given candidate by matching candidate's labels with cell content
+    """
+    """ TODO Move this code outside this function (cell candidates should have it)
+    if is_person(cell.content):
+        tokens = candidate[28:].split("_")
+        if len(tokens[0]) > 0:
+            tokens[0] = tokens[0][0]
+
+        label = " ".join(tokens).lower()
+    """
+
+    winning_conf = 0.0
+    for normalized_label in cell.candidates_labels(candidate):
+        confidence = 1.0 - edit_distance(cell.normalized, normalized_label)
+        
+        if confidence > winning_conf:
+            winning_conf = confidence
+
+    return winning_conf
 
 class Linkage:
     def __init__(self, row):
@@ -50,14 +75,14 @@ class Linkage:
 
         subjects = {}
         for link in links:
-            s_tmp = [
+            subjects_buffer = [
                 l.subject()
                 for l in link
             ]
 
             l_subj = {
                 k: step(v)
-                for k, v in collections.Counter(s_tmp).items()
+                for k, v in collections.Counter(subjects_buffer).items()
             }
 
             subjects = {
@@ -67,7 +92,7 @@ class Linkage:
 
         # Subjects confidence
         for k, v in subjects.items():
-            confidence = self._get_candidate_confidence(k, subj_cell)
+            confidence = _get_candidate_confidence(k, subj_cell)
             subjects[k] = confidence * (v / len(links))
             
         return subjects
@@ -99,7 +124,7 @@ class Linkage:
 
         # TODO: Check if I can reuse predicates from lamapi objects endpoint
         for s, p, o in self._match(candidates_pair):
-            confidence = self._get_candidate_confidence(o, cell2)
+            confidence = _get_candidate_confidence(o, cell2)
             links.append( Link(triple=(s, p, o), confidence=confidence) )
 
         # Calculate max confidence for the same triple (different labels)
@@ -140,8 +165,6 @@ class Linkage:
             ],
             key=lambda item: item.subject()
         )
-
-        print(links_same_datatype)
 
         # Group links by subject
         groups = [
@@ -219,25 +242,3 @@ class Linkage:
                 )
 
         return list(set(triples))
-
-    def _get_candidate_confidence(self, candidate, cell):
-        """
-            Compute the max confidence of a given candidate by matching candidate's labels with cell content
-        """
-        """ TODO Move this code outside this function (cell candidates should have it)
-        if is_person(cell.content):
-            tokens = candidate[28:].split("_")
-            if len(tokens[0]) > 0:
-                tokens[0] = tokens[0][0]
-
-            label = " ".join(tokens).lower()
-        """
-
-        winning_conf = 0.0
-        for normalized_label in cell.candidates_labels(candidate):
-            confidence = 1.0 - edit_distance(cell.normalized, normalized_label)
-            
-            if confidence > winning_conf:
-                winning_conf = confidence
-
-        return confidence

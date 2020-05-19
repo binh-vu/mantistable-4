@@ -94,19 +94,18 @@ class ProcessView(View):
             datasets = Dataset.objects.filter(name__in=ids)
 
         print(datasets)
-        table_ids = []
+        tables = []
         for dataset in datasets:
             for table in dataset.table_set.all():
-                table_ids.append(table.id)
-
-        assert(len(table_ids) == len(set(table_ids)))
+                tables.append(table.original)
         
         data = {
-            "table_ids": json.dumps(table_ids),
-            "callback": self._build_url(request, 'job-handler')
+            "tables": json.dumps(tables),
+            "callback": _build_url(request, 'job-handler')
         }
 
         uri = _build_url(request, 'api_job')
+        print("Requesting job to", uri, data)
         response = requests.post(uri, json=data)
         status = response.status_code
 
@@ -130,7 +129,7 @@ class JobView(View):
         return {
             "id": job.id,
             "created": job.created,
-            "tables": len(job.table_ids),
+            "tables": len(job.tables),
             "progress": job.progress,
             "callback": job.callback
         }

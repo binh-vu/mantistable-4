@@ -40,7 +40,6 @@ class CEAProcess:
 
             if self._is_necol(self._table, pos):
                 is_subject = self._is_subject(self._table, pos)
-                print(cell, norm, cands)
                 row.add_ne_cell(cell, norm, cands, is_subject=is_subject)
             else:
                 # TODO: Is cands always empty list???

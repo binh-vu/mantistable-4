@@ -22,7 +22,7 @@ class Normalizer:
             }
             for value in cells:
                 clean_text = self._get_clean_text(value)
-                value_datatype   = self._get_datatype(value)
+                value_datatype = self._get_datatype(clean_text)
                 clean_text = self._get_uniform_datatype(value_datatype)
 
                 if value_datatype.get_type().name not in stats:

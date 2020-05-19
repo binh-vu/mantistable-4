@@ -86,6 +86,8 @@ def column_analysis_phase(table_id, table, data):
         for col_name, prev_meta in data.items()
     }
 
+    print(metadata)
+
     return table_id, table, metadata
 
 @app.task(name="data_retrieval_phase")
@@ -119,7 +121,6 @@ def data_retrieval_phase(table_id, table, data):
 
 @app.task(name="computation_phase")
 def computation_phase(table_id, table_data, columns, candidates):
-    print(candidates)
     tags = [
         col_val["tags"]["col_type"]
         for col_val in columns.values()
