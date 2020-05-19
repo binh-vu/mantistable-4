@@ -3,6 +3,8 @@ from api.process.utils.datatype import DataTypeEnum
 from api.process.utils.table import Table
 from api.process.utils.validator import Validator
 
+
+import datatype
 import dateutil.parser as dateutil
 
         
@@ -19,16 +21,16 @@ class Normalizer:
                 'values': []
             }
             for value in cells:
-                datatype   = self._get_datatype(value)
                 clean_text = self._get_clean_text(value)
-                clean_text = self._get_uniform_datatype(datatype, clean_text)
+                value_datatype   = self._get_datatype(value)
+                clean_text = self._get_uniform_datatype(value_datatype)
 
-                if datatype.name not in stats:
-                    stats[datatype.name] = 0
-                stats[datatype.name] += 1
+                if value_datatype.get_type().name not in stats:
+                    stats[value_datatype.get_type().name] = 0
+                stats[value_datatype.get_type().name] += 1
 
                 metadata[header]['values'].append({
-                    "datatype": datatype.name,
+                    "datatype": value_datatype.get_type().name,
                     "original": value,
                     "normalized": clean_text
                 })
@@ -40,18 +42,13 @@ class Normalizer:
     def _get_clean_text(self, value):
         return Cleaner(value).clean()
 
-    def _get_uniform_datatype(self, datatype, value):
-        if datatype == DataTypeEnum.NUMERIC:
-            return value.replace(",", "")
-        elif datatype == DataTypeEnum.DATE:
-            try:
-                return dateutil.parse(value).strftime("%Y-%d-%m")
-            except:
-                return value
-
-        return value
+    def _get_uniform_datatype(self, value_datatype):
+        return str(value_datatype.to_python())
 
     def _get_datatype(self, value):
+        return datatype.get_datatype(value)
+
+        """ TODO: Deprecated, remove
         validator = Validator()
         type_map = [
             # type, predicate
@@ -81,3 +78,4 @@ class Normalizer:
                 return data_type
 
         return DataTypeEnum.NONE
+        """

@@ -2,6 +2,7 @@ from functools import singledispatch
 from datatype import xsd, validators
 
 import sys
+import math
 
 from api.process.cea.models.link import Link
 from api.process.utils.math_utils import edit_distance
@@ -17,7 +18,9 @@ from api.process.utils.math_utils import edit_distance
 #           and we are able to adjust the spread by editing the standard deviation
 #           e^-0.5*((a - b)/σ)^2
 def numeric_confidence(a, b):
-    return 1.0 - (abs(a - b) / max(a, b, 1.0))
+    #return 1.0 - (abs(a - b) / max(a, b, 1.0))
+    sigma = 100
+    return math.e**(-0.5*((a - b) / sigma)**2)
 
 def literal_exact_match(cell_value, candidates_value: list):
     links = []
@@ -60,11 +63,13 @@ def literal_numeric_match(cell_value: float, candidates_value: list):
 
             if lower_triple[1] != "dummy_predicate":
                 conf = numeric_confidence(cell_value, lower_value)
-                links.append( Link(triple=lower_triple, confidence=conf) )
+                if conf > 0.0001:
+                    links.append( Link(triple=lower_triple, confidence=conf) )
 
             if idx + 1 < len(comparation_line) - 1 and confidence_upper > 0.0:
                 conf = numeric_confidence(cell_value, upper_value)
-                links.append( Link(triple=upper_triple, confidence=conf) )
+                if conf > 0.0001:
+                    links.append( Link(triple=upper_triple, confidence=conf) )
             
             break
 

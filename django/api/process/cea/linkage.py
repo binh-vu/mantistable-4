@@ -170,59 +170,6 @@ class Linkage:
             
             # Compute the confidence score
             res.extend(lit_utils.literal_confidence(xsd_datatype, cell_python_value, candidates_value))
-            """
-            if xsd_datatype.label() == "xsd:float":
-                # confidence = (value - upper) / (lower - upper)
-                dummy_subject = candidates_value[0][0]
-                comparation_line = [(dummy_subject, "dummy_predicate", sys.float_info.min)] + \
-                                   [cv for cv in candidates_value] + \
-                                   [(candidates_value[-1][0], candidates_value[-1][1], sys.float_info.max)]
-
-                for idx in range(0, len(comparation_line) - 1):
-                    lower_triple = comparation_line[idx]
-                    upper_triple = comparation_line[idx + 1]
-
-                    lower_value = lower_triple[2]
-                    upper_value = upper_triple[2]
-                    
-                    if lower_value == upper_value and cell_python_value == lower_value:
-                        res.append(Link(triple=lower_triple, confidence=1.0))
-                    elif cell_python_value >= lower_value and cell_python_value < upper_value:
-                        confidence_lower = (cell_python_value - upper_value) / (lower_value - upper_value)
-                        confidence_lower = min(max(confidence_lower, 0.0), 1.0)
-                        confidence_upper = 1.0 - confidence_lower
-                        if lower_triple[1] != "dummy_predicate":
-                            # res.append(Link(triple=lower_triple, confidence=confidence_lower))    
-                            # TODO: I don't use membership function confidence anymore for a problem in the revision,
-                            #       but this new score is technically bugged...
-                            # TODO: The reason is in the following example:
-                            #       1.0 - (abs(-2 - 5) / max(-2, 5, 1)) = -0.39999
-                            #       while confidence should always be between 0.0 and 1.0
-                            # PROPOSAL: A modification of gaussian probability density function without the normalization factor
-                            #           in this way confidence is 1.0 when the distance between values is zero
-                            #           and we are able to adjust the spread by editing the standard deviation
-                            #           e^-0.5*((a - b)/σ)^2
-                            conf = 1.0 - (abs(cell_python_value - lower_value) / max(cell_python_value, lower_value, 1.0))
-                            res.append(Link(triple=lower_triple, confidence=conf))
-
-                        if idx + 1 < len(comparation_line) - 1 and confidence_upper > 0.0:
-                            #res.append(Link(triple=comparation_line[idx + 1], confidence=confidence_upper))
-                            conf = 1.0 - (abs(cell_python_value - upper_value) / max(cell_python_value, upper_value, 1.0))
-                            res.append(Link(triple=upper_triple, confidence=conf))
-                        
-                        break
-                    
-            elif xsd_datatype.label() == "xsd:date":
-                for cv in candidates_value:
-                    if cv[2] == cell_python_value:
-                        res.append(Link(triple=cv, confidence=1.0))
-            else:
-                cell_python_value = cell2.content
-                for cv in candidates_value:
-                    confidence = 1.0 - edit_distance(cv[2], cell_python_value)
-                    if confidence > 0.0:
-                        res.append(Link(triple=cv, confidence=confidence))
-            """
 
         return res
 
