@@ -66,8 +66,12 @@ class JobView(generics.ListCreateAPIView):
         )
         job.save()
 
+        job.task_id = tasks.job_slot(job.id)
+
+        """
         job.task_id = tasks.job_slot.apply_async(
             args=(job.id,),
             link=[tasks.rest_hook_task.s()]
         )
+        """
         job.save()
