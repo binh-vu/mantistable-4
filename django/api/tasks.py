@@ -10,46 +10,99 @@ from api.process.data_retrieval import cells as data_retrieval
 
 from api.process.cea import cea
 from api.process.cpa import cpa
+from api.process.revision import revision
 
 from celery import group
 from multiprocessing import Manager
 
 import requests
 import json
+import math
 
 manager = Manager()
 shared_memory = manager.dict()
 
 def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
-    rows = [
+    tables = [
         (idx, table)
         for idx, table in enumerate(job.tables)
     ]
 
-    data_preparation_task = group([
-        data_preparation_phase.s(*row)
-        for row in rows
-    ])
-
-    workflow = data_preparation_task | computation_phase.s()
+    workflow = data_preparation_phase.s(tables) | data_retrieval_phase.s() | computation_phase.s()
     return workflow.apply_async()
 
+@app.task(name="data_preparation_phase", bind=True)
+def data_preparation_phase(self, tables):
+    self.replace(group([
+        data_preparation_table_phase.s(*table)
+        for table in tables
+    ]))
 
-@app.task(name="data_preparation_phase")
-def data_preparation_phase(table_id, table_data):
+@app.task(name="data_preparation_table_phase")
+def data_preparation_table_phase(table_id, table_data):
     print(f"Normalization")
     normalization_result = _normalization_phase(table_id, table_data)
     
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
 
+    """
     print(f"Data retrieval")
     data_retrieval_result = _data_retrieval_phase(table_id, col_analysis_result)
+    shared_memory.update(data_retrieval_result)
     for cell, content in data_retrieval_result.items():
         shared_memory[cell] = content
+    """
 
     return table_id, table_data, col_analysis_result
+
+@app.task(name="data_retrieval_phase", bind=True)
+def data_retrieval_phase(self, tables):
+    # TODO: Extract to utils
+    def generate_chunks(iterable, n):
+        assert (n > 0)
+        for i in range(0, len(iterable), n):
+            yield iterable[i:i + n]
+
+    print(f"Data retrieval")
+
+    cells_content = set()
+    for table in tables:
+        metadata = table[2]
+        tags = [
+            col_val["tags"]["col_type"]
+            for col_val in metadata.values()
+        ]
+        cells = {
+            values["normalized"]
+            for col_idx, col_val in enumerate(metadata.values())
+            for values in col_val["values"]
+            if tags[col_idx] != "LIT"
+        }
+        cells_content.update(cells)
+
+    cells_content = list(cells_content)
+    # TODO: Extract constants
+    THREADS = 4
+    CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
+    chunks = generate_chunks(cells_content, CHUNK_SIZE)
+
+    self.replace(
+        group([
+            data_retrieval_group_phase.si(chunk)
+            for chunk in chunks
+        ]) | dummy_phase.s(tables)
+    )
+
+@app.task(name="data_retrieval_group_phase")
+def data_retrieval_group_phase(chunk):
+    data_retrieval_result = _data_retrieval_phase(chunk)
+    shared_memory.update(data_retrieval_result)
+
+@app.task(name="dummy_phase")
+def dummy_phase(null, info):
+    return info
 
 @app.task(name="computation_phase")
 def computation_phase(info):
@@ -70,7 +123,6 @@ def computation_table_phase(table_id, table_data, columns):
 def _normalization_phase(table_id, data):
     table_model = table.Table(table_id=table_id, table=data)
     metadata = normalizer.Normalizer(table_model).normalize()
-
     return metadata
 
 def _column_analysis_phase(table_id, table, data):
@@ -88,19 +140,10 @@ def _column_analysis_phase(table_id, table, data):
 
     return metadata
 
-def _data_retrieval_phase(table_id, data):
-    tags = [
-        col_val["tags"]["col_type"]
-        for col_val in data.values()
-    ]
-    cells = [
-        values["normalized"]
-        for col_idx, col_val in enumerate(data.values())
-        for values in col_val["values"]
-        if tags[col_idx] != "LIT" and values["normalized"] not in shared_memory
-    ]
+def _data_retrieval_phase(cells):
     solr_result = data_retrieval.CandidatesRetrieval(cells).get_candidates()
 
+    print("Clean solr results")
     results = {}
     for cell in solr_result.keys():
         for res in solr_result[cell]:
@@ -128,6 +171,7 @@ def _computation_phase(table_id, table_data, columns):
         for values in col_val["values"]
     }
 
+    print ("CEA")
     cea_results = cea.CEAProcess(
         table.Table(table_id=table_id, table=table_data),
         tags=tags,
@@ -137,10 +181,19 @@ def _computation_phase(table_id, table_data, columns):
 
     print(cea_results)
 
+    print ("CPA")
     cpa_results = cpa.CPAProcess(
         cea_results
     ).compute()
 
     print(cpa_results)
+
+    print ("Revision")
+    revision_results = revision.RevisionProcess(
+        cea_results, 
+        cpa_results
+    ).compute()
+
+    print(revision_results)
 
     return table_id, table_data#, results

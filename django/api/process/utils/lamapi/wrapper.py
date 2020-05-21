@@ -12,6 +12,10 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def labels(self, query):
+        self._log("labels", query)
+        if len(query) == 0:
+            return []
+        
         response = self._make_request(
             lambda: requests.get(
                 self._api_url("labels"),
@@ -27,6 +31,7 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def predicates(self, data):
+        self._log("predicates", data)
         return self._make_request(
             lambda: requests.post(
                 self._api_url("predicates"),
@@ -38,6 +43,7 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def objects(self, subjects):
+        self._log("objects", subjects)
         return self._make_request(
             lambda: requests.post(
                 self._api_url("objects"),
@@ -49,6 +55,7 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def literals(self, subjects):
+        self._log("literals", subjects)
         return self._make_request(
             lambda: requests.post(
                 self._api_url("literals"),
@@ -60,6 +67,7 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def concepts(self, entities):
+        self._log("concepts", entities)
         return self._make_request(
             lambda: requests.post(
                 self._api_url("concepts"),
@@ -78,6 +86,10 @@ class LamAPIWrapper:
             return {}
 
         return response.json()
+
+    def _log(self, endpoint_name, query):
+        q = str(query).replace('\n', '')[0:10] + '...'
+        print(f"LAMAPI {endpoint_name} {q}")
 
 
 """
