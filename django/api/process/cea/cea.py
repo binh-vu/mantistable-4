@@ -4,8 +4,6 @@ from api.process.utils.table import Table
 
 
 class CEAProcess:
-    # TODO: What data is table??
-    # TODO: I need rows and column analysis results
     def __init__(self, table, tags: list, normalized_map: dict, candidates_map: dict):
         self._table = table
         self._normalized_map = normalized_map   # { <original_cell>: <norm_cell> }
@@ -43,7 +41,7 @@ class CEAProcess:
                 row.add_ne_cell(cell, norm, cands, is_subject=is_subject)
             else:
                 # TODO: Is cands always empty list???
-                row.add_lit_cell(cell, cell, cands) # TODO: literal normalization???
+                row.add_lit_cell(cell, cell, cands)
 
         return row
 

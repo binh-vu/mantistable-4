@@ -10,13 +10,14 @@ from api.process.utils.math_utils import edit_distance
 # TODO: Extract function to utils.math_utils
 # TODO: I don't use membership function confidence anymore for a problem in the revision,
 #       but this new score is technically bugged...
-# TODO: The reason is in the following example:
+# TODO: This bug is shown in the following example:
 #       1.0 - (abs(-2 - 5) / max(-2, 5, 1)) = -0.39999
-#       while confidence should always be between 0.0 and 1.0
+#       but confidence should always be between 0.0 and 1.0
 # PROPOSAL: A modification of gaussian probability density function without the normalization factor
 #           in this way confidence is 1.0 when the distance between values is zero
 #           and we are able to adjust the spread by editing the standard deviation
 #           e^-0.5*((a - b)/σ)^2
+#           Standard deviation could be adjusted to reflect the column distribution.
 def numeric_confidence(a, b):
     #return 1.0 - (abs(a - b) / max(a, b, 1.0))
     sigma = 100
@@ -89,11 +90,9 @@ def literal_date_confidence(xsd_type: xsd.date.XsdDate, cell_value, candidates_v
     # TODO: Should use a distance function or something alike not exact matching
     return literal_exact_match(cell_value, candidates_value)
 
-
 @literal_confidence.register
 def literal_string_confidence(xsd_type: xsd.string.XsdString, cell_value, candidates_value: list):
     return literal_editdistance_match(cell_value, candidates_value)
-
 
 @literal_confidence.register
 def literal_boolean_confidence(xsd_type: xsd.boolean.XsdBoolean, cell_value, candidates_value: list):
@@ -101,7 +100,7 @@ def literal_boolean_confidence(xsd_type: xsd.boolean.XsdBoolean, cell_value, can
 
 @literal_confidence.register
 def literal_url_confidence(xsd_type: xsd.anyURI.XsdUri, cell_value, candidates_value: list):
-    return literal_exact_match(cell_value, candidates_value)
+    return literal_editdistance_match(cell_value, candidates_value)
 
 @literal_confidence.register
 def literal_geocoord_confidence(xsd_type: xsd.geo.XsdGeo, cell_value: validators.geocoord.Point, candidates_value: list):
