@@ -15,6 +15,13 @@ class LamAPIWrapper:
         self._log("labels", query)
         if len(query) == 0:
             return []
+
+        # Avoid solr injection
+        query_tokens = query.split(' ')
+        query = " ".join([
+            f'"{token}"'
+            for token in query_tokens
+        ])
         
         response = self._make_request(
             lambda: requests.get(

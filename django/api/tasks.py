@@ -47,14 +47,6 @@ def data_preparation_table_phase(table_id, table_data):
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
 
-    """
-    print(f"Data retrieval")
-    data_retrieval_result = _data_retrieval_phase(table_id, col_analysis_result)
-    shared_memory.update(data_retrieval_result)
-    for cell, content in data_retrieval_result.items():
-        shared_memory[cell] = content
-    """
-
     return table_id, table_data, col_analysis_result
 
 @app.task(name="data_retrieval_phase", bind=True)

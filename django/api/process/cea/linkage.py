@@ -15,9 +15,12 @@ from api.process.utils.math_utils import edit_distance, step
 
 import mantistable.settings
 
-import celery.utils.functional as functional
+from multiprocessing import Manager
 
-@functional.memoize(maxsize=None)
+manager = Manager()
+candidates_confidence_cache = manager.dict()
+lamapi_literals_cache = manager.dict()
+
 def _get_candidate_confidence(candidate, cell):
     """
         Compute the max confidence of a given candidate by matching candidate's labels with cell content
@@ -30,6 +33,9 @@ def _get_candidate_confidence(candidate, cell):
 
         label = " ".join(tokens).lower()
     """
+    key = (candidate, cell.normalized)
+    if key in candidates_confidence_cache:
+        return candidates_confidence_cache[key]
 
     winning_conf = 0.0
     for normalized_label in cell.candidates_labels(candidate):
@@ -38,6 +44,7 @@ def _get_candidate_confidence(candidate, cell):
         if confidence > winning_conf:
             winning_conf = confidence
 
+    candidates_confidence_cache[key] = winning_conf
     return winning_conf
 
 class Linkage:
@@ -235,10 +242,17 @@ class Linkage:
             Get literal triples from Lamapi service
         """
         triples = []
-        for s, pl in self.lamapi.literals(candidates).items():
+        buffer = set(candidates)
+        for candidate in set(candidates):
+            if candidate in lamapi_literals_cache:
+                triples.append(lamapi_literals_cache[candidate])
+                buffer.remove(candidate)
+
+        for s, pl in self.lamapi.literals(list(buffer)).items():
             for p, l in pl.items():
                 triples.append(
                     (s, p, l)
                 )
+                lamapi_literals_cache[s] = (s, p, l)
 
         return list(set(triples))
