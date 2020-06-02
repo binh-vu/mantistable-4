@@ -27,7 +27,9 @@ def literal_exact_match(cell_value, candidates_value: list):
     links = []
     for cv in candidates_value:
         if cv[2] == cell_value:
-            links.append( Link(triple=cv, confidence=1.0) )
+            s, p, o = tuple(map(lambda item: str(item), cv))
+
+            links.append( Link(triple=(s, p, o), confidence=1.0) )
 
     return links
 

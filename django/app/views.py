@@ -237,6 +237,7 @@ class SearchResultView(View):
                 links = [
                     (link[0][1], link[0][2], round(link[1], 2))
                     for link in row[1]
+                    if link[0] is not None
                 ]
                 print(subject, links)
         else:
