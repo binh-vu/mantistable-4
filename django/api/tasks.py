@@ -29,13 +29,13 @@ def job_slot(job_id: int):
         for idx, table in enumerate(job.tables)
     ]
 
-    workflow = data_preparation_phase.s(tables) | data_retrieval_phase.s() | computation_phase.s()
+    workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s() | computation_phase.s(job_id) | clean_up.si(job_id)
     return workflow.apply_async()
 
 @app.task(name="data_preparation_phase", bind=True)
-def data_preparation_phase(self, tables):
+def data_preparation_phase(self, tables, job_id):
     self.replace(group([
-        data_preparation_table_phase.s(*table)
+        data_preparation_table_phase.s(job_id, *table)
         for table in tables
     ]))
 
@@ -78,25 +78,27 @@ def data_retrieval_phase(self, tables):
     )
 
 @app.task(name="computation_phase", bind=True)
-def computation_phase(self, info):
+def computation_phase(self, info, job_id):
     print("Computation")
     self.replace(
         group([
-            computation_table_phase.s(*table)
+            computation_table_phase.s(job_id, *table)
             for table in info
         ])
     )
 
 
 @app.task(name="data_preparation_table_phase")
-def data_preparation_table_phase(table_id, table_data):
+def data_preparation_table_phase(job_id, table_id, table_data):
+    job = Job.objects.get(id=job_id)
+
     print(f"Normalization")
     normalization_result = _normalization_phase(table_id, table_data)
-    client_callback(table_id, normalization_result)
+    client_callback(job, table_id, "normalization", normalization_result)
     
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
-    client_callback(table_id, col_analysis_result)
+    client_callback(job, table_id, "column analysis", col_analysis_result)
 
     return table_id, table_data, col_analysis_result
 
@@ -124,7 +126,9 @@ def dummy_phase(info):
     return info
 
 @app.task(name="computation_table_phase")
-def computation_table_phase(table_id, table_data, columns):
+def computation_table_phase(job_id, table_id, table_data, columns):
+    job = Job.objects.get(id=job_id)
+
     print("Computation table")
     candidates = shared_memory
     tags = [
@@ -160,12 +164,17 @@ def computation_table_phase(table_id, table_data, columns):
         cea_results, 
         cpa_results
     ).compute()
-    client_callback(table_id, revision_results)
+    client_callback(job, table_id, "computation", revision_results)
 
     print(revision_results)
 
-    return table_id, table_data, revision_results
+    #return table_id, table_data, revision_results
 
+
+@app.task(name="clean_up")
+def clean_up(job_id):
+    # TODO: For now just delete job
+    Job.objects.get(id=job_id).delete()
 
 def _normalization_phase(table_id, data):
     table_model = table.Table(table_id=table_id, table=data)
@@ -207,24 +216,28 @@ def _data_retrieval_phase(cells):
 
 # ====================================================
 
-def client_callback(job, table_id, payload=None):
-    """
+def client_callback(job, table_id, header: str, payload=None):
+    assert header is not None and len(header) > 0   # Contract
+
     if payload is None:
         payload = { }
 
     message = {
-        "id": job.id,
+        "job_id": job.id,
         "table_id": table_id,
+        "header": header,
         "payload": payload
     }
 
     try:
-        response = requests.post(job.client, json=message)
-    except:
+        response = requests.post(job.callback, json=message)
+        print("sent to:", job.callback)
+    except Exception as e:
         # Send to morgue?
+        print("Error", e)
         return
 
     if response.status_code != 200:
         # Send to morgue?
+        print("Response error", response.status_code)
         pass
-    """

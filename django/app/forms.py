@@ -32,7 +32,7 @@ class QueryServiceForm(forms.Form):
                 "cols":20
             }
         ),
-        help_text='Ex. ["batman", "nolan", "2005"]'
+        help_text='Ex. ["batman", "nolan", "pfister"]'
     )
 
     def clean_json(self):

@@ -233,13 +233,18 @@ class SearchResultView(View):
         return super(SearchResultView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request):
-        job_id = request.POST.get("job_id")
-        progress = request.POST.get("progress")
-        results = request.POST.get("results")
+        data = json.loads(request.body)
 
-        print()
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        job_id = data.get("job_id", -1)
+        table_id = data.get("table_id", -1)
+        header = data.get("header", "invalid")
+        payload = data.get("payload", "invalid")
+
         print(job_id)
-        print(progress)
-        print(results)
+        print(table_id)
+        print(header)
+        print(payload)
+
 
         return JsonResponse({"status": "Received"}, safe=False)
