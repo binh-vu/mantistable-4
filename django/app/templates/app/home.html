@@ -16,7 +16,7 @@
             <canvas id="joke" style="width: 84.8%; height:1em"></canvas>
         </h2>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
                     {% csrf_token %}
                     <input type='hidden' name='form' value='import'> 
@@ -49,6 +49,7 @@
                 </form>
             </div>
 
+            <!--
             <div class="col-md-6">
                 <form id="export-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
                     {% csrf_token %}
@@ -71,6 +72,7 @@
                     </div>
                 </form>
             </div>
+            -->
         </div>
 
         <div class="row">
@@ -436,7 +438,7 @@
                     if (marioClickable) {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.save();
-                        ctx.drawImage(mario, Math.floor(marioSprite) * 17, 0, 17, 24, marioX, 5, 17, 24);
+                            ctx.drawImage(mario, Math.floor(marioSprite) * 17, 0, 17, 24, marioX, 5, 17, 24);
                         ctx.restore();
 
                         marioX += Math.abs(marioSpeed)*delta;
@@ -448,7 +450,7 @@
                     } else {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.save();
-                        ctx.drawImage(mario, 0, 0, 24, 24, marioX - 12, 5, 24, 24);
+                            ctx.drawImage(mario, 0, 0, 24, 24, marioX - 12, 5, 24, 24);
                         ctx.restore();
                     }
 
