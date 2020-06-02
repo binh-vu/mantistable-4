@@ -12,9 +12,10 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def labels(self, query):
-        self._log("labels", query)
         if len(query) == 0:
             return []
+
+        self._log("labels", query)
 
         # Avoid solr injection
         query_tokens = query.split(' ')
@@ -38,6 +39,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def predicates(self, data):
+        if len(data) == 0:
+            return {}
+
         self._log("predicates", data)
         return self._make_request(
             lambda: requests.post(
@@ -50,6 +54,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def objects(self, subjects):
+        if len(subjects) == 0:
+            return {}
+
         self._log("objects", subjects)
         return self._make_request(
             lambda: requests.post(
@@ -62,6 +69,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def literals(self, subjects):
+        if len(subjects) == 0:
+            return {}
+
         self._log("literals", subjects)
         return self._make_request(
             lambda: requests.post(
@@ -74,6 +84,9 @@ class LamAPIWrapper:
 
     @retry_on_exception(max_retries=5)
     def concepts(self, entities):
+        if len(entities) == 0:
+            return {}
+
         self._log("concepts", entities)
         return self._make_request(
             lambda: requests.post(

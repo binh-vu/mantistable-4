@@ -186,9 +186,13 @@ class JobHandler(View):
 class CeleryLoadView(View):
     def get(self, request):
         worker_name = "celery@main"
+
+        active = 0
+        reserved = 0
         inspector = current_app.control.inspect([worker_name])
-        active = len(inspector.active()[worker_name])
-        reserved = len(inspector.reserved()[worker_name])
+        if inspector.active() is not None:
+            active = len(inspector.active()[worker_name])
+            reserved = len(inspector.reserved()[worker_name])
 
         return JsonResponse({
             "active": active,

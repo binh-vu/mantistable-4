@@ -50,5 +50,5 @@ class CPAProcess:
                 if norm_factor != 0.0:
                     for pred in d:
                         predicates[col_idx][pred] /= norm_factor
-        
+                        
         return predicates

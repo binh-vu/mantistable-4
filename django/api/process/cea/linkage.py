@@ -114,7 +114,7 @@ class Linkage:
         cand_objects = set()
 
         # Get candidates objects from lamapi service
-        cand_lamapi_objects = self._get_candidates_objects(subj_cell.candidates_entities())
+        cand_lamapi_objects, cand_lamapi_predicates = self._get_candidates_objects(subj_cell.candidates_entities())
         for cand1_uri, candidates_objects in cand_lamapi_objects.items():
             for sub_obj in candidates_objects:
                 cand_objects.add(sub_obj)
@@ -124,15 +124,25 @@ class Linkage:
                 cand_subjects[sub_obj].append(cand1_uri)
         
         # Intersection between subject candidates objects and object's candidates
+        """
         candidates_pair = []
         for candidate_obj in cand_objects.intersection(set(cell2.candidates_entities())):
             for candidate_subj in cand_subjects[candidate_obj]:
                 candidates_pair.append((candidate_subj, candidate_obj))
+        
 
         # TODO: Check if I can reuse predicates from lamapi objects endpoint
-        for s, p, o in self._match(candidates_pair):
+        for s, p, o in cand_lamapi_predicates.get(candidates_pair, []):
             confidence = _get_candidate_confidence(o, cell2)
             links.append( Link(triple=(s, p, o), confidence=confidence) )
+        """
+
+        for candidate_obj in cand_objects.intersection(set(cell2.candidates_entities())):
+            for candidate_subj in cand_subjects[candidate_obj]:
+                p = cand_lamapi_predicates.get((candidate_subj, candidate_obj), None)
+                if p is not None:
+                    confidence = _get_candidate_confidence(candidate_obj, cell2)
+                    links.append( Link(triple=(candidate_subj, p, candidate_obj), confidence=confidence) )
 
         # Calculate max confidence for the same triple (different labels)
         max_conf_links = {}
@@ -203,10 +213,11 @@ class Linkage:
 
         return res
 
+    """
     def _match(self, subj_object_pairs: list):
-        """
+        #
             Match subject object pairs to find predicates from Lamapi service
-        """
+        #
         pairs = [
             " ".join(pair)
             for pair in subj_object_pairs
@@ -222,20 +233,25 @@ class Linkage:
                 )
 
         return triples
+    """
 
     def _get_candidates_objects(self, candidates):
         """
             Get objects from Lamapi service
         """
         cand_lamapi_objects = {}
+        cand_lamapi_predicates = {}
         for candidate, po in self.lamapi.objects(candidates).items():
             cand_lamapi_objects[candidate] = []
-            for objs in po.values():
+            for pred, objs in po.items():
                 cand_lamapi_objects[candidate].extend(objs)
+
+                for obj in objs:
+                    cand_lamapi_predicates[(candidate, obj)] = pred
             
             cand_lamapi_objects[candidate] = set(cand_lamapi_objects[candidate])
 
-        return cand_lamapi_objects
+        return cand_lamapi_objects, cand_lamapi_predicates
 
     def _get_candidates_literals(self, candidates):
         """

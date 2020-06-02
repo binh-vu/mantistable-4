@@ -13,8 +13,8 @@ from api.process.utils.math_utils import edit_distance
 # TODO: This bug is shown in the following example:
 #       1.0 - (abs(-2 - 5) / max(-2, 5, 1)) = -0.39999
 #       but confidence should always be between 0.0 and 1.0
-# PROPOSAL: A modification of gaussian probability density function without the normalization factor
-#           in this way confidence is 1.0 when the distance between values is zero
+# PROPOSAL: Score based on a modification of gaussian probability density function without the normalization factor.
+#           In this way confidence is 1.0 when the distance between values is zero
 #           and we are able to adjust the spread by editing the standard deviation
 #           e^-0.5*((a - b)/σ)^2
 #           Standard deviation could be adjusted to reflect the column distribution.
