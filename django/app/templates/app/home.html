@@ -404,6 +404,24 @@
                 let marioSpeed = 0.085;
                 let marioX = -1000 * marioSpeed * 10;
                 let marioSprite = 0;
+                let marioClickable = true;
+
+                canvas.addEventListener("mousedown", function (e) {
+                    if (marioClickable && Math.abs(e.offsetX - marioX) < 20) {
+                        marioClickable = false;
+                        marioSpeed = 0.0;
+
+                        mario.src = "{% static 'app/images/splat.png' %}";
+                        
+                        console.log("Die");
+
+                        // Scaring people: check! Who cares right? AHahAHahAH
+                        var snd = new Audio("{% static 'app/images/di.data' %}");
+                        snd.volume = 0.75;   // Ok not so loud
+                        snd.play();          // Enjoy
+                        // Good music bytheway
+                    }
+                }, false);
 
                 mario.onload = function() {
                     start();
@@ -415,16 +433,23 @@
                     var now = Date.now();
                     var delta = now - then;
 
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.save();
-                    ctx.drawImage(mario, Math.floor(marioSprite) * 17, 0, 17, 24, marioX, 5, 17, 24);
-                    ctx.restore();
+                    if (marioClickable) {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.save();
+                        ctx.drawImage(mario, Math.floor(marioSprite) * 17, 0, 17, 24, marioX, 5, 17, 24);
+                        ctx.restore();
 
-                    marioX += Math.abs(marioSpeed)*delta;
-                    marioSprite = (marioSprite + 0.01*delta) % 2;
+                        marioX += Math.abs(marioSpeed)*delta;
+                        marioSprite = (marioSprite + 0.01*delta) % 2;
 
-                    if (marioX > canvas.width) {
-                        marioX = -10000 * marioSpeed * 10;
+                        if (marioX > canvas.width) {
+                            marioX = -10000 * marioSpeed * 10;
+                        }
+                    } else {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.save();
+                        ctx.drawImage(mario, 0, 0, 24, 24, marioX - 12, 5, 24, 24);
+                        ctx.restore();
                     }
 
                     then = now;
