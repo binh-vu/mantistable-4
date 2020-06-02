@@ -20,7 +20,7 @@ from api.process.utils.math_utils import edit_distance
 #           Standard deviation could be adjusted to reflect the column distribution.
 def numeric_confidence(a, b):
     #return 1.0 - (abs(a - b) / max(a, b, 1.0))
-    sigma = 100
+    sigma = 100 # TODO: adjust this to reflect column distribution??
     return math.e**(-0.5*((a - b) / sigma)**2)
 
 def literal_exact_match(cell_value, candidates_value: list):

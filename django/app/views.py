@@ -101,7 +101,7 @@ class ProcessView(View):
         
         data = {
             "tables": json.dumps(tables),
-            "callback": _build_url(request, 'job-handler')
+            "callback": _build_url(request, 'search-result')
         }
 
         uri = _build_url(request, 'api_job')
@@ -169,20 +169,6 @@ class DatasetView(View):
             "table_count": dataset.table_count,
         }
 
-
-class JobHandler(View):
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        return super(JobHandler, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request):
-        data = json.loads(request.POST.get("progress"))
-        print(data)
-        print(data["current"], data["total"])
-
-        return JsonResponse({"status": "ok"})
-
-
 class CeleryLoadView(View):
     def get(self, request):
         worker_name = "celery@main"
@@ -244,7 +230,17 @@ class SearchResultView(View):
         print(job_id)
         print(table_id)
         print(header)
-        print(payload)
+
+        if header == "computation":
+            for row in payload:
+                subject = row[0]
+                links = [
+                    (link[0][1], link[0][2], round(link[1], 2))
+                    for link in row[1]
+                ]
+                print(subject, links)
+        else:
+            print(payload)
 
 
         return JsonResponse({"status": "Received"}, safe=False)

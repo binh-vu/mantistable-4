@@ -18,6 +18,8 @@ import mantistable.settings
 from multiprocessing import Manager
 
 manager = Manager()
+
+# TODO: Caches are sooo bugged...
 candidates_confidence_cache = manager.dict()
 lamapi_literals_cache = manager.dict()
 
@@ -34,8 +36,10 @@ def _get_candidate_confidence(candidate, cell):
         label = " ".join(tokens).lower()
     """
     key = (candidate, cell.normalized)
+    """
     if key in candidates_confidence_cache:
         return candidates_confidence_cache[key]
+    """
 
     winning_conf = 0.0
     for normalized_label in cell.candidates_labels(candidate):
@@ -44,7 +48,7 @@ def _get_candidate_confidence(candidate, cell):
         if confidence > winning_conf:
             winning_conf = confidence
 
-    candidates_confidence_cache[key] = winning_conf
+    #candidates_confidence_cache[key] = winning_conf
     return winning_conf
 
 class Linkage:
@@ -100,7 +104,7 @@ class Linkage:
         # Subjects confidence
         for k, v in subjects.items():
             confidence = _get_candidate_confidence(k, subj_cell)
-            subjects[k] = confidence * (v / len(links))
+            subjects[k] = confidence * (v / len(links))    # TODO: <<<<<<<<<<< Check the algorithm
             
         return subjects
 
@@ -259,16 +263,19 @@ class Linkage:
         """
         triples = []
         buffer = set(candidates)
+        """ TODO: Cache is bugged <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         for candidate in set(candidates):
             if candidate in lamapi_literals_cache:
-                triples.append(lamapi_literals_cache[candidate])
+                triples.extend(lamapi_literals_cache[candidate])
                 buffer.remove(candidate)
+        """
 
         for s, pl in self.lamapi.literals(list(buffer)).items():
+            # lamapi_literals_cache[s] = []
             for p, l in pl.items():
                 triples.append(
                     (s, p, l)
                 )
-                lamapi_literals_cache[s] = (s, p, l)
+                # lamapi_literals_cache[s].append((s, p, l))
 
         return list(set(triples))

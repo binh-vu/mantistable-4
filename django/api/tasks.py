@@ -166,7 +166,7 @@ def computation_table_phase(job_id, table_id, table_data, columns):
     ).compute()
     client_callback(job, table_id, "computation", revision_results)
 
-    print(revision_results)
+    #print(revision_results)
 
     #return table_id, table_data, revision_results
 

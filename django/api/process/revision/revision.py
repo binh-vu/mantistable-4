@@ -17,18 +17,27 @@ class RevisionProcess:
                 key=lambda item: item[1],
                 reverse=True
             )
+            max_subject_confidence = 0.0
+            if len(subject_items) > 0:
+                max_subject_confidence = subject_items[0][1]
+            """ TODO: default is bugged??
             max_subject_confidence = max(
                 subject_items,
                 key=lambda item: item[1],
                 default=[None, 0.0]
             )[1]
+            """
             
             # Get all subjects with max confidence (could be more than one)
+            """
             most_confident_subjects_items = [
                 item
                 for item in subject_items
                 if item[1] == max_subject_confidence
             ]
+            """
+            # TODO: Bypass performance euristic (all stuff before this line)
+            most_confident_subjects_items = subject_items
 
             for winning_subject, s_confidence in most_confident_subjects_items:
                 if winning_subject is not None:
