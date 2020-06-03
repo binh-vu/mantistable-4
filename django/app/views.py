@@ -102,11 +102,10 @@ class ProcessView(View):
         else:
             datasets = Dataset.objects.filter(name__in=ids)
 
-        print(datasets)
         tables = []
         for dataset in datasets:
             for table in dataset.table_set.all():
-                tables.append(table.original)
+                tables.append((table.id, table.original))
         
         data = {
             "tables": json.dumps(tables),
@@ -206,12 +205,15 @@ class ServiceView(FormView):
         callback_url = _build_url(self.request, "search-result")
         data = {
             "tables": [
-                [
-                    {
-                        f"col_{idx}": value
-                        for idx, value in enumerate(query)
-                    }
-                ]
+                (
+                    -1, # Null id
+                    [
+                        {
+                            f"col_{idx}": value
+                            for idx, value in enumerate(query)
+                        }
+                    ]
+                ),
             ],
             "callback": callback_url
         }
@@ -227,20 +229,32 @@ class SearchResultView(View):
     def dispatch(self, request, *args, **kwargs):
         return super(SearchResultView, self).dispatch(request, *args, **kwargs)
 
+    # TODO: In general this is a bit dangerous if someone other than api post on this
     def post(self, request):
         data = json.loads(request.body)
 
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         job_id = data.get("job_id", -1)
         table_id = data.get("table_id", -1)
         header = data.get("header", "invalid")
         payload = data.get("payload", "invalid")
 
-        print(job_id)
-        print(table_id)
-        print(header)
+        if job_id < 0:
+            return JsonResponse({"status": "bad format"}, safe=False)
+        
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        print(job_id, table_id, header)
 
-        if header == "computation":
+        try:
+            table = Table.objects.get(id=table_id)
+        except Table.DoesNotExist:
+            table = None
+
+        if header == "column analysis":
+            # TODO: Parse format
+            if table is not None:
+                table.cols = payload
+                table.save()            
+        elif header == "computation":
             for row in payload:
                 subject = row[0]
                 links = [
@@ -251,6 +265,6 @@ class SearchResultView(View):
                 print(subject, links)
         else:
             print(payload)
+        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
-
-        return JsonResponse({"status": "Received"}, safe=False)
+        return JsonResponse({"status": "ack"}, safe=False)

@@ -24,9 +24,10 @@ shared_memory = manager.dict()
 
 def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
+
     tables = [
-        (idx, table)
-        for idx, table in enumerate(job.tables)
+        (item[0], item[1])
+        for item in job.tables
     ]
 
     workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s() | computation_phase.s(job_id) | clean_up.si(job_id)
