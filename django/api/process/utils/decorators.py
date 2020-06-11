@@ -1,6 +1,6 @@
 import functools
 
-def retry_on_exception(max_retries=5):
+def retry_on_exception(max_retries=5, default=[], raise_exception=False):
     """
         Call function up to max_retries if raise exception
         Use it as decorator
@@ -18,7 +18,10 @@ def retry_on_exception(max_retries=5):
                     last_except = e
 
             if last_except is not None:
-                raise last_except
+                if raise_exception:
+                    raise last_except
+                else:
+                    return default
 
         return wrapper
     return decorator
