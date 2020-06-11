@@ -143,12 +143,16 @@ class ExportView(View):
             table_name = name[0:-5]
             prefix = "http://dbpedia.org/resource/"
             for row_idx, row in enumerate(linkages):
+                subject = None
                 for col_idx, col in enumerate(row):
                     if col["confidence"] > 0.0:
                         content = f"\"{table_name}\",\"{col_idx+1}\",\"{row_idx+1}\",\"{prefix}{col['object']}\""
                         csv_export += content + "\n"
-                content = f"\"{table_name}\",\"0\",\"{row_idx+1}\",\"{prefix}{col['subject']}\""
-                csv_export += content + "\n"
+                    subject = col['subject']
+                
+                if subject is not None:
+                    content = f"\"{table_name}\",\"0\",\"{row_idx+1}\",\"{prefix}{subject}\""
+                    csv_export += content + "\n"
         
         response = HttpResponse(csv_export, content_type="text/csv")
         response['Content-Disposition'] = f'inline; filename=CEA.csv'
