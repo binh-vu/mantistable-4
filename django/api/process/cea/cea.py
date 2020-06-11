@@ -1,7 +1,7 @@
 from api.process.cea.models.row import Row
 from api.process.cea.linkage import Linkage
 from api.process.utils.table import Table
-
+from api.process.utils.rules import person_rule as rules
 
 class CEAProcess:
     def __init__(self, table, tags: list, normalized_map: dict, candidates_map: dict):
@@ -34,7 +34,14 @@ class CEAProcess:
         row = Row()
         for pos, cell in enumerate(table_row.values()):
             norm = self._normalized_map.get(cell, None)
-            cands = self._candidates_map.get(norm, [])
+
+            rule = rules.PersonRule(cell)
+            if rule.match():
+                query = rule.build_query()
+            else:
+                query = norm
+
+            cands = self._candidates_map.get(query, [])
 
             if self._is_necol(self._table, pos):
                 is_subject = self._is_subject(self._table, pos)

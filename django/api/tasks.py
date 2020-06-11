@@ -2,6 +2,7 @@ from mantistable.celery import app
 from api.models import Job
 from api.serializers import TableSerializer
 from api.process.utils import table
+from api.process.utils.rules import person_rule as rules
 from api.process.utils.mongo.repository import Repository
 
 from api.process.normalization import normalizer, cleaner
@@ -57,6 +58,21 @@ def data_retrieval_phase(self, tables):
             col_val["tags"]["col_type"]
             for col_val in metadata.values()
         ]
+
+        for col_idx, col_val in enumerate(metadata.values()):
+            for values in col_val["values"]:
+                if tags[col_idx] != "LIT":
+                    # Apply rules
+                    # TODO:
+                    rule = rules.PersonRule(values["original"])
+                    if rule.match():
+                        query = rule.build_query()
+                    else:
+                        query = values["normalized"]
+
+                    cells_content.add(query)
+
+        """
         cells = {
             values["normalized"]
             for col_idx, col_val in enumerate(metadata.values())
@@ -64,8 +80,12 @@ def data_retrieval_phase(self, tables):
             if tags[col_idx] != "LIT"
         }
         cells_content.update(cells)
+        """
 
     cells_content = list(cells_content)
+
+
+
     # TODO: Extract constants
     THREADS = 4
     CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
@@ -117,7 +137,7 @@ def data_retrieval_group_phase(chunk):
             norm_label = cleaner.Cleaner(label).clean()
             if cell not in data_retrieval_result:
                 data_retrieval_result[cell] = []
-
+            
             data_retrieval_result[cell].append((norm_label, entity))
     
     shared_memory.update(data_retrieval_result)

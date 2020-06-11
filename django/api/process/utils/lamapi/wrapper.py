@@ -20,7 +20,7 @@ class LamAPIWrapper:
         # Avoid solr injection
         query_tokens = query.split(' ')
         query = " ".join([
-            f'"{token}"'
+            f'{token}'          # TODO: solr injection
             for token in query_tokens
         ])
         
@@ -33,6 +33,7 @@ class LamAPIWrapper:
         )
 
         if "results" in response:
+            print(query, response["count"])
             return response["results"]
 
         return response
@@ -108,8 +109,10 @@ class LamAPIWrapper:
         return response.json()
 
     def _log(self, endpoint_name, query):
-        q = str(query).replace('\n', '')[0:10] + '...'
-        print(f"LAMAPI {endpoint_name} {q}")
+        query = str(query).replace('\n', '')
+        if len(query) > 20:
+            query = query[0:20] + '...'
+        print(f"LAMAPI {endpoint_name} {query}")
 
 
 """

@@ -9,10 +9,11 @@ from api.process.normalization import cleaner
 from api.process.cea.models.cell import Cell
 from api.process.cea.models.link import Link
 from api.process.cea.models.row import Row
-import api.process.cea.literals_confidence as lit_utils
+from api.process.utils.rules import person_rule as rules
 from api.process.utils.lamapi import LamAPIWrapper
 from api.process.utils.math_utils import edit_distance, step
 
+import api.process.cea.literals_confidence as lit_utils
 import mantistable.settings
 
 from multiprocessing import Manager
@@ -35,7 +36,13 @@ def _get_candidate_confidence(candidate, cell):
 
         label = " ".join(tokens).lower()
     """
-    key = (candidate, cell.normalized)
+    rule = rules.PersonRule(cell.content)
+    if rule.match():
+        candidate_label = rule.build_label(cell.normalized)
+    else:
+        candidate_label = cell.normalized
+
+    key = (candidate, candidate_label)
     """
     if key in candidates_confidence_cache:
         return candidates_confidence_cache[key]
@@ -43,7 +50,7 @@ def _get_candidate_confidence(candidate, cell):
 
     winning_conf = 0.0
     for normalized_label in cell.candidates_labels(candidate):
-        confidence = 1.0 - edit_distance(cell.normalized, normalized_label)
+        confidence = 1.0 - edit_distance(candidate_label, normalized_label)
         
         if confidence > winning_conf:
             winning_conf = confidence
@@ -118,6 +125,7 @@ class Linkage:
         cand_objects = set()
 
         # Get candidates objects from lamapi service
+        print(f"{subj_cell.content} | {cell2.content} | {len(subj_cell.candidates_entities())}")
         cand_lamapi_objects, cand_lamapi_predicates = self._get_candidates_objects(subj_cell.candidates_entities())
         for cand1_uri, candidates_objects in cand_lamapi_objects.items():
             for sub_obj in candidates_objects:

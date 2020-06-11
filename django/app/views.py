@@ -255,14 +255,32 @@ class SearchResultView(View):
                 table.cols = payload
                 table.save()            
         elif header == "computation":
+            cols = []
             for row in payload:
                 subject = row[0]
-                links = [
-                    (link[0][1], link[0][2], round(link[1], 2))
-                    for link in row[1]
-                    if link[0] is not None
-                ]
-                print(subject, links)
+                linkages = []
+                for link in row[1]:
+                    if link[0] is not None:
+                        l = (link[0][1], link[0][2], round(link[1], 2))
+                        linkages.append({
+                            "subject": subject,
+                            "predicate": l[0],
+                            "object": l[1],
+                            "confidence": l[2]
+                        })
+                    else:
+                        linkages.append({
+                            "subject": subject,
+                            "predicate": None,
+                            "object": None,
+                            "confidence": 0.0
+                        })
+                cols.append(linkages)
+
+            print(cols)
+            if table is not None:
+                table.linkages = cols
+                table.save()
         else:
             print(payload)
         print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")

@@ -78,5 +78,7 @@ class Table(models.Model):
     predicates = SafeJSONField(default=[])
     concepts = SafeJSONField(default=[])
 
+    linkages = JSONField(default=[])    # TODO: Just for debug and fast export
+
     rows_count = models.PositiveIntegerField()
     cols_count = models.PositiveIntegerField()
