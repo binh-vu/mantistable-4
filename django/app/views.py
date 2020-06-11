@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -122,6 +122,37 @@ class ProcessView(View):
             "phrase": HTTPStatus(status).phrase,
             "message": response.json()
         })
+
+
+class ExportView(View):
+    def get(self, request):
+        ids = request.GET.get("datasets", "")
+        ids = ids.split(",")
+        if len(ids) != 0:
+            datasets = Dataset.objects.filter(name__in=ids)
+        else:
+            return redirect("home")
+
+        tables = []
+        for dataset in datasets:
+            for table in dataset.table_set.all():
+                tables.append((table.name, table.linkages))
+
+        csv_export = ""
+        for name, linkages in tables:
+            table_name = name[0:-5]
+            prefix = "http://dbpedia.org/resource/"
+            for row_idx, row in enumerate(linkages):
+                for col_idx, col in enumerate(row):
+                    if col["confidence"] > 0.0:
+                        content = f"\"{table_name}\",\"{col_idx+1}\",\"{row_idx+1}\",\"{prefix}{col['object']}\""
+                        csv_export += content + "\n"
+                content = f"\"{table_name}\",\"0\",\"{row_idx+1}\",\"{prefix}{col['subject']}\""
+                csv_export += content + "\n"
+        
+        response = HttpResponse(csv_export, content_type="text/csv")
+        response['Content-Disposition'] = f'inline; filename=CEA.csv'
+        return response
 
 
 class JobView(View):

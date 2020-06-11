@@ -48,31 +48,6 @@
                     </div>
                 </form>
             </div>
-
-            <!--
-            <div class="col-md-6">
-                <form id="export-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
-                    {% csrf_token %}
-                    <input type='hidden' name='form' value='export'> 
-                    <div class="box box-solid">
-                        <div class="box-header with-border">
-                            <h3 class="box-title">Export</h3>
-                        </div>
-                        <div class="box-body">
-                            {{ export_form | crispy }}
-
-                            <div class="box-footer">
-                                <div class="btn-wrapper">
-                                    <button type="submit" class="btn btn-info">
-                                        Download
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            -->
         </div>
 
         <div class="row">
@@ -98,10 +73,14 @@
                         <div class="box-footer">
                             <div class="btn-wrapper">
                                 <a id="process-selected-btn" href="#" class="btn btn-warning">
-                                    Process selected <span id="selected-count" class="badge badge-light"></span> <span id="last-status-code" class="badge badge-light"></span>
+                                    Process selected <span class="badge badge-light selected-count"></span> <span id="last-status-code" class="badge badge-light"></span>
                                 </a>
                                 <a id="process-btn" href="#" class="btn btn-danger">
                                     Process all <span id="last-status-code-all" class="badge badge-light"></span>
+                                </a>
+
+                                <a id="export-selected-btn" href="#" class="btn btn-info">
+                                    Export selected <span class="badge badge-light selected-count"></span>
                                 </a>
                             </div>
                         </div>
@@ -170,6 +149,7 @@
     <script>
         $(function() {
             $("#process-selected-btn").attr('disabled', true);
+            $("#export-selected-btn").attr('disabled', true);
             let selections = [];
             $("#process-btn").click(function() {
                 $('#last-status-code').empty();
@@ -197,6 +177,13 @@
                             $('#job-table').bootstrapTable("refresh");
                         }
                     });
+                }
+            });
+            $("#export-selected-btn").click(function() {
+                if ($("#export-selected-btn").attr("disabled") === undefined) {
+                    console.log("Export selected", selections)
+                    datasets = selections.join(",")
+                    window.location = "{% url 'export' %}?datasets=" + datasets
                 }
             });
 
@@ -305,26 +292,31 @@
                 });
                 if (selections.length > 0) {
                     $("#process-selected-btn").attr('disabled', false);
+                    $("#export-selected-btn").attr('disabled', false);
                 } else {
                     $("#process-selected-btn").attr('disabled', true);
+                    $("#export-selected-btn").attr('disabled', true);
                 }
-                $("#selected-count").text(selections.length)
+                $(".selected-count").text(selections.length)
             });
 
             $('#dataset-table').on('uncheck-all.bs.table', function (e, row) {
                 selections = [];
                 $("#process-selected-btn").attr('disabled', true);
-                $("#selected-count").text(selections.length)
+                $("#export-selected-btn").attr('disabled', true);
+                $(".selected-count").text(selections.length)
             });
 
             $('#dataset-table').on('check.bs.table', function (e, row) {
                 selections.push(row.name);
                 if (selections.length > 0) {
                     $("#process-selected-btn").attr('disabled', false);
+                    $("#export-selected-btn").attr('disabled', false);
                 } else {
                     $("#process-selected-btn").attr('disabled', true);
+                    $("#export-selected-btn").attr('disabled', true);
                 }
-                $("#selected-count").text(selections.length)
+                $(".selected-count").text(selections.length)
             });
 
             $('#dataset-table').on('uncheck.bs.table', function (e, row) {
@@ -335,10 +327,12 @@
                 });
                 if (selections.length > 0) {
                     $("#process-selected-btn").attr('disabled', false);
+                    $("#export-selected-btn").attr('disabled', false);
                 } else {
                     $("#process-selected-btn").attr('disabled', true);
+                    $("#export-selected-btn").attr('disabled', true);
                 }
-                $("#selected-count").text(selections.length)
+                $(".selected-count").text(selections.length)
             });
 
             // Celery stats
