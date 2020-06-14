@@ -15,14 +15,6 @@ class ImportForm(forms.Form):
         label_suffix=""
     )
 
-class ExportForm(forms.Form):
-    export_type = forms.ChoiceField(
-        choices=(
-            ("CEA", "CEA"),
-            ("CPA", "CPA"),
-            ("CTA", "CTA"),
-        )
-    )
 
 class QueryServiceForm(forms.Form):
     json = forms.CharField(

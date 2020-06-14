@@ -70,6 +70,13 @@ class Dataset(models.Model):
     average_rows = models.FloatField()
     average_cols = models.FloatField()
 
+    @property
+    def has_annotations(self):
+        return any([
+            table.has_annotations
+            for table in self.table_set.all()
+        ])
+
 class Table(models.Model):
     name = models.CharField(max_length=255)
     dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE)   # TODO: check this
@@ -82,3 +89,5 @@ class Table(models.Model):
 
     rows_count = models.PositiveIntegerField()
     cols_count = models.PositiveIntegerField()
+
+    has_annotations = models.BooleanField(default=False)

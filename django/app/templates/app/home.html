@@ -16,7 +16,7 @@
             <canvas id="joke" style="width: 84.8%; height:1em"></canvas>
         </h2>
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-5">
                 <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
                     {% csrf_token %}
                     <input type='hidden' name='form' value='import'> 
@@ -48,6 +48,44 @@
                     </div>
                 </form>
             </div>
+        
+            <div class="col-md-7">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">LAMApi Backends</h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="table-responsive table-wrapper">
+                            <table class="table table-bordered sde-table">
+                                <thead>
+                                    <tr>
+                                        <th>url</th>
+                                        <th>description</th>
+                                        <th>prefixes</th>
+                                        <th>status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr>
+                                        <td><a href="http://149.132.176.50:8093">149.132.176.50:8093</a></td>
+                                        <td>Dbpedia</td>
+                                        <td>dbr, dbo, foaf, geo</td>
+                                        <td>ONLINE</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="http://149.132.176.50:8097">149.132.176.50:8097</a></td>
+                                        <td>Wikidata</td>
+                                        <td>wiki</td>
+                                        <td>OFFLINE</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row">
@@ -59,6 +97,7 @@
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
                             <table
+                                class="table table-bordered sde-table"
                                 id="dataset-table"
                                 data-search="false"
                                 data-show-refresh="true"
@@ -88,6 +127,7 @@
                 </div>
             </div>
         </div>
+
         <div class="row">
             <div class="col-md-7">
                 <div class="box box-solid">
@@ -97,6 +137,7 @@
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
                             <table
+                                class="table table-bordered sde-table"
                                 id="job-table"
                                 data-search="false"
                                 data-show-refresh="true"
@@ -208,6 +249,13 @@
                 return (value).toFixed(1);
             }
 
+            function boolFormatter(value, row, index) {
+                if (value) {
+                    return '<i class="fa fa-check" aria-hidden="true"></i>'
+                } 
+                return '<i class="fa fa-times" aria-hidden="true"></i>'
+            }
+
             $('#job-table').bootstrapTable({
                 url: "{% url 'jobs' %}",
                 locale: "it-IT",
@@ -281,6 +329,12 @@
                             title: "Avg. Cols",
                             sortable: true,
                             formatter: floatFormatter
+                        },
+                        {
+                            field: "has_annotations",
+                            title: "Annotated",
+                            align: 'center',
+                            formatter: boolFormatter
                         },
                     ]
                 ]

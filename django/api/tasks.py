@@ -115,10 +115,14 @@ def data_preparation_table_phase(job_id, table_id, table_data):
 
     print(f"Normalization")
     normalization_result = _normalization_phase(table_id, table_data)
+    job.progress["current"] = 1
+    job.save()
     client_callback(job, table_id, "normalization", normalization_result)
     
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
+    job.progress["current"] = 2
+    job.save()
     client_callback(job, table_id, "column analysis", col_analysis_result)
 
     return table_id, table_data, col_analysis_result
@@ -185,6 +189,8 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         cea_results, 
         cpa_results
     ).compute()
+    job.progress["current"] = 3
+    job.save()
     client_callback(job, table_id, "computation", revision_results)
 
     #print(revision_results)

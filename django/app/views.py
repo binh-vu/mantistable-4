@@ -8,7 +8,7 @@ from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
 
 from app.imports.dataset import DatasetImport
-from app.forms import ImportForm, ExportForm, QueryServiceForm
+from app.forms import ImportForm, QueryServiceForm
 from app.models import Table, Dataset
 from api.models import Job
 
@@ -31,7 +31,6 @@ def index(request):
 class HomeView(FormView):
     template_name = 'app/home.html'
     form_class = ImportForm
-    #export_form_class = ExportForm
     success_url = reverse_lazy('home')
 
     def post(self, request, *args, **kwargs):
@@ -39,11 +38,6 @@ class HomeView(FormView):
             if request.POST.get('form') == 'import':
                 form_class = self.get_form_class()
                 form_name = 'form'
-            """
-            else:
-                form_class = self.export_form_class
-                form_name = 'form2'
-            """
 
         form = self.get_form(form_class)
 
@@ -61,13 +55,6 @@ class HomeView(FormView):
 
             DatasetImport(dataset_name, table_file).load()
             return super().form_valid(form)
-        """
-        else:
-            export_type = form.cleaned_data.get('export_type')
-            response = HttpResponse(self._export(export_type), content_type="text/csv")
-            response['Content-Disposition'] = f'inline; filename={export_type}.csv'
-            return response
-        """
 
     def get_context_data(self, **kwargs):
         context = super(HomeView, self).get_context_data(**kwargs)
@@ -75,22 +62,7 @@ class HomeView(FormView):
         if 'form' not in context:
             context['form'] = self.form_class()
 
-        """
-        if 'export_form' not in context:
-            context['export_form'] = self.export_form_class()
-        """
-
         return context
-
-    """
-    def _export(self, export_type):
-        if export_type == "CEA":
-            return "cea"
-        elif export_type == "CPA":
-            return "cpa"
-        elif export_type == "CTA":
-            return "cta"
-    """
 
 
 class ProcessView(View):
@@ -210,6 +182,7 @@ class DatasetView(View):
             "average_rows": dataset.average_rows,
             "average_cols": dataset.average_cols,
             "table_count": dataset.table_count,
+            "has_annotations": dataset.has_annotations
         }
 
 class CeleryLoadView(View):
@@ -315,6 +288,7 @@ class SearchResultView(View):
             print(cols)
             if table is not None:
                 table.linkages = cols
+                table.has_annotations = True
                 table.save()
         else:
             print(payload)

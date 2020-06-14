@@ -21,7 +21,7 @@ class JobView(generics.ListCreateAPIView):
             callback=serializer.data["callback"],
             progress={
                 "current": 0,
-                "total": 5
+                "total": 3
             }
         )
         job.save()
