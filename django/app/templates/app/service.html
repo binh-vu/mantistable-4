@@ -46,6 +46,19 @@
                 </form>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Last results</h3>
+                    </div>
+                    <div id="results" class="box-body">
+                        No results yet!
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 {% endblock %}
@@ -69,6 +82,43 @@
     </script>
 
     <script>
+        $(function() {
+            let ws = new WebSocket('ws://' + window.location.hostname + ':5001/service');
+
+            ws.onmessage = function(e) {
+                let data = JSON.parse(e.data);
+                let command = data["command"];
+                let resource = data["resource"];
+                let payload = data["payload"]
+
+                if (command == "UPDATE") {
+                    if (resource == "results") {
+                        console.log(payload);
+
+                        let results = $("#results");
+                        results.empty();
+                        payload.forEach(function(item) {
+                            console.log(item);
+                            let subject = item["subject"];
+                            let predicate = item["predicate"];
+                            let object = item["object"];
+                            let confidence = item["confidence"];
+
+                            let subjectTemplate = "<span class='badge badge-primary'>" + subject + "</span>";
+                            let predicateTemplate = "<span class='badge badge-primary'>" + predicate + "</span>";
+                            let objectTemplate = "<span class='badge badge-primary'>" + object + "</span>";
+                            let arrowTemplate = " <i class='fa fa-arrow-right' aria-hidden='true'></i> "
+
+                            results.append("<p>" + subjectTemplate + arrowTemplate + predicateTemplate + arrowTemplate + objectTemplate + " (" + confidence + ")" + "</p>")
+                        })
+                    }
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("Close connection");
+            };
+        });
     </script>
 
 {% endblock %}

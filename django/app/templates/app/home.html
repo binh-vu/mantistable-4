@@ -92,7 +92,18 @@
             <div class="col-md-12">
                 <div class="box box-solid">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Datasets <span class="badge badge-primary">{{loaded_dataset}}</span></h3>
+                        <h3 class="box-title pull-left">
+                            Datasets <span class="badge badge-primary">{{loaded_dataset}}</span>
+                        </h3>
+
+                        <div class="btn-wrapper pull-right">
+                            <a id="process-selected-btn" href="#" class="btn btn-warning">
+                                Process selected <span class="badge badge-light selected-count"></span> <span id="last-status-code" class="badge badge-light"></span>
+                            </a>
+                            <a id="process-btn" href="#" class="btn btn-danger">
+                                Process all <span id="last-status-code-all" class="badge badge-light"></span>
+                            </a>
+                        </div>
                     </div>
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
@@ -100,8 +111,8 @@
                                 class="table table-bordered sde-table"
                                 id="dataset-table"
                                 data-search="false"
-                                data-show-refresh="true"
-                                data-show-pagination-switch="true"
+                                data-show-refresh="false"
+                                data-show-pagination-switch="false"
                                 data-pagination="true"
                                 data-side-pagination="server"
                                 data-id-field="id"
@@ -111,13 +122,6 @@
 
                         <div class="box-footer">
                             <div class="btn-wrapper">
-                                <a id="process-selected-btn" href="#" class="btn btn-warning">
-                                    Process selected <span class="badge badge-light selected-count"></span> <span id="last-status-code" class="badge badge-light"></span>
-                                </a>
-                                <a id="process-btn" href="#" class="btn btn-danger">
-                                    Process all <span id="last-status-code-all" class="badge badge-light"></span>
-                                </a>
-
                                 <a id="export-selected-btn" href="#" class="btn btn-info">
                                     Export selected <span class="badge badge-light selected-count"></span>
                                 </a>
@@ -140,8 +144,8 @@
                                 class="table table-bordered sde-table"
                                 id="job-table"
                                 data-search="false"
-                                data-show-refresh="true"
-                                data-show-pagination-switch="true"
+                                data-show-refresh="false"
+                                data-show-pagination-switch="false"
                                 data-pagination="true"
                                 data-id-field="id"
                                 data-page-list="[10, 25, 50, 100, all]">
@@ -508,6 +512,30 @@
             }());
         });
 
+    </script>
+
+    <script>
+        $(function() {
+            let ws = new WebSocket('ws://' + window.location.hostname + ':5001/main');
+
+            ws.onmessage = function(e) {
+                let data = JSON.parse(e.data);
+                let command = data["command"];
+                let resource = data["resource"];
+
+                if (command == "UPDATE") {
+                    if (resource == "progress") {
+                        $('#job-table').bootstrapTable("refresh");
+                    } else if (resource == "datasets") {
+                        $('#dataset-table').bootstrapTable("refresh");
+                    }
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("Close connection");
+            };
+        });
     </script>
 
 {% endblock %}

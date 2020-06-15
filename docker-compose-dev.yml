@@ -21,17 +21,6 @@ services:
     env_file:
       - ./django/.env-dev
       
-  mongo:
-    container_name: mantistable4_mongo
-    image: mongo
-    command: mongod --port 27017
-    ports:
-      - "27017:27017"
-      
-  redis:
-    container_name: mantistable4_redis
-    image: redis:alpine
-    
   celery:
     container_name: mantistable4_celery
     image: cremarco/mantis4
@@ -44,3 +33,27 @@ services:
       - mongo
     env_file:
       - ./django/.env-dev
+      
+  tornado:
+    container_name: mantistable4_tornado
+    build: ./tornado
+    command: bash -c "echo 'Starting websocket server...' &&
+                      python server.py"
+    volumes:
+      - ./tornado:/app
+    ports:
+      - "5000:5000"     # Remove in production
+      - "5001:5001"
+    depends_on:
+      - web
+      
+  mongo:
+    container_name: mantistable4_mongo
+    image: mongo
+    command: mongod --port 27017
+    ports:
+      - "27017:27017"
+      
+  redis:
+    container_name: mantistable4_redis
+    image: redis:alpine

@@ -31,7 +31,7 @@ def job_slot(job_id: int):
         for item in job.tables
     ]
 
-    workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s() | computation_phase.s(job_id) | clean_up.si(job_id)
+    workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
     return workflow.apply_async()
 
 @app.task(name="data_preparation_phase", bind=True)
@@ -42,7 +42,11 @@ def data_preparation_phase(self, tables, job_id):
     ]))
 
 @app.task(name="data_retrieval_phase", bind=True)
-def data_retrieval_phase(self, tables):
+def data_retrieval_phase(self, tables, job_id):
+    job = Job.objects.get(id=job_id)
+    job.progress["current"] = 1
+    job.save()
+
     # TODO: Extract to utils
     def generate_chunks(iterable, n):
         assert (n > 0)
@@ -100,6 +104,10 @@ def data_retrieval_phase(self, tables):
 
 @app.task(name="computation_phase", bind=True)
 def computation_phase(self, info, job_id):
+    job = Job.objects.get(id=job_id)
+    job.progress["current"] = 2
+    job.save()
+
     print("Computation")
     self.replace(
         group([
@@ -115,14 +123,10 @@ def data_preparation_table_phase(job_id, table_id, table_data):
 
     print(f"Normalization")
     normalization_result = _normalization_phase(table_id, table_data)
-    job.progress["current"] = 1
-    job.save()
     client_callback(job, table_id, "normalization", normalization_result)
     
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
-    job.progress["current"] = 2
-    job.save()
     client_callback(job, table_id, "column analysis", col_analysis_result)
 
     return table_id, table_data, col_analysis_result
@@ -189,8 +193,6 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         cea_results, 
         cpa_results
     ).compute()
-    job.progress["current"] = 3
-    job.save()
     client_callback(job, table_id, "computation", revision_results)
 
     #print(revision_results)
@@ -200,8 +202,14 @@ def computation_table_phase(job_id, table_id, table_data, columns):
 
 @app.task(name="clean_up")
 def clean_up(job_id):
+    job = Job.objects.get(id=job_id)
+    job.progress["current"] = 3
+    job.save()
+
+    client_callback(job, -1, "end", {})
+
     # TODO: For now just delete job
-    Job.objects.get(id=job_id).delete()
+    job.delete()
 
 def _normalization_phase(table_id, data):
     table_model = table.Table(table_id=table_id, table=data)

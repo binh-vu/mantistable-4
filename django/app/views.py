@@ -81,7 +81,7 @@ class ProcessView(View):
         
         data = {
             "tables": json.dumps(tables),
-            "callback": _build_url(request, 'search-result')
+            "callback": _build_url(request, 'main-result')
         }
 
         uri = _build_url(request, 'api_job')
@@ -232,10 +232,10 @@ class ServiceView(FormView):
         return super().form_valid(form)
 
 
-class SearchResultView(View):
+class MainResultView(View):
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
-        return super(SearchResultView, self).dispatch(request, *args, **kwargs)
+        return super(MainResultView, self).dispatch(request, *args, **kwargs)
 
     # TODO: In general this is a bit dangerous if someone other than api post on this
     def post(self, request):
@@ -256,6 +256,16 @@ class SearchResultView(View):
             table = Table.objects.get(id=table_id)
         except Table.DoesNotExist:
             table = None
+
+        # TODO: Implement better websocket wrapper
+        requests.post("http://mantistable4_tornado:5000", json={
+            "channel": "main",
+            "payload": {
+                "command": "UPDATE",    # TODO: Making this up just for test
+                "resource": "progress",
+                "payload": {}
+            }
+        })
 
         if header == "column analysis":
             # TODO: Parse format
@@ -290,8 +300,69 @@ class SearchResultView(View):
                 table.linkages = cols
                 table.has_annotations = True
                 table.save()
+
+                # TODO: Implement better websocket wrapper
+                requests.post("http://mantistable4_tornado:5000", json={
+                    "channel": "main",
+                    "payload": {
+                        "command": "UPDATE",    # TODO: Making this up just for test
+                        "resource": "datasets",
+                        "payload": {}
+                    }
+                })
         else:
             print(payload)
         print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+
+        return JsonResponse({"status": "ack"}, safe=False)
+
+class SearchResultView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SearchResultView, self).dispatch(request, *args, **kwargs)
+
+    # TODO: In general this is a bit dangerous if someone other than api post on this
+    def post(self, request):
+        data = json.loads(request.body)
+
+        job_id = data.get("job_id", -1)
+        header = data.get("header", "invalid")
+        payload = data.get("payload", "invalid")
+
+        if job_id < 0:
+            return JsonResponse({"status": "bad format"}, safe=False)
+
+        if header == "computation":
+            cols = []
+            for row in payload:
+                subject = row[0]
+                linkages = []
+                for link in row[1]:
+                    if link[0] is not None:
+                        l = (link[0][1], link[0][2], round(link[1], 2))
+                        linkages.append({
+                            "subject": subject,
+                            "predicate": l[0],
+                            "object": l[1],
+                            "confidence": l[2]
+                        })
+                    else:
+                        linkages.append({
+                            "subject": subject,
+                            "predicate": None,
+                            "object": None,
+                            "confidence": 0.0
+                        })
+                cols = linkages
+
+            # TODO: Implement better websocket wrapper
+            requests.post("http://mantistable4_tornado:5000", json={
+                "channel": "service",
+                "payload": {
+                    "command": "UPDATE",    # TODO: Making this up just for test
+                    "resource": "results",
+                    "payload": cols
+                }
+            })
 
         return JsonResponse({"status": "ack"}, safe=False)
