@@ -72,10 +72,10 @@ class Dataset(models.Model):
 
     @property
     def has_annotations(self):
-        return any([
+        return any((
             table.has_annotations
             for table in self.table_set.all()
-        ])
+        ))
 
 class Table(models.Model):
     name = models.CharField(max_length=255)
