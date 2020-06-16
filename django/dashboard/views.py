@@ -7,29 +7,28 @@ from django.views.generic.edit import FormView
 from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
 
-from app.imports.dataset import DatasetImport
-from app.forms import ImportForm, QueryServiceForm
-from app.models import Table, Dataset
 from api.models import Job
+from web.models import Table, Dataset
+from dashboard.imports.dataset import DatasetImport
+from dashboard.forms import ImportForm, QueryServiceForm
 
 from celery import current_app
-
 from http import HTTPStatus
 import json
 import requests
 
-#NOTE: This is really bad:
-#NOTE: 0.0.0.0 is not always in the url...
+
 def _build_url(request, view_name):
-        return request.build_absolute_uri(reverse(view_name)).replace("0.0.0.0", "mantistable4web")
+    return "http://web:8000" + reverse(view_name)
+
 
 def index(request):
     context = {}
-    return render(request, 'app/index.html', context)
+    return render(request, 'dashboard/index.html', context)
 
 
 class HomeView(FormView):
-    template_name = 'app/home.html'
+    template_name = 'dashboard/home.html'
     form_class = ImportForm
     success_url = reverse_lazy('home')
 
@@ -149,6 +148,7 @@ class JobView(View):
             "callback": job.callback
         }
 
+
 class DatasetView(View):
     def get(self, request):
         offset_filter = int(request.GET.get("offset", "0"))
@@ -203,7 +203,7 @@ class CeleryLoadView(View):
 
 
 class ServiceView(FormView):
-    template_name = 'app/service.html'
+    template_name = 'dashboard/service.html'
     form_class = QueryServiceForm
     success_url = reverse_lazy('service')
 

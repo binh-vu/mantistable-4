@@ -1,8 +1,8 @@
 # Created by https://www.gitignore.io/api/linux,macos,django,python,windows,jetbrains+all
 # Edit at https://www.gitignore.io/?templates=linux,macos,django,python,windows,jetbrains+all
 
-django/app/static/app/css/.sass-cache
-django/app/migrations
+css/.sass-cache
+migrations/
 django/node_modules
 django/staticfiles
 django/package-lock.json

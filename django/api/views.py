@@ -5,9 +5,9 @@ from rest_framework import generics
 from api.process.utils.mongo.repository import Repository
 from api.serializers import JobSerializer
 from api.models import Job
-from app.models import Table
 import api.tasks as tasks
 
+from web.models import Table
 
 class JobView(generics.ListCreateAPIView):
     queryset = Job.objects.all()

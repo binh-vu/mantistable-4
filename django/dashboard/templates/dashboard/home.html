@@ -1,4 +1,4 @@
-{% extends "app/base-dashboard.html" %}
+{% extends "web/base-dashboard.html" %}
 
 {% load static %}
 {% load crispy_forms_tags %}
@@ -465,12 +465,12 @@
                         marioClickable = false;
                         marioSpeed = 0.0;
 
-                        mario.src = "{% static 'app/images/splat.png' %}";
+                        mario.src = "{% static 'dashboard/images/splat.png' %}";
                         
                         console.log("Die");
 
                         // Scaring people: check! Who cares right? AHahAHahAH
-                        var snd = new Audio("{% static 'app/images/di.data' %}");
+                        var snd = new Audio("{% static 'dashboard/images/di.data' %}");
                         snd.volume = 0.75;   // Ok not so loud
                         snd.play();          // Enjoy
                         // Good music bytheway
@@ -480,7 +480,7 @@
                 mario.onload = function() {
                     start();
                 }
-                mario.src = "{% static 'app/images/mario.png' %}";
+                mario.src = "{% static 'dashboard/images/mario.png' %}";
 
                 var then = Date.now();
                 function start() {

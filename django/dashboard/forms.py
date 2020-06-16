@@ -1,6 +1,6 @@
 from django import forms
 from django.core.validators import FileExtensionValidator
-from app.models import Table
+from web.models import Table
 
 import json
 

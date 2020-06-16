@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from api.models import Job
-from app.models import Table
+from web.models import Table
 
 import json
 

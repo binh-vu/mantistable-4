@@ -2,7 +2,7 @@ version: '3'
 
 services:
   web:
-    container_name: mantistable4web
+    container_name: mantistable4_web
     image: cremarco/mantis4
     command: bash -c "echo 'Making migrations...' &&
                       python manage.py makemigrations &&

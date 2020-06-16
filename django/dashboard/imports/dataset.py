@@ -1,4 +1,4 @@
-from app.models import Table, Dataset
+from web.models import Table, Dataset
 import json
 import csv
 import zipfile

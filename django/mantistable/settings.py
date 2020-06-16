@@ -33,7 +33,7 @@ PORT = os.environ.get("PORT", "80")
 LAMAPI_HOST = os.environ.get("LAMAPI_HOST", "localhost")
 LAMAPI_PORT = os.environ.get("LAMAPI_PORT", "8093")
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "mantistable4web"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web"]
 if HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(HOST)
 
@@ -42,7 +42,10 @@ if HOST not in ALLOWED_HOSTS:
 
 INSTALLED_APPS = [
     'api.apps.ApiConfig',
-    'app.apps.AppConfig',
+    'web.apps.WebConfig',
+    'web_api.apps.WebApiConfig',
+    'dashboard.apps.DashboardConfig',
+
     'account.apps.AccountConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
     'rest_framework',
     'rest_framework_swagger',
     'crispy_forms',
@@ -70,7 +74,7 @@ ROOT_URLCONF = 'mantistable.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ["stiltool/"],
+        'DIRS': [""],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
