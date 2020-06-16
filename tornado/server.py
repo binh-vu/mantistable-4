@@ -11,10 +11,9 @@ import signal
 import time
 import json
 
-
-#TODO: Update this
 define('debug', default=False, type=bool, help='Run in debug mode')
-define('port', default=5001, type=int, help='Server websocket port')
+define('restport', default=5000, type=int, help='Server rest port')
+define('wsport', default=5001, type=int, help='Server websocket port')
 define('allowed_hosts', default="localhost:5001", multiple=True,
     help='Allowed hosts for cross domain connections')
 
@@ -113,10 +112,8 @@ class CommandHandler(RequestHandler):
                 'status': 'bad request',
                 'request': data
             })
-                
-                
-        
-        
+
+
 def shutdown(server):
     ioloop = IOLoop.instance()
     logging.info('Stopping server.')
@@ -133,14 +130,14 @@ if __name__ == "__main__":
     
     ws_app = FrontSyncApplication(debug=options.debug)
     ws_server = HTTPServer(ws_app)
-    ws_server.listen(options.port)
+    ws_server.listen(options.wsport)
     
     app = Application([("/", CommandHandler)], debug=True)
-    app.listen(5000)
+    app.listen(options.restport)
     
     #signal.signal(signal.SIGINT, lambda sig, frame: shutdown(ws_server))
     
-    logging.info('Starting rest server on localhost:{}'.format(5000))
-    logging.info('Starting ws server on localhost:{}'.format(options.port))
+    logging.info('Starting rest server on localhost:{}'.format(options.restport))
+    logging.info('Starting ws server on localhost:{}'.format(options.wsport))
     IOLoop.instance().start()
  
