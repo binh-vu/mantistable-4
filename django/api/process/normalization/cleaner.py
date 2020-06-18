@@ -26,6 +26,7 @@ class Cleaner:
 
         i = 0
         token = self._get_token(tokens, i)
+        print(tokens)
     
         while token is not None:
             value = token.value
@@ -59,7 +60,7 @@ class Cleaner:
             elif value == "'":
                 if len(clean_text) > 0 and clean_text[-1] == " ":
                     clean_text = clean_text[0:-1]
-                    clean_text += value + " "
+                    clean_text += value
 
             i += 1
             token = self._get_token(tokens, i)
