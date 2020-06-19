@@ -74,7 +74,7 @@ def data_retrieval_phase(self, tables, job_id):
                     else:
                         query = values["normalized"]
 
-                    cells_content.add((query, values["original"]))
+                    cells_content.add(query)
 
         """
         cells = {
@@ -88,8 +88,6 @@ def data_retrieval_phase(self, tables, job_id):
 
     cells_content = list(cells_content)
 
-
-
     # TODO: Extract constants
     THREADS = 4
     CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
@@ -97,7 +95,7 @@ def data_retrieval_phase(self, tables, job_id):
 
     self.replace(
         group([
-            data_retrieval_group_phase.si(chunk)
+            data_retrieval_group_phase.si(job_id, chunk)
             for chunk in chunks
         ]) | dummy_phase.si(tables)
     )
@@ -132,12 +130,15 @@ def data_preparation_table_phase(job_id, table_id, table_data):
     return table_id, table_data, col_analysis_result
 
 @app.task(name="data_retrieval_group_phase")
-def data_retrieval_group_phase(chunk):
+def data_retrieval_group_phase(job_id, chunk):
     solr_result = data_retrieval.CandidatesRetrieval(chunk).get_candidates()
 
     print("Clean solr results")
     data_retrieval_result = {}
     for cell in solr_result.keys():
+        if len(solr_result[cell]) == 0:
+            client_callback(Job.objects.get(id=job_id), -1, "debug", cell)
+
         for res in solr_result[cell]:
             label = res["label"]
             entity = res["uri"]

@@ -5,13 +5,13 @@ import string
 from nltk.corpus import stopwords
 
 
-def remove_punctuations(s):
+def remove_punctuations(s, punctuation=string.punctuation):
     """
     Remove punctuations characters
     :param s:
     :return:
     """
-    return s.translate(str.maketrans("", "", string.punctuation))
+    return s.translate(str.maketrans("", "", punctuation))
 
 
 def remove_extra_spaces(s):

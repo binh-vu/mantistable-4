@@ -162,6 +162,14 @@ class MainResultView(View):
                         "payload": {}
                     }
                 })
+        elif header == "debug":
+            requests.post("http://mantistable4_tornado:5000", json={
+                "channel": "0",
+                "payload": {
+                    "command": "DEBUG",
+                    "payload": payload
+                }
+            })
         else:
             print(payload)
         print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
@@ -214,6 +222,14 @@ class SearchResultView(View):
                     "command": "UPDATE",    # TODO: Making this up just for test
                     "resource": "results",
                     "payload": cols
+                }
+            })
+        elif header == "debug":
+            requests.post("http://mantistable4_tornado:5000", json={
+                "channel": "0",
+                "payload": {
+                    "command": "DEBUG",
+                    "payload": payload
                 }
             })
 

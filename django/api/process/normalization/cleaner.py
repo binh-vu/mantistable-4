@@ -1,6 +1,8 @@
 from api.process.normalization.tokenizer import Tokenizer, TokenTagEnum
-
 from nltk.corpus import stopwords
+import string
+
+import api.process.utils.nlp.utils as nlp
 
 class Cleaner:
     def __init__(self, text):
@@ -21,13 +23,13 @@ class Cleaner:
         '''
 
     def _get_clean_text(self):
+        """
         clean_text = ""
         tokens = self._tokenizer.tokenize(self._text)
 
         i = 0
         token = self._get_token(tokens, i)
-        print(tokens)
-    
+
         while token is not None:
             value = token.value
             tag = token.tag
@@ -36,9 +38,13 @@ class Cleaner:
                 if "'" in value:
                     index = value.find("'")
                     value = value[0:index]
-                        
+
+                forward_token = self._get_token(tokens, i + 1)
                 if value != "":
-                    clean_text += value + " "
+                    if forward_token is not None and forward_token.value.startswith("'"):
+                        clean_text += value
+                    else:
+                        clean_text += value + " "
             elif tag == TokenTagEnum.URL:
                 clean_text += value
             elif value == "(":  # NOTE: skip parenthesis (...)
@@ -64,8 +70,18 @@ class Cleaner:
 
             i += 1
             token = self._get_token(tokens, i)
+        """
 
-        return clean_text.strip().lower()
+        clean_text = self._text
+
+        clean_text = clean_text.strip().lower()
+        clean_text = clean_text.replace(".", " ")
+        clean_text = clean_text.replace("-", " ")
+        clean_text = clean_text.replace("_", " ")
+        clean_text = clean_text.replace("/", " ")
+        clean_text = nlp.remove_punctuations(clean_text, string.punctuation.replace("'", ""))
+        clean_text = nlp.remove_extra_spaces(clean_text)
+        return clean_text
 
     def _get_token(self, tokens, idx):
         if len(tokens) <= idx:
