@@ -9,7 +9,12 @@ class PersonRule:
         
     def build_query(self):
         fields = list(map(lambda field: field.strip(), self.cell_content.split(".")))
-        fields[0] = fields[0] + "*"
+        for idx, field in enumerate(fields):
+            if len(field) == 1:
+                fields[idx] = fields[idx] + "*"
+            else:
+                break
+        
         return " ".join(fields).lower()
         
     def build_label(self, label):
