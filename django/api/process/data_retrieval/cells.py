@@ -9,7 +9,7 @@ class CandidatesRetrieval:
     def get_candidates(self):
         candidates = {}
         for norm, original in self._cells:
-            if norm in candidates:
+            if norm not in candidates:
                 cands = self._wrapper.labels(norm)
                 if len(cands) == 0:
                     cands = self._wrapper.labels(original)

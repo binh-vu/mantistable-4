@@ -33,7 +33,7 @@ class LamAPIWrapper:
         )
 
         if "results" in response:
-            #print(query, response["count"])
+            print(query, response["count"])
             return response["results"]
 
         return response
