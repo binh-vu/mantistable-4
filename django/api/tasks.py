@@ -74,7 +74,7 @@ def data_retrieval_phase(self, tables, job_id):
                     else:
                         query = values["normalized"]
 
-                    cells_content.add((query, values["original"]))
+                    cells_content.add(query)
 
         """
         cells = {
