@@ -269,7 +269,7 @@ class Linkage:
         """
             Get literal triples from Lamapi service
         """
-        triples = []
+        cand_lamapi_triples = []
         buffer = set(candidates)
         """ TODO: Cache is bugged <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         for candidate in set(candidates):
@@ -280,10 +280,11 @@ class Linkage:
 
         for s, pl in self.lamapi.literals(list(buffer)).items():
             # lamapi_literals_cache[s] = []
-            for p, l in pl.items():
-                triples.append(
+            for p, lits in pl.items():
+                cand_lamapi_triples.extend([
                     (s, p, l)
-                )
+                    for l in lits
+                ])
                 # lamapi_literals_cache[s].append((s, p, l))
 
-        return list(set(triples))
+        return list(set(cand_lamapi_triples[s]))
