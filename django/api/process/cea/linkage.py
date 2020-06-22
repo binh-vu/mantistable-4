@@ -287,4 +287,4 @@ class Linkage:
                 ])
                 # lamapi_literals_cache[s].append((s, p, l))
 
-        return list(set(cand_lamapi_triples[s]))
+        return list(set(cand_lamapi_triples))
