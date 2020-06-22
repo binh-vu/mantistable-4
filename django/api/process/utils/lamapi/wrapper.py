@@ -3,6 +3,7 @@ import json
 
 from api.process.utils.decorators import retry_on_exception
 
+
 class LamAPIWrapper:
     ACCESS_TOKEN = "ee4ba0c4f8db0eb3580cb3b7b5536c54"
 
@@ -17,26 +18,13 @@ class LamAPIWrapper:
 
         self._log("labels", query)
 
-        # Avoid solr injection
         query_tokens = query.split(' ')
         query = " ".join([
             f'{token}'          # TODO: solr injection
             for token in query_tokens
         ])
-        
-        response = self._make_request(
-            lambda: requests.get(
-                self._api_url("labels"),
-                params={"query": query, "token": self.ACCESS_TOKEN}, 
-                timeout=30
-            )
-        )
 
-        if "results" in response:
-            print(query, response["count"])
-            return response["results"]
-
-        return response
+        return self._labels_impl(query)
 
     @retry_on_exception(max_retries=5)
     def predicates(self, data):
@@ -114,6 +102,38 @@ class LamAPIWrapper:
             query = query[0:20] + '...'
         print(f"LAMAPI {endpoint_name} {query}")
 
+    def _labels_impl(self, query, results=None, cursor=None):
+        if results is None:
+            results = []
+
+        params = {
+            "query": query,
+            "token": self.ACCESS_TOKEN
+        }
+
+        if cursor is not None:
+            params.update({
+                "nextCursor": cursor
+            })
+        
+        response = self._make_request(
+            lambda: requests.get(
+                self._api_url("labels"),
+                params=params, 
+                timeout=60
+            )
+        )
+
+        if "results" in response:
+            results.extend(response["results"])
+
+            if "cursor" in response and response["count"] > 0:
+                cursor = response["cursor"]
+                results = self._labels_impl(query, results, cursor)
+            
+            return results
+        
+        return response
 
 """
 if __name__ == "__main__":
