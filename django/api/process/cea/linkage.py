@@ -59,11 +59,12 @@ def _get_candidate_confidence(candidate, cell):
     return winning_conf
 
 class Linkage:
-    def __init__(self, row):
+    def __init__(self, row, lamapi_backend):
         self.row = row
         self.lamapi = LamAPIWrapper(
-            mantistable.settings.LAMAPI_HOST,
-            mantistable.settings.LAMAPI_PORT
+            lamapi_backend["host"],
+            lamapi_backend["port"],
+            lamapi_backend["accessToken"]
         )
 
     def get_links(self):

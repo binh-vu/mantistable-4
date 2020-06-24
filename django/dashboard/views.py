@@ -11,6 +11,7 @@ from api.models import Job
 from web.models import Table, Dataset
 from dashboard.imports.dataset import DatasetImport
 from dashboard.forms import ImportForm, QueryServiceForm
+import mantistable.settings as settings
 
 from celery import current_app
 from http import HTTPStatus
@@ -62,6 +63,16 @@ class HomeView(FormView):
 class ProcessView(View):
     def post(self, request):
         ids = request.POST.getlist("ids[]", [])
+        backend = request.POST.get("backend", None)
+
+        if backend is None or backend not in settings.LAMAPI_BACKENDS:
+            JsonResponse({
+                "status": 400,
+                "phrase": HTTPStatus(400).phrase,
+                "message": {}
+            })
+
+        backend = settings.LAMAPI_BACKENDS[backend]
 
         if len(ids) == 0:
             datasets = Dataset.objects.all()
@@ -75,6 +86,9 @@ class ProcessView(View):
         
         data = {
             "tables": json.dumps(tables),
+            "backend_host": backend["host"],
+            "backend_port": backend["port"],
+            "backend_token": backend["accessToken"],
             "callback": _build_url(request, 'main-result')
         }
 
@@ -134,6 +148,7 @@ class ServiceView(FormView):
         query = form.cleaned_data.get('json')
 
         callback_url = _build_url(self.request, "search-result")
+        backend = settings.LAMAPI_BACKENDS["dbpedia"]
         data = {
             "tables": [
                 (
@@ -146,6 +161,9 @@ class ServiceView(FormView):
                     ]
                 ),
             ],
+            "backend_host": backend["host"],
+            "backend_port": backend["port"],
+            "backend_token": backend["accessToken"],
             "callback": callback_url
         }
 

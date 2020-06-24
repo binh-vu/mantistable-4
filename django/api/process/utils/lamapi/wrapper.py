@@ -5,12 +5,18 @@ from api.process.utils.decorators import retry_on_exception
 
 
 class LamAPIWrapper:
-    #ACCESS_TOKEN = "ee4ba0c4f8db0eb3580cb3b7b5536c54"
-
     def __init__(self, endpoint, port, access_token):
         self._endpoint = endpoint
         self._port = port
         self._access_token = access_token
+
+    def infos(self):
+        return self._make_request(
+            lambda: requests.get(
+                self._api_url("infos"),
+                timeout=2
+            )
+        )
 
     @retry_on_exception(max_retries=5)
     def labels(self, query):
@@ -109,7 +115,7 @@ class LamAPIWrapper:
 
         params = {
             "query": query,
-            "token": self.ACCESS_TOKEN
+            "token": self._access_token
         }
 
         if cursor is not None:

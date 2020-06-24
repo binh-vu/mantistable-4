@@ -203,7 +203,8 @@
                         url: "{% url 'process' %}",
                         type: 'POST',
                         data: {
-                            "ids": selections
+                            "ids": selections,
+                            "backend": lamapi["id"],
                         },
                         success: function(result) {
                             $('#last-status-code').text(result.status + " (" + result.phrase + ")");
@@ -302,11 +303,13 @@
                         {
                             field: "description",
                             title: "Description",
+                            align: 'center',
                         },
                         {
                             field: "prefixes",
                             title: "Prefixes",
-                            formatter: prefixFormatter
+                            formatter: prefixFormatter,
+                            align: 'center',
                         },
                         {
                             field: "status",
@@ -393,18 +396,21 @@
                         {
                             field: "table_count",
                             title: "Tables",
+                            align: 'right',
                             sortable: true,
                         },
                         {
                             field: "average_rows",
                             title: "Avg. Rows",
                             sortable: true,
+                            align: 'right',
                             formatter: floatFormatter
                         },
                         {
                             field: "average_cols",
                             title: "Avg. Cols",
                             sortable: true,
+                            align: 'right',
                             formatter: floatFormatter
                         },
                         {

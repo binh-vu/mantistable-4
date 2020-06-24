@@ -10,7 +10,7 @@ class CEAProcess:
         self._candidates_map = candidates_map   # { <norm_cell>: [(<label>, <entity>), (<label>, <entity>),...] }
         self._tags = tags                       # e.g. [SUBJ, NE, LIT, NE]
 
-    def compute(self):
+    def compute(self, lamapi_backend):
         results = []
 
         # TODO: Do I really need enumeration??
@@ -21,7 +21,7 @@ class CEAProcess:
                 print("WARNING: row has no subject column. Ignoring...")
                 continue
                     
-            table_rm = Linkage(row)
+            table_rm = Linkage(row, lamapi_backend)
             links = table_rm.get_links()
             subjects = table_rm.get_subjects(links)
             results.append(

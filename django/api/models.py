@@ -8,6 +8,7 @@ class Job(models.Model):
     #table_ids = JSONField(default=[]) 
     tables = JSONField(default=[])
     progress = JSONField(default={})
+    backend = JSONField(default={})
     callback = models.CharField(max_length=255, blank=False)    # TODO: use models.URLField
     #callback = models.URLField(max_length=255, blank=False)    # TODO: use models.URLField
 

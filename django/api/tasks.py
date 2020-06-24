@@ -23,6 +23,13 @@ import math
 manager = Manager()
 shared_memory = manager.dict()
 
+# TODO: extract this
+lamapi_backensd = {
+    "host": "149.132.176.50",
+    "port": 8093,
+    "accessToken": "ee4ba0c4f8db0eb3580cb3b7b5536c54"
+}
+
 def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
 
@@ -121,13 +128,8 @@ def data_preparation_table_phase(job_id, table_id, table_data):
 
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
-    # TODO: extract this
-    lamapi_backend = {
-        "host": "mantistable4_api_rest.lamapi_mantis",
-        "port": 8093,
-        "accessToken": "ee4ba0c4f8db0eb3580cb3b7b5536c54"
-    }
-    solr_result = data_retrieval.CandidatesRetrieval(chunk, lamapi_backend).get_candidates()
+    job = Job.objects.get(id=job_id)
+    solr_result = data_retrieval.CandidatesRetrieval(chunk, job.backend).get_candidates()
 
     print("Clean solr results")
     data_retrieval_result = {}
@@ -176,7 +178,7 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         tags=tags,
         normalized_map=normalized,
         candidates_map=candidates
-    ).compute()
+    ).compute(job.backend)
 
     print(cea_results)
 

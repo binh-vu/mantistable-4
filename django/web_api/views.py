@@ -21,7 +21,7 @@ class LamapiView(View):
             lamapi = backends[backend_id]
             host = lamapi["host"]
             port = lamapi["port"]
-            description = ""
+            description = "-"
             prefixes = []
             status = "ONLINE"
 
@@ -38,6 +38,7 @@ class LamapiView(View):
                 status = "OFFLINE"
 
             lamapi_info = {
+                "id": backend_id,
                 "host": host,
                 "port": port,
                 "description": description,
