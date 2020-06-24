@@ -6,8 +6,8 @@
 
         <header class="main-header">
             <a href="{% url 'home' %}" class="logo">
-                <span class="logo-mini"><b>T</b>N</span>
-                <span class="logo-lg"><b>Tool</b>Name</span>
+                <span class="logo-mini"><b>M</b>T</span>
+                <span class="logo-lg"><b>Mantis</b>Table</span>
             </a>
 
             <nav class="navbar navbar-static-top">
@@ -52,8 +52,22 @@
 
                         <li {% if url_name == 'service' %}class="active"{% endif %}>
                             <a href="{% url 'service' %}">
-                                <i class="fas fa-server"></i>
+                                <i class="fa fa-terminal"></i>
                                 <span>Service</span>
+                            </a>
+                        </li>
+
+                        <li {% if url_name == 'logs' %}class="active"{% endif %}>
+                            <a href="#">
+                                <i class="fa fa-th-list"></i>
+                                <span>Logs</span>
+                            </a>
+                        </li>
+
+                        <li {% if url_name == 'api' %}class="active"{% endif %}>
+                            <a href="/api/">
+                                <i class="fa fa-cloud"></i>
+                                <span>Swagger API</span>
                             </a>
                         </li>
 

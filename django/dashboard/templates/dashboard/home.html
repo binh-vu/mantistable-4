@@ -23,7 +23,10 @@
 
                     <div class="box box-solid">
                         <div class="box-header with-border">
-                            <h3 class="box-title">Import</h3>
+                            <h3 class="box-title">
+                                <i class="fa fa-table" aria-hidden="true"></i>
+                                Import
+                            </h3>
                             {% for message in messages %}
                                 <span class="pull-right badge badge-primary">
                                     {{ message }}
@@ -36,7 +39,8 @@
                             <div class="box-footer">
                                 <div class="btn-wrapper">
                                     <button type="submit" class="btn btn-primary">
-                                        Submit
+                                        <i class="fa fa-upload" aria-hidden="true"></i>
+                                        <span>Submit</span>
                                     </button>
                                 </div>
                             </div>
@@ -50,7 +54,10 @@
             <div class="col-md-12">
                 <div class="box box-solid">
                     <div class="box-header with-border">
-                        <h3 class="box-title">LAMApi Backends</h3>
+                        <h3 class="box-title">
+                            <i class="fa fa-cloud" aria-hidden="true"></i>
+                            LAMApi Backends
+                        </h3>
                     </div>
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
@@ -74,6 +81,7 @@
                 <div class="box box-solid">
                     <div class="box-header with-border">
                         <h3 class="box-title pull-left">
+                            <i class="fa fa-database" aria-hidden="true"></i>
                             Datasets <span class="badge badge-primary">{{loaded_dataset}}</span>
                         </h3>
                         <div class="btn-wrapper pull-right">
@@ -117,7 +125,10 @@
             <div class="col-md-7">
                 <div class="box box-solid">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Jobs <span id="jobs-count" class="badge badge-primary"></span></h3>
+                        <h3 class="box-title">
+                            <i class="fa fa-tasks" aria-hidden="true"></i>
+                            Jobs <span id="jobs-count" class="badge badge-primary"></span>
+                        </h3>
                     </div>
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
@@ -138,7 +149,10 @@
             <div class="col-md-5">
                 <div class="box box-solid">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Tasks</h3>
+                        <h3 class="box-title">
+                            <i class="fas fa-chart-line" aria-hidden="true"></i>
+                            Job stats
+                        </h3>
                     </div>
                     <div class="box-body">
                         <canvas id="celery-stats"></canvas>
@@ -252,7 +266,7 @@
             function prefixFormatter(value, row, index) {
                 let html = '';
                 for (let key in value) {
-                    html += "<span class='badge badge-primary'>" + key + "</span>"
+                    html += "<span style='margin-right:0.25em' class='badge badge-primary'>" + key + "</span>"
                 }
                 return html;
             }
