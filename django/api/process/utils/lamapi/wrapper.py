@@ -5,11 +5,12 @@ from api.process.utils.decorators import retry_on_exception
 
 
 class LamAPIWrapper:
-    ACCESS_TOKEN = "ee4ba0c4f8db0eb3580cb3b7b5536c54"
+    #ACCESS_TOKEN = "ee4ba0c4f8db0eb3580cb3b7b5536c54"
 
-    def __init__(self, endpoint, port=8093):
+    def __init__(self, endpoint, port, access_token):
         self._endpoint = endpoint
         self._port = port
+        self._access_token = access_token
 
     @retry_on_exception(max_retries=5)
     def labels(self, query):
@@ -36,7 +37,7 @@ class LamAPIWrapper:
             lambda: requests.post(
                 self._api_url("predicates"),
                 json={"json": data},
-                params={"token": self.ACCESS_TOKEN},
+                params={"token": self._access_token},
                 timeout=30
             )
         )
@@ -51,7 +52,7 @@ class LamAPIWrapper:
             lambda: requests.post(
                 self._api_url("objects"),
                 json={"json": subjects},
-                params={"token": self.ACCESS_TOKEN},
+                params={"token": self._access_token},
                 timeout=30
             )
         )
@@ -66,7 +67,7 @@ class LamAPIWrapper:
             lambda: requests.post(
                 self._api_url("literals"),
                 json={"json": subjects},
-                params={"token": self.ACCESS_TOKEN},
+                params={"token": self._access_token},
                 timeout=30
             )
         )
@@ -81,7 +82,7 @@ class LamAPIWrapper:
             lambda: requests.post(
                 self._api_url("concepts"),
                 json={"json": entities},
-                params={"token": self.ACCESS_TOKEN},
+                params={"token": self._access_token},
                 timeout=30 
             )
         )

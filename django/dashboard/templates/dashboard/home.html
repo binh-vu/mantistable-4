@@ -56,32 +56,15 @@
                     </div>
                     <div class="box-body">
                         <div class="table-responsive table-wrapper">
-                            <table class="table table-bordered sde-table">
-                                <thead>
-                                    <tr>
-                                        <th>url</th>
-                                        <th>description</th>
-                                        <th>prefixes</th>
-                                        <th>status</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    <tr>
-                                        <td><a href="http://149.132.176.50:8093">149.132.176.50:8093</a></td>
-                                        <td>Dbpedia</td>
-                                        <td>dbr, dbo, foaf, geo</td>
-                                        <td>ONLINE</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="http://149.132.176.50:8097">149.132.176.50:8097</a></td>
-                                        <td>Wikidata</td>
-                                        <td>wiki</td>
-                                        <td>OFFLINE</td>
-                                    </tr>
-                                </tbody>
+                            <table
+                                class="table table-bordered sde-table"
+                                id="lamapi-table"
+                                data-search="false"
+                                data-show-refresh="false"
+                                data-show-pagination-switch="false"
+                                data-pagination="false"
+                                data-id-field="id">
                             </table>
-
                         </div>
                     </div>
                 </div>
@@ -117,6 +100,7 @@
                         </div>
 
                         <div class="box-footer">
+                            <span id="no-lamapi-selected" class="text-muted">Select a LAMApi Backend to process</span>
                             <div class="btn-wrapper">
                                 <a id="process-selected-btn" href="#" class="btn btn-warning">
                                     Process selected <span class="badge badge-light selected-count"></span> <span id="last-status-code" class="badge badge-light"></span>
@@ -195,6 +179,13 @@
             $("#process-selected-btn").attr('disabled', true);
             $("#export-selected-btn").attr('disabled', true);
             let selections = [];
+            let lamapi = null;
+
+            $("#no-lamapi-selected").show();
+            $("#process-selected-btn").hide();
+            $("#process-btn").hide();
+
+
             $("#process-btn").click(function() {
                 $('#last-status-code').empty();
                 $.ajax({
@@ -258,6 +249,91 @@
                 } 
                 return '<i class="fa fa-times" aria-hidden="true"></i>'
             }
+
+            function prefixFormatter(value, row, index) {
+                let html = '';
+                for (let key in value) {
+                    html += "<span class='badge badge-primary'>" + key + "</span>"
+                }
+                return html;
+            }
+
+            function statusFormatter(value, row, index) {
+                if (value == "OFFLINE") {
+                    let offline = "<span class='flashing'>OFFLINE</span>";
+                    setInterval(function () {
+                        // NOTE: This is going to make me puke!
+                        let flashing = $(".flashing");
+                        if (flashing.css("color") != "rgb(255, 255, 255)") {
+                            flashing.css('text-shadow', '2px 0 0 #ff2222, -2px 0 0 #ff2222, 0 2px 0 #ff2222, 0 -2px 0 #ff2222, 1px 1px #ff2222, -1px -1px 0 #ff2222, 1px -1px 0 #ff2222, -1px 1px 0 #ff2222');
+                            flashing.css('color', 'white');
+                        } else {
+                            flashing.css('color', "black");
+                            flashing.css('text-shadow', "");
+                        }
+                    }, 1000);
+
+                    //offline.removeClass('red-border');
+                    return offline;
+                }
+
+                return "<span>ONLINE</span>"
+            }
+
+            $('#lamapi-table').bootstrapTable({
+                url: "{% url 'lamapi' %}",
+                locale: "it-IT",
+                columns:[
+                    [
+                        {
+                            field: 'state',
+                            radio: true,
+                            
+                            align: 'center',
+                            valign: 'middle'
+                        },
+                        {
+                            field: "host",
+                            title: "Host",
+                        },
+                        {
+                            field: "port",
+                            title: "Port",
+                            align: 'center',
+                        },
+                        {
+                            field: "description",
+                            title: "Description",
+                        },
+                        {
+                            field: "prefixes",
+                            title: "Prefixes",
+                            formatter: prefixFormatter
+                        },
+                        {
+                            field: "status",
+                            title: "Status",
+                            align: 'center',
+                            formatter: statusFormatter
+                        },
+                    ]
+                ]
+            });
+
+            $('#lamapi-table').on('check.bs.table', function (e, row) {
+                if (row.status == "ONLINE") {
+                    lamapi = row;
+                    $("#no-lamapi-selected").hide();
+                    $("#process-selected-btn").show();
+                    $("#process-btn").show();
+                } else {
+                    lamapi = null;
+                    $("#no-lamapi-selected").show();
+                    $("#process-selected-btn").hide();
+                    $("#process-btn").hide();
+                }
+            });
+
 
             $('#job-table').bootstrapTable({
                 url: "{% url 'jobs' %}",

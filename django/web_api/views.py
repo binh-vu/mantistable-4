@@ -10,6 +10,44 @@ from celery import current_app
 
 import json
 import requests
+import mantistable.settings as settings
+
+class LamapiView(View):
+    def get(self, request):
+        backends = settings.LAMAPI_BACKENDS
+
+        json_response = []
+        for backend_id in backends:
+            lamapi = backends[backend_id]
+            host = lamapi["host"]
+            port = lamapi["port"]
+            description = ""
+            prefixes = []
+            status = "ONLINE"
+
+            try:
+                result = requests.get("http://" + host + ":" + str(port) + "/infos", timeout=2)
+                print(result.status_code)
+                if result.status_code != 200:
+                    status = "OFFLINE"
+                else:
+                    description = result.json()["description"]
+                    prefixes = result.json()["prefixes"]
+            except Exception as e:
+                print(str(e))
+                status = "OFFLINE"
+
+            lamapi_info = {
+                "host": host,
+                "port": port,
+                "description": description,
+                "prefixes": prefixes,
+                "status": status,
+            }
+            json_response.append(lamapi_info)
+
+
+        return JsonResponse(json_response, safe=False)
 
 class JobView(View):
     def get(self, request):

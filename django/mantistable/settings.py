@@ -11,27 +11,41 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from .config import Config
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_PATH = "mantistable.yml"
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'hpf%js#5+y!zhm!64!i#g#vqys(nxz(fxv-u-@lu894@z1@erg')  # NOTE: Fake key for development
+config = Config(CONFIG_PATH)
 
-DEBUG = os.environ.get('DEBUG_MODE', '') != 'False'
 
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", '')
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", '')
+#SECRET_KEY = os.environ.get('SECRET_KEY', 'hpf%js#5+y!zhm!64!i#g#vqys(nxz(fxv-u-@lu894@z1@erg')  # NOTE: Fake key for development
+SECRET_KEY = config["mantistable"].get("secretKey", 'hpf%js#5+y!zhm!64!i#g#vqys(nxz(fxv-u-@lu894@z1@erg')
+
+#DEBUG = os.environ.get('DEBUG_MODE', '') != 'False'
+DEBUG = config["mantistable"].get("debug", True) != False
+
+#ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", '')
+#ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", '')
+ADMIN_USERNAME = config["mantistable"]["admin"].get("username", "")
+ADMIN_PASSWORD = config["mantistable"]["admin"].get("password", "")
 
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST", '')
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD", '')
+#EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = config["mantistable"]["smtp"].get("host", "smtp.gmail.com")
+#EMAIL_HOST_USER = os.environ.get("EMAIL_HOST", '')
+EMAIL_HOST_USER = config["mantistable"]["smtp"].get("user", "")
+#EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD", '')
+EMAIL_HOST_PASSWORD = config["mantistable"]["smtp"].get("password", "")
 EMAIL_PORT = 587
 
 HOST = os.environ.get("HOST", "localhost")
 PORT = os.environ.get("PORT", "80")
 
-LAMAPI_HOST = os.environ.get("LAMAPI_HOST", "localhost")
-LAMAPI_PORT = os.environ.get("LAMAPI_PORT", "8093")
+#LAMAPI_HOST = os.environ.get("LAMAPI_HOST", "localhost")
+#LAMAPI_PORT = os.environ.get("LAMAPI_PORT", "8093")
+LAMAPI_BACKENDS = config["mantistable"].get("lamapi", {})
+
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web"]
 if HOST not in ALLOWED_HOSTS:

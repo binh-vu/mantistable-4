@@ -75,17 +75,7 @@ def data_retrieval_phase(self, tables, job_id):
                         query = values["normalized"]
 
                     cells_content.add(query)
-
-        """
-        cells = {
-            values["normalized"]
-            for col_idx, col_val in enumerate(metadata.values())
-            for values in col_val["values"]
-            if tags[col_idx] != "LIT"
-        }
-        cells_content.update(cells)
-        """
-
+    
     cells_content = list(cells_content)
 
     # TODO: Extract constants
@@ -131,7 +121,13 @@ def data_preparation_table_phase(job_id, table_id, table_data):
 
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
-    solr_result = data_retrieval.CandidatesRetrieval(chunk).get_candidates()
+    # TODO: extract this
+    lamapi_backend = {
+        "host": "mantistable4_api_rest.lamapi_mantis",
+        "port": 8093,
+        "accessToken": "ee4ba0c4f8db0eb3580cb3b7b5536c54"
+    }
+    solr_result = data_retrieval.CandidatesRetrieval(chunk, lamapi_backend).get_candidates()
 
     print("Clean solr results")
     data_retrieval_result = {}

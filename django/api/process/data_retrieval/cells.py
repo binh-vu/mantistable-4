@@ -1,10 +1,9 @@
-from mantistable.settings import LAMAPI_HOST, LAMAPI_PORT
 from api.process.utils.lamapi.wrapper import LamAPIWrapper
 
 class CandidatesRetrieval:
-    def __init__(self, cells):
+    def __init__(self, cells, lamapi_backend):
         self._cells = set(cells)
-        self._wrapper = LamAPIWrapper(LAMAPI_HOST, LAMAPI_PORT)
+        self._wrapper = LamAPIWrapper(lamapi_backend["host"], lamapi_backend["port"], lamapi_backend["accessToken"])
 
     def get_candidates(self):
         candidates = {}
