@@ -191,6 +191,15 @@
                 console.log(row)
             })
 
+            let evalConfidence = function(confidence) {
+                if (confidence > 1.0 - 1.0/3.0) {
+                    return "<span class='label label-success'>" + confidence + "</span>"
+                } else if (confidence > 1.0 - 2.0/3.0) {
+                    return "<span class='label label-warning'>" + confidence + "</span>"
+                } else {
+                    return "<span class='label label-danger'>" + confidence + "</span>"
+                }
+            }
 
             let ws = new WebSocket('ws://' + window.location.hostname + ':5001/service');
 
@@ -203,10 +212,13 @@
                 if (command == "UPDATE") {
                     if (resource == "results") {
                         console.log(payload);
+                        let linkages = payload.linkages;
+                        let confidence = payload.confidence;
 
                         let results = $("#results");
+                        let resultBlock = $("<div></div>")
                         results.empty();
-                        payload.forEach(function(item) {
+                        linkages.forEach(function(item) {
                             console.log(item);
                             let subject = item["subject"];
                             let predicate = item["predicate"];
@@ -218,8 +230,11 @@
                             let objectTemplate = "<span class='badge badge-primary'>" + object + "</span>";
                             let arrowTemplate = " <i class='fa fa-arrow-right' aria-hidden='true'></i> "
 
-                            results.append("<p>" + subjectTemplate + arrowTemplate + predicateTemplate + arrowTemplate + objectTemplate + " (" + confidence + ")" + "</p>")
-                        })
+                            resultBlock.append("<p>" + subjectTemplate + arrowTemplate + predicateTemplate + arrowTemplate + objectTemplate + ' <i class="fas fa-equals"></i> ' + evalConfidence(confidence) + "</p>")
+                        });
+                        results.append(resultBlock);
+                        results.append("<p>" + evalConfidence(confidence) + "</>");
+                        results.append("<hr>");
                     }
                 }
             };

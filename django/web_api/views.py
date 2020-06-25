@@ -223,6 +223,7 @@ class SearchResultView(generics.GenericAPIView):
                 cols = []
                 for row in payload:
                     subject = row[0]
+                    confidence = round(row[2], 2)
                     linkages = []
                     for link in row[1]:
                         if link[0] is not None:
@@ -240,7 +241,10 @@ class SearchResultView(generics.GenericAPIView):
                                 "object": None,
                                 "confidence": 0.0
                             })
-                    cols = linkages
+                    cols = {
+                        "linkages": linkages,
+                        "confidence": confidence / len(linkages)
+                    }
 
                 # TODO: Implement better websocket wrapper
                 requests.post("http://mantistable4_tornado:5000", json={
