@@ -16,11 +16,39 @@
         </h2>
         <div class="row">
             <div class="col-md-12">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">
+                            <i class="fa fa-cloud" aria-hidden="true"></i>
+                            LAMApi Backends
+                        </h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="table-responsive table-wrapper">
+                            <table
+                                class="table table-bordered sde-table"
+                                id="lamapi-table"
+                                data-search="false"
+                                data-show-refresh="false"
+                                data-show-pagination-switch="false"
+                                data-pagination="false"
+                                data-id-field="id">
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
                 <form id="query-form-id" enctype="multipart/form-data" method="post" action="{% url 'service' %}">
                     {% csrf_token %}
                     <div class="box box-solid">
                         <div class="box-header with-border">
-                            <h3 class="box-title">Input</h3>
+                            <h3 class="box-title">
+                                <i class="fa fa-terminal" aria-hidden="true"></i>
+                                Input
+                            </h3>
                         </div>
                         <div class="box-body">
                             {{ form | crispy }}
@@ -37,6 +65,7 @@
                             <div class="box-footer">
                                 <div class="btn-wrapper">
                                     <button type="submit" class="btn btn-primary">
+                                        <i class="fa fa-upload" aria-hidden="true"></i>
                                         Submit
                                     </button>
                                 </div>
@@ -51,10 +80,13 @@
             <div class="col-md-12">
                 <div class="box box-solid">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Last results</h3>
+                        <h3 class="box-title">
+                            <i class="fas fa-project-diagram"></i>
+                            Output
+                        </h3>
                     </div>
                     <div id="results" class="box-body">
-                        No results yet!
+                        <span class="text-muted">No results yet!</span>
                     </div>
                 </div>
             </div>
@@ -83,6 +115,83 @@
 
     <script>
         $(function() {
+            function prefixFormatter(value, row, index) {
+                let html = '';
+                for (let key in value) {
+                    html += "<span style='margin-right:0.25em' class='badge badge-primary'>" + key + "</span>"
+                }
+                return html;
+            }
+
+            function statusFormatter(value, row, index) {
+                if (value == "OFFLINE") {
+                    let offline = "<strong class='flashing'>OFFLINE</strong>";
+                    setInterval(function () {
+                        // NOTE: This is going to make me puke!
+                        let flashing = $(".flashing");
+                        if (flashing.css("color") != "rgb(255, 255, 255)") {
+                            flashing.css('text-shadow', '2px 0 0 #ff2222, -2px 0 0 #ff2222, 0 2px 0 #ff2222, 0 -2px 0 #ff2222, 1px 1px #ff2222, -1px -1px 0 #ff2222, 1px -1px 0 #ff2222, -1px 1px 0 #ff2222');
+                            flashing.css('color', 'white');
+                        } else {
+                            flashing.css('color', "black");
+                            flashing.css('text-shadow', "");
+                        }
+                    }, 1000);
+
+                    //offline.removeClass('red-border');
+                    return offline;
+                }
+
+                return "<strong>ONLINE</strong>"
+            }
+
+            $('#lamapi-table').bootstrapTable({
+                url: "{% url 'lamapi' %}",
+                locale: "it-IT",
+                columns:[
+                    [
+                        {
+                            field: 'state',
+                            radio: true,
+                            
+                            align: 'center',
+                            valign: 'middle'
+                        },
+                        {
+                            field: "host",
+                            title: "Host",
+                        },
+                        {
+                            field: "port",
+                            title: "Port",
+                            align: 'center',
+                        },
+                        {
+                            field: "description",
+                            title: "Description",
+                            align: 'center',
+                        },
+                        {
+                            field: "prefixes",
+                            title: "Prefixes",
+                            formatter: prefixFormatter,
+                            align: 'center',
+                        },
+                        {
+                            field: "status",
+                            title: "Status",
+                            align: 'center',
+                            formatter: statusFormatter
+                        },
+                    ]
+                ]
+            });
+
+            $('#lamapi-table').on('check.bs.table', function (e, row) {
+                console.log(row)
+            })
+
+
             let ws = new WebSocket('ws://' + window.location.hostname + ':5001/service');
 
             ws.onmessage = function(e) {

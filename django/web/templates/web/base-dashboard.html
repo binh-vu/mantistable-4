@@ -64,10 +64,19 @@
                             </a>
                         </li>
 
+                        <li class="header">API</li>
+
                         <li {% if url_name == 'api' %}class="active"{% endif %}>
                             <a href="/api/">
                                 <i class="fa fa-cloud"></i>
                                 <span>Swagger API</span>
+                            </a>
+                        </li>
+
+                        <li {% if url_name == 'webapi' %}class="active"{% endif %}>
+                            <a href="/webapi/">
+                                <i class="fab fa-react"></i>
+                                <span>Frontend API</span>
                             </a>
                         </li>
 
