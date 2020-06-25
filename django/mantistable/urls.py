@@ -11,6 +11,7 @@ from rest_framework.schemas import SchemaGenerator
 from rest_framework.views import APIView
 
 from api import urls as api_urls
+from web_api import urls as webapi_urls
 
 def get_swagger_view(title=None, url=None, patterns=None, urlconf=None, description=None):
     """
@@ -46,20 +47,29 @@ def get_swagger_view(title=None, url=None, patterns=None, urlconf=None, descript
     return SwaggerSchemaView.as_view()
 
 
-schema_view = get_swagger_view(
+mantis_schema_view = get_swagger_view(
     title='MantisTable API',
     url="/api",
     urlconf=api_urls,
     description="MantisTable API allows to identify annotations (Entity Linking, Predicate Annotation, Concept Annotation) by using a non-destructive, incremental approach"
 )
 
+frontend_schema_view = get_swagger_view(
+    title='Frontend API',
+    url="/webapi",
+    urlconf=webapi_urls,
+    description="MantisTable Frontend API"
+)
+
 urlpatterns = [
     path('', RedirectView.as_view(url='dashboard', permanent=False), name='index'),
     path('dashboard/', include('dashboard.urls')),
+    
     path('webapi/', include('web_api.urls')),
+    path('webapi/', frontend_schema_view),
 
     path('api/', include('api.urls')),
-    path('api/', schema_view),
+    path('api/', mantis_schema_view),
     
     path('admin/', admin.site.urls),
 ]
