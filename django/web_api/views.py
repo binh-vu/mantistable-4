@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from api.models import Job
-from web.models import Table, Dataset
+from dashboard.models import Table, Dataset
 
 from celery import current_app
 

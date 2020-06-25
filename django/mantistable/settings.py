@@ -56,11 +56,9 @@ if HOST not in ALLOWED_HOSTS:
 
 INSTALLED_APPS = [
     'api.apps.ApiConfig',
-    'web.apps.WebConfig',
     'web_api.apps.WebApiConfig',
     'dashboard.apps.DashboardConfig',
 
-    'account.apps.AccountConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

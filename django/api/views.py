@@ -9,8 +9,6 @@ from api.models import Job
 import api.tasks as tasks
 from api.process.utils.lamapi import LamAPIWrapper
 
-from web.models import Table
-
 import requests
 
 class JobView(generics.ListCreateAPIView):

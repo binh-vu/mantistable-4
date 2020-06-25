@@ -1,6 +1,5 @@
 from mantistable.celery import app
 from api.models import Job
-from api.serializers import TableSerializer
 from api.process.utils import table
 from api.process.utils.rules import person_rule as rules
 from api.process.utils.mongo.repository import Repository

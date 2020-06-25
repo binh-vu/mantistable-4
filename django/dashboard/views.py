@@ -8,7 +8,7 @@ from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
 
 from api.models import Job
-from web.models import Table, Dataset
+from dashboard.models import Table, Dataset
 from dashboard.imports.dataset import DatasetImport
 from dashboard.forms import ImportForm, QueryServiceForm
 import mantistable.settings as settings

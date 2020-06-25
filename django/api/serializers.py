@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from api.models import Job
-from web.models import Table
 
 import json
 
@@ -32,8 +31,3 @@ class JobSerializer(serializers.Serializer):
             "port": self.data["backend_port"],
             "accessToken": self.data["backend_token"]
         }
-
-class TableSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Table
-        fields = "__all__"
