@@ -145,7 +145,8 @@ class ServiceView(FormView):
     success_url = reverse_lazy('service')
 
     def form_valid(self, form):
-        query = form.cleaned_data.get('json')
+        query = form.cleaned_data.get('query')
+        print(query)
 
         callback_url = _build_url(self.request, "search-result")
         backend = settings.LAMAPI_BACKENDS["dbpedia"]

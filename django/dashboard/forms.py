@@ -17,21 +17,21 @@ class ImportForm(forms.Form):
 
 
 class QueryServiceForm(forms.Form):
-    json = forms.CharField(
+    query = forms.CharField(
         widget=forms.Textarea(
             attrs={
                 "rows":5,
                 "cols":20
             }
         ),
-        help_text='Ex. ["batman", "nolan", "pfister"]'
+        initial='["batman", "nolan", "pfister"]'
     )
 
-    def clean_json(self):
-         jdata = self.cleaned_data['json']
-         try:
-             jdata = json.loads(jdata)
-         except:
-             raise forms.ValidationError("Invalid json")
+    def clean_query(self):
+        jdata = self.cleaned_data['query']
+        try:
+            jdata = json.loads(jdata)
+        except:
+            raise forms.ValidationError("Invalid json")
 
-         return jdata
+        return jdata

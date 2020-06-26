@@ -1,7 +1,8 @@
-from api.process.normalization.tokenizer import Tokenizer, TokenTagEnum
 from nltk.corpus import stopwords
 import string
+import re
 
+from api.process.normalization.tokenizer import Tokenizer, TokenTagEnum
 import api.process.utils.nlp.utils as nlp
 
 class Cleaner:
@@ -79,6 +80,9 @@ class Cleaner:
         clean_text = clean_text.replace("-", " ")
         clean_text = clean_text.replace("_", " ")
         clean_text = clean_text.replace("/", " ")
+        clean_text = re.sub(r'\([^)]*\)', '', clean_text)   # Remove (<any>)
+        clean_text = re.sub(r'\[[^)]*\]', '', clean_text)   # Remove [<any>]
+        clean_text = re.sub(r'\{[^)]*\}', '', clean_text)   # Remove {<any>}
         clean_text = nlp.remove_punctuations(clean_text, string.punctuation.replace("'", ""))
         clean_text = nlp.remove_extra_spaces(clean_text)
         return clean_text
