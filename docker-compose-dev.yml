@@ -21,6 +21,20 @@ services:
     env_file:
       - ./django/.env-dev
       
+  frontend:
+    container_name: mantistable4_frontend
+    build: ./frontend
+    command: bash -c "npm start"
+    volumes:
+        - ./frontend:/reactapp
+    ports:
+        - "3000:3000"
+    environment:
+        - NODE_ENV=development
+    depends_on:
+        - web
+    stdin_open: true
+      
   celery:
     container_name: mantistable4_celery
     image: cremarco/mantis4
