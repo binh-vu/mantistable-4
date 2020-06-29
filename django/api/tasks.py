@@ -21,6 +21,7 @@ import math
 
 manager = Manager()
 shared_memory = manager.dict()
+literals_memory = manager.dict()
 
 # TODO: extract this
 lamapi_backensd = {

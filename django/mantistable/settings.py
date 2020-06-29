@@ -148,6 +148,12 @@ CORS_ORIGIN_ALLOW_ALL = True
 #CORS_ORIGIN_REGEX_WHITELIST = [
 #    'http://localhost:3000',
 #]
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10
+}
     
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

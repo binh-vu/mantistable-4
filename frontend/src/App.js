@@ -15,13 +15,25 @@ function TableComponent(props) {
     );
 }
 
+function TablesPresentationHeader(props) {
+    const total = props.total;
+    const count = props.count;
+
+    if (count < total) {
+        return <p>I found {total} tables (showing {count})</p>
+    } else {
+        return <p>I found {total} tables</p>
+    }
+}
+
 function TablesPresentation(props) {
     const tables = props.tables;
+    const count = props.count;
+
     if (tables.length > 0) {
-        let url = "http://" + window.location.hostname + ":8000/webapi/tables/";
         return (
             <React.Fragment>
-                <p>I found {tables.length} <a className="App-link" href={url}>tables</a></p>
+                <TablesPresentationHeader count={tables.length} total={count}/>
                 {
                     tables.map((item) => {
                         return (
@@ -39,12 +51,11 @@ function TablesPresentation(props) {
             </React.Fragment>
         );
     } else {
-        let url = "http://" + window.location.hostname + ":8000";
         return (
             <div>
                 <hr/>
                 <p>No tables here :(</p>
-                <p>Go <a className="App-link" href={url}>here</a> and import some json tables</p>
+                <p>Go to dashboard and import some json tables</p>
                 <hr/>
             </div>
         );
@@ -55,7 +66,8 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            tables: []
+            tables: [],
+            count: 0
         }
     }
     
@@ -66,26 +78,29 @@ class App extends React.Component {
         .then(
             (result) => {
                 this.setState({
-                    tables: result
+                    tables: result.results,
+                    count: result.count
                 });
             },
             (error) => {
                 this.setState({
-                    tables: []      // Just an empty result...
+                    tables: [],      // Just an empty result...
+                    count: 0
                 });
             }
         );
     }
     
-  render() {
-    return (
-        <div className="App-header">
-            <p>Hello, this is a React test page</p>
-            <img alt="" className="App-logo" src="logo192.png"></img>
-            <TablesPresentation tables={this.state.tables} />
-        </div>
-    )
-  }
+    render() {
+        console.log(process.env)
+        return (
+            <div className="App-header">
+                <p>Hello, this is a React test page</p>
+                <img alt="" className="App-logo" src="logo192.png"></img>
+                <TablesPresentation tables={this.state.tables} count={this.state.count}/>
+            </div>
+        )
+    }
 }
 
 export default App;

@@ -16,56 +16,24 @@ from api.process.utils.math_utils import edit_distance, step
 import api.process.cea.literals_confidence as lit_utils
 import mantistable.settings
 
-from multiprocessing import Manager
+#from multiprocessing import Manager
 
-manager = Manager()
+#manager = Manager()
 
 # TODO: Caches are sooo bugged...
-candidates_confidence_cache = manager.dict()
-lamapi_literals_cache = manager.dict()
-
-def _get_candidate_confidence(candidate, cell):
-    """
-        Compute the max confidence of a given candidate by matching candidate's labels with cell content
-    """
-    """ TODO Move this code outside this function (cell candidates should have it)
-    if is_person(cell.content):
-        tokens = candidate[28:].split("_")
-        if len(tokens[0]) > 0:
-            tokens[0] = tokens[0][0]
-
-        label = " ".join(tokens).lower()
-    """
-    rule = rules.PersonRule(cell.content)
-    if rule.match():
-        candidate_label = rule.build_label(cell.normalized)
-    else:
-        candidate_label = cell.normalized
-
-    key = (candidate, candidate_label)
-    """
-    if key in candidates_confidence_cache:
-        return candidates_confidence_cache[key]
-    """
-
-    winning_conf = 0.0
-    for normalized_label in cell.candidates_labels(candidate):
-        confidence = 1.0 - edit_distance(candidate_label, normalized_label)
-        
-        if confidence > winning_conf:
-            winning_conf = confidence
-
-    #candidates_confidence_cache[key] = winning_conf
-    return winning_conf
+#candidates_confidence_cache = manager.dict()
+#lamapi_literals_cache = manager.dict()
 
 class Linkage:
-    def __init__(self, row, lamapi_backend):
+    def __init__(self, row, lamapi_backend, lamapi_literals_cache, lamapi_candidates_cache):
         self.row = row
         self.lamapi = LamAPIWrapper(
             lamapi_backend["host"],
             lamapi_backend["port"],
             lamapi_backend["accessToken"]
         )
+        self.lamapi_literals_cache = lamapi_literals_cache
+        self.lamapi_candidates_cache = lamapi_candidates_cache
 
     def get_links(self):
         """
@@ -111,7 +79,7 @@ class Linkage:
 
         # Subjects confidence
         for k, v in subjects.items():
-            confidence = _get_candidate_confidence(k, subj_cell)
+            confidence = self._get_candidate_confidence(k, subj_cell)
             subjects[k] = confidence * (v / len(links))    # TODO: <<<<<<<<<<< Check the algorithm
             
         return subjects
@@ -154,7 +122,7 @@ class Linkage:
             for candidate_subj in cand_subjects[candidate_obj]:
                 p = cand_lamapi_predicates.get((candidate_subj, candidate_obj), None)
                 if p is not None:
-                    confidence = _get_candidate_confidence(candidate_obj, cell2)
+                    confidence = self._get_candidate_confidence(candidate_obj, cell2)
                     links.append( Link(triple=(candidate_subj, p, candidate_obj), confidence=confidence) )
 
         # Calculate max confidence for the same triple (different labels)
@@ -272,20 +240,46 @@ class Linkage:
         """
         cand_lamapi_triples = []
         buffer = set(candidates)
-        """ TODO: Cache is bugged <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
         for candidate in set(candidates):
-            if candidate in lamapi_literals_cache:
-                triples.extend(lamapi_literals_cache[candidate])
+            if candidate in self.lamapi_literals_cache:
+                cand_lamapi_triples.extend(self.lamapi_literals_cache[candidate])
                 buffer.remove(candidate)
-        """
 
         for s, pl in self.lamapi.literals(list(buffer)).items():
-            # lamapi_literals_cache[s] = []
+            self.lamapi_literals_cache[s] = []
             for p, lits in pl.items():
                 cand_lamapi_triples.extend([
                     (s, p, l)
                     for l in lits
                 ])
-                # lamapi_literals_cache[s].append((s, p, l))
+                self.lamapi_literals_cache[s].extend([
+                    (s, p, l)
+                    for l in lits
+                ])
 
         return list(set(cand_lamapi_triples))
+
+    def _get_candidate_confidence(self, candidate, cell):
+        """
+            Compute the max confidence of a given candidate by matching candidate's labels with cell content
+        """
+        rule = rules.PersonRule(cell.content)
+        if rule.match():
+            candidate_label = rule.build_label(cell.normalized)
+        else:
+            candidate_label = cell.normalized
+
+        key = (candidate, candidate_label)
+        if key in self.lamapi_candidates_cache:
+            return self.lamapi_candidates_cache[key]
+
+        winning_conf = 0.0
+        for normalized_label in cell.candidates_labels(candidate):
+            confidence = 1.0 - edit_distance(candidate_label, normalized_label)
+            
+            if confidence > winning_conf:
+                winning_conf = confidence
+
+        self.lamapi_candidates_cache[key] = winning_conf
+        return winning_conf

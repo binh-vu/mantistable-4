@@ -9,19 +9,21 @@ class CEAProcess:
         self._normalized_map = normalized_map   # { <original_cell>: <norm_cell> }
         self._candidates_map = candidates_map   # { <norm_cell>: [(<label>, <entity>), (<label>, <entity>),...] }
         self._tags = tags                       # e.g. [SUBJ, NE, LIT, NE]
+        self._lit_cache = {}
+        self._cands_cache = {}
 
     def compute(self, lamapi_backend):
         results = []
 
         # TODO: Do I really need enumeration??
-        for row_idx, table_row in enumerate(self._table.get_rows()):
+        for _, table_row in enumerate(self._table.get_rows()):
             row = self._build_row(table_row)
             if row.get_subject_cell() is None:
                 # TODO: This is a serious error. What should I do?
                 print("WARNING: row has no subject column. Ignoring...")
                 continue
                     
-            table_rm = Linkage(row, lamapi_backend)
+            table_rm = Linkage(row, lamapi_backend, self._lit_cache, self._cands_cache)
             links = table_rm.get_links()
             subjects = table_rm.get_subjects(links)
             results.append(
