@@ -10,6 +10,7 @@ import api.tasks as tasks
 from api.process.utils.lamapi import LamAPIWrapper
 
 import requests
+import json
 
 class JobView(generics.ListCreateAPIView):
     queryset = Job.objects.all()
@@ -18,9 +19,13 @@ class JobView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         backend = serializer.get_backend()
         self._check_backend(backend)
+        try:
+            tables = json.loads(serializer.data["tables"])
+        except:
+            raise ValidationError('Invalid json body')
 
         job = Job(
-            tables=serializer.data["tables"],
+            tables=tables,
             backend=backend,
             callback=serializer.data["callback"],
             progress={

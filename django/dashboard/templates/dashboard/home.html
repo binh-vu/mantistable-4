@@ -295,7 +295,7 @@
             }
 
             $('#lamapi-table').bootstrapTable({
-                url: "{% url 'lamapi' %}",
+                url: "{% url 'dashboard-lamapi' %}",
                 locale: "it-IT",
                 columns:[
                     [
@@ -350,9 +350,8 @@
                 }
             });
 
-
             $('#job-table').bootstrapTable({
-                url: "{% url 'jobs' %}",
+                url: "{% url 'dashboard-jobs' %}",
                 locale: "it-IT",
                 onPostBody: function (data) {
                     $('#jobs-count').text(data.length)
@@ -389,7 +388,7 @@
             });
 
             $('#dataset-table').bootstrapTable({
-                url: "{% url 'datasets' %}",
+                url: "{% url 'dashboard-datasets' %}",
                 locale: "it-IT",
                 onPostBody: function (data) {
                     $('#tables-count').text(data.length)
@@ -514,7 +513,7 @@
                                 delay: 2000,
                                 onRefresh: function(chart) {
                                     $.ajax({
-                                        url: "{% url 'celery-stats' %}",
+                                        url: "{% url 'dashboard-celery-stats' %}",
                                         type: 'GET',
                                         success: function(result) {
                                             chart.data.datasets[0].data.push({

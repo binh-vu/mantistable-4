@@ -57,6 +57,7 @@ class JobView(generics.ListAPIView):
     serializer_class = JobSerializer
     model = serializer_class.Meta.model
     queryset = model.objects.order_by('created')
+    pagination_class = None
     
 
 class DatasetView(generics.GenericAPIView):
