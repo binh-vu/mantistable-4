@@ -76,10 +76,10 @@ class App extends React.Component {
         fetch("/webapi/tables/")
         .then(res => res.json())
         .then(
-            (result) => {
+            (data) => {
                 this.setState({
-                    tables: result.results,
-                    count: result.count
+                    tables: data.results,
+                    count: data.count
                 });
             },
             (error) => {
@@ -92,7 +92,6 @@ class App extends React.Component {
     }
     
     render() {
-        console.log(process.env)
         return (
             <div className="App-header">
                 <p>Hello, this is a React test page</p>

@@ -45,22 +45,22 @@
                     {% with request.resolver_match.url_name as url_name %}
                         <li {% if url_name == 'home' %}class="active"{% endif %}>
                             <a href="{% url 'home' %}">
-                                <i class="fas fa-home"></i>
-                                <span>Home</span>
+                                <i class="fas fa-home fa-fw"></i>
+                                <span>Dashboard</span>
                             </a>
                         </li>
 
                         <li {% if url_name == 'service' %}class="active"{% endif %}>
                             <a href="{% url 'service' %}">
-                                <i class="fa fa-terminal"></i>
-                                <span>Service</span>
+                                <i class="fa fa-terminal fa-fw"></i>
+                                <span>Query</span>
                             </a>
                         </li>
 
                         <li {% if url_name == 'logs' %}class="active"{% endif %}>
                             <a href="#">
-                                <i class="fa fa-th-list"></i>
-                                <span>Logs</span>
+                                <i class="fa fa-exclamation-circle fa-fw"></i>
+                                <span>Debug logs</span>
                             </a>
                         </li>
 
@@ -68,14 +68,14 @@
 
                         <li {% if url_name == 'api' %}class="active"{% endif %}>
                             <a href="/api/">
-                                <i class="fa fa-cloud"></i>
-                                <span>Swagger API</span>
+                                <i class="fa fa-cloud fa-fw"></i>
+                                <span>Backend API</span>
                             </a>
                         </li>
 
                         <li {% if url_name == 'webapi' %}class="active"{% endif %}>
                             <a href="/webapi/">
-                                <i class="fab fa-react"></i>
+                                <i class="fab fa-react fa-fw"></i>
                                 <span>Frontend API</span>
                             </a>
                         </li>
