@@ -85,7 +85,7 @@ class ProcessView(View):
                 tables.append((table.id, table.original))
         
         data = {
-            "tables": json.dumps(tables),
+            "tables": tables,
             "backend_host": backend["host"],
             "backend_port": backend["port"],
             "backend_token": backend["accessToken"],

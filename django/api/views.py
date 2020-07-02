@@ -19,13 +19,9 @@ class JobView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         backend = serializer.get_backend()
         self._check_backend(backend)
-        try:
-            tables = json.loads(serializer.data["tables"])
-        except:
-            raise ValidationError('Invalid json body')
 
         job = Job(
-            tables=tables,
+            tables=serializer.data["tables"],
             backend=backend,
             callback=serializer.data["callback"],
             progress={
