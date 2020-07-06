@@ -41,51 +41,51 @@
 
 <body class="skin-green sde-fixed sidebar-mini sidebar-collapse">
 
-{% block container %}{% endblock %}
+    {% block container %}{% endblock %}
 
-{% block modal %}{% endblock %}
+    {% block modal %}{% endblock %}
 
-{% block javascript %}
-    <!-- jQuery -->
-    <script src="{% static '/jquery/dist/jquery.min.js' %}"></script>
-    <!-- Bootstrap -->
-    <script src="{% static '/bootstrap/dist/js/bootstrap.min.js' %}"></script>
-    <!-- SlimScroll -->
-    <script src="{% static '/jquery-slimscroll/jquery.slimscroll.min.js' %}"></script>
-    <!-- AdminLTE -->
-    <script src="{% static '/admin-lte/dist/js/adminlte.min.js' %}"></script>
-    <!-- Custom JS -->
-    <script src="{% static '/dashboard/js/app.js' %}"></script>
+    {% block javascript %}
+        <!-- jQuery -->
+        <script src="{% static '/jquery/dist/jquery.min.js' %}"></script>
+        <!-- Bootstrap -->
+        <script src="{% static '/bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <!-- SlimScroll -->
+        <script src="{% static '/jquery-slimscroll/jquery.slimscroll.min.js' %}"></script>
+        <!-- AdminLTE -->
+        <script src="{% static '/admin-lte/dist/js/adminlte.min.js' %}"></script>
+        <!-- Custom JS -->
+        <script src="{% static '/dashboard/js/app.js' %}"></script>
 
-    <script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/locale/bootstrap-table-it-IT.min.js"></script>
+        <script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/locale/bootstrap-table-it-IT.min.js"></script>
 
-    <script>
+        <script>
 
-        function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = jQuery.trim(cookies[i]);
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+            function getCookie(name) {
+                var cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = jQuery.trim(cookies[i]);
+                        // Does this cookie string begin with the name we want?
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
                     }
                 }
+                return cookieValue;
             }
-            return cookieValue;
-        }
 
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
+            function csrfSafeMethod(method) {
+                // these HTTP methods do not require CSRF protection
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            }
 
-    </script>
+        </script>
 
-{% endblock %}
+    {% endblock %}
 
 </body>
 

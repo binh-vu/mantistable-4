@@ -93,7 +93,7 @@ class DatasetView(generics.GenericAPIView):
             "average_rows": dataset.average_rows,
             "average_cols": dataset.average_cols,
             "table_count": dataset.table_count,
-            "has_annotations": dataset.has_annotations
+            #"has_annotations": dataset.has_annotations
         }
 
 
@@ -177,7 +177,7 @@ class MainResultView(generics.GenericAPIView):
                             })
                     cols.append(linkages)
 
-                print(cols)
+                #print(cols)
                 if table is not None:
                     table.linkages = cols
                     table.has_annotations = True
@@ -201,7 +201,8 @@ class MainResultView(generics.GenericAPIView):
                     }
                 })
             else:
-                print(payload)
+                #print(payload)
+                pass
             print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
             return Response({"status": "ack"})

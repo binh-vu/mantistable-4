@@ -7,29 +7,96 @@ services:
     ports:
       - ${PORT}:80
     depends_on:
-      - web
+      - frontend
     volumes:
-      - ./django/staticfiles:/app/staticfiles
-      - ./django/media:/app/media
-      
+      - ./django:/mantistable
+    networks:
+      - default
+
   web:
     container_name: mantistable4_web
     image: cremarco/mantis4
     command: bash -c "python manage.py collectstatic --noinput &&
+                      echo 'Making migrations...' &&
                       python manage.py makemigrations &&
+                      echo 'Migrating...' &&
                       python manage.py migrate &&
-                      gunicorn mantistable.wsgi:application --bind 0.0.0.0:8000"
+                      echo 'Running server...' &&
+                      gunicorn -w4 mantistable.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - ./django/staticfiles:/mantistable/staticfiles
-      - ./media:/mantistable/media
-    expose:
-      - 8000
+      - ./django:/mantistable
+    ports:
+        - "8001:8000"
     depends_on:
       - mongo
-    env_file:
-      - ./django/.env-prod
+      - redis
+      - celery
+      - tornado
+    networks:
+      - default
+      - mantis
+
+      
+  frontend:
+    container_name: mantistable4_frontend
+    build: ./frontend
+    command: bash -c "npm start"
+    volumes:
+        - ./frontend:/reactapp
+    ports:
+        - "3000:3000"
+    environment:
+        - NODE_ENV=development
+    depends_on:
+        - web
+    stdin_open: true
+    networks:
+      - default
+      
+  celery:
+    container_name: mantistable4_celery
+    image: cremarco/mantis4
+    command: celery -A mantistable worker --loglevel=info --autoscale=$THREADS,1 -Qcelery -n main
+    volumes:
+      - ./django:/mantistable
+    ports: []
+    depends_on:
+      - redis
+      - mongo
+    networks:
+      - default
+      - mantis
+      
+  tornado:
+    container_name: mantistable4_tornado
+    build: ./tornado
+    command: bash -c "echo 'Starting websocket server...' &&
+                      python server.py"
+    volumes:
+      - ./tornado:/app
+    ports:
+      - "5000:5000"     # Remove in production
+      - "5001:5001"
+    networks:
+      - default
       
   mongo:
     container_name: mantistable4_mongo
     image: mongo
     command: mongod --port 27017
+    ports:
+      - "27017:27017"
+    networks:
+      - default
+      
+  redis:
+    container_name: mantistable4_redis
+    image: redis:alpine
+    networks:
+      - default
+
+networks:
+  default:
+  mantis:
+    external:
+      name: label-matching-api_mantis

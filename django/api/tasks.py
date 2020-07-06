@@ -19,16 +19,18 @@ import requests
 import json
 import math
 
+# TODO: EXtract constants
+THREADS = 4
 manager = Manager()
 shared_memory = manager.dict()
 literals_memory = manager.dict()
 
-# TODO: extract this
-lamapi_backensd = {
-    "host": "149.132.176.50",
-    "port": 8093,
-    "accessToken": "ee4ba0c4f8db0eb3580cb3b7b5536c54"
-}
+# TODO: Extract to utils
+def generate_chunks(iterable, n):
+    assert (n > 0)
+    for i in range(0, len(iterable), n):
+        yield iterable[i:i + n]
+
 
 def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
@@ -38,8 +40,76 @@ def job_slot(job_id: int):
         for item in job.tables
     ]
 
+    #data_preparation_phase(tables, job_id)
     workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
     return workflow.apply_async()
+    return 0
+
+"""
+def job_slot(job_id: int):
+    job = Job.objects.get(id=job_id)
+
+    tables = [
+        (item[0], item[1])
+        for item in job.tables
+    ]
+
+    workflow = data_preparation_phase.s(tables, job_id)# | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
+    return workflow.apply_async()
+
+@app.task(name="data_preparation_phase", bind=True)
+def data_preparation_phase(self, tables, job_id):
+    CHUNK_SIZE = int(math.ceil(len(tables) / THREADS))
+    chunks = generate_chunks(tables, CHUNK_SIZE)
+
+    self.replace(
+        group([
+            data_preparation_chunk_phase.si(job_id, chunk)
+            for chunk in chunks
+        ])
+    )
+
+@app.task(name="data_preparation_table_phase")
+def data_preparation_chunk_phase(job_id, tables):
+    results = []
+    for table in tables:
+        results = _data_preparation_table_phase(job_id, *table)
+
+    return results
+
+def _data_preparation_table_phase(job_id, table_id, table_data):
+    job = Job.objects.get(id=job_id)
+
+    print(f"Normalization")
+    normalization_result = _normalization_phase(table_id, table_data)
+    client_callback(job, table_id, "normalization", normalization_result)
+    
+    print(f"Column Analysis")
+    col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
+    client_callback(job, table_id, "column analysis", col_analysis_result)
+
+    return table_id, table_data, col_analysis_result
+
+def _normalization_phase(table_id, data):
+    table_model = table.Table(table_id=table_id, table=data)
+    metadata = normalizer.Normalizer(table_model).normalize()
+    return metadata
+
+def _column_analysis_phase(table_id, table, data):
+    stats = {
+        col_name: d["stats"]
+        for col_name, d in data.items()
+    }
+    cc = column_classifier.ColumnClassifier(stats)
+    tags = cc.get_columns_tags()
+    
+    metadata = {
+        col_name: {**prev_meta, **tags[col_name]}
+        for col_name, prev_meta in data.items()
+    }
+
+    return metadata
+"""
 
 @app.task(name="data_preparation_phase", bind=True)
 def data_preparation_phase(self, tables, job_id):
@@ -48,17 +118,49 @@ def data_preparation_phase(self, tables, job_id):
         for table in tables
     ]))
 
+@app.task(name="data_preparation_table_phase")
+def data_preparation_table_phase(job_id, table_id, table_data):
+    job = Job.objects.get(id=job_id)
+
+    print(f"Normalization")
+    normalization_result = _normalization_phase(table_id, table_data)
+    client_callback(job, table_id, "normalization", normalization_result)
+    
+    print(f"Column Analysis")
+    col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
+    client_callback(job, table_id, "column analysis", col_analysis_result)
+
+    return table_id, table_data, col_analysis_result
+
+def _normalization_phase(table_id, data):
+    table_model = table.Table(table_id=table_id, table=data)
+    metadata = normalizer.Normalizer(table_model).normalize()
+    return metadata
+
+def _column_analysis_phase(table_id, table, data):
+    stats = {
+        col_name: d["stats"]
+        for col_name, d in data.items()
+    }
+    cc = column_classifier.ColumnClassifier(stats)
+    tags = cc.get_columns_tags()
+    
+    metadata = {
+        col_name: {**prev_meta, **tags[col_name]}
+        for col_name, prev_meta in data.items()
+    }
+
+    return metadata
+
+
+
+
 @app.task(name="data_retrieval_phase", bind=True)
 def data_retrieval_phase(self, tables, job_id):
     job = Job.objects.get(id=job_id)
     job.progress["current"] = 1
     job.save()
 
-    # TODO: Extract to utils
-    def generate_chunks(iterable, n):
-        assert (n > 0)
-        for i in range(0, len(iterable), n):
-            yield iterable[i:i + n]
 
     print(f"Data retrieval")
 
@@ -86,7 +188,6 @@ def data_retrieval_phase(self, tables, job_id):
     cells_content = list(cells_content)
 
     # TODO: Extract constants
-    THREADS = 4
     CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
     chunks = generate_chunks(cells_content, CHUNK_SIZE)
 
@@ -111,21 +212,6 @@ def computation_phase(self, info, job_id):
         ])
     )
 
-
-@app.task(name="data_preparation_table_phase")
-def data_preparation_table_phase(job_id, table_id, table_data):
-    job = Job.objects.get(id=job_id)
-
-    print(f"Normalization")
-    normalization_result = _normalization_phase(table_id, table_data)
-    client_callback(job, table_id, "normalization", normalization_result)
-    
-    print(f"Column Analysis")
-    col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
-    client_callback(job, table_id, "column analysis", col_analysis_result)
-
-    return table_id, table_data, col_analysis_result
-
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
     job = Job.objects.get(id=job_id)
@@ -134,10 +220,8 @@ def data_retrieval_group_phase(job_id, chunk):
     print("Clean solr results")
     data_retrieval_result = {}
     for cell in solr_result.keys():
-        """
-        if len(solr_result[cell]) == 0:
-            client_callback(Job.objects.get(id=job_id), -1, "debug", cell)
-        """
+        #if len(solr_result[cell]) == 0:
+        #    client_callback(Job.objects.get(id=job_id), -1, "debug", cell)
 
         for res in solr_result[cell]:
             label = res["label"]
@@ -212,25 +296,6 @@ def clean_up(job_id):
     # TODO: For now just delete job
     job.delete()
 
-def _normalization_phase(table_id, data):
-    table_model = table.Table(table_id=table_id, table=data)
-    metadata = normalizer.Normalizer(table_model).normalize()
-    return metadata
-
-def _column_analysis_phase(table_id, table, data):
-    stats = {
-        col_name: d["stats"]
-        for col_name, d in data.items()
-    }
-    cc = column_classifier.ColumnClassifier(stats)
-    tags = cc.get_columns_tags()
-    
-    metadata = {
-        col_name: {**prev_meta, **tags[col_name]}
-        for col_name, prev_meta in data.items()
-    }
-
-    return metadata
 
 def _data_retrieval_phase(cells):
     solr_result = data_retrieval.CandidatesRetrieval(cells).get_candidates()

@@ -4,25 +4,32 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
+from django.views.generic import TemplateView
 from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
+from django.contrib.auth import (
+    authenticate, login
+)
 
 from api.models import Job
 from dashboard.models import Table, Dataset
 from dashboard.imports.dataset import DatasetImport
-from dashboard.forms import ImportForm, QueryServiceForm
+from dashboard.forms import ImportForm, QueryServiceForm, LoginForm
 import mantistable.settings as settings
 
 from celery import current_app
 from http import HTTPStatus
 import json
 import requests
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
 
 def _build_url(request, view_name):
     return "http://web:8000" + reverse(view_name)
 
 
+@method_decorator(login_required, name='dispatch')
 class HomeView(FormView):
     template_name = 'dashboard/home.html'
     form_class = ImportForm
@@ -59,7 +66,7 @@ class HomeView(FormView):
 
         return context
 
-
+@method_decorator(login_required, name='dispatch')
 class ProcessView(View):
     def post(self, request):
         ids = request.POST.getlist("ids[]", [])
@@ -103,7 +110,7 @@ class ProcessView(View):
             "message": response.json()
         })
 
-
+@method_decorator(login_required, name='dispatch')
 class ExportView(View):
     def get(self, request):
         ids = request.GET.get("datasets", "")
@@ -138,7 +145,7 @@ class ExportView(View):
         response['Content-Disposition'] = f'inline; filename=CEA.csv'
         return response
 
-
+@method_decorator(login_required, name='dispatch')
 class ServiceView(FormView):
     template_name = 'dashboard/service.html'
     form_class = QueryServiceForm
@@ -149,7 +156,7 @@ class ServiceView(FormView):
         print(query)
 
         callback_url = _build_url(self.request, "search-result")
-        backend = settings.LAMAPI_BACKENDS["dbpedia"]
+        backend = settings.LAMAPI_BACKENDS["local-dbpedia"]
         data = {
             "tables": [
                 (
@@ -169,6 +176,32 @@ class ServiceView(FormView):
         }
 
         api_url = _build_url(self.request, "api_job")
+        print("posting to", api_url, data)
         response = requests.post(api_url, json=data)
+        print("ok")
 
         return super().form_valid(form)
+
+@method_decorator(login_required, name='dispatch')
+class DebugLogsView(TemplateView):
+    template_name = "dashboard/debug-logs.html"
+
+
+class LoginView(FormView):
+    template_name = "dashboard/login.html"
+    form_class = LoginForm
+    success_url = reverse_lazy('home')
+
+    def form_valid(self, form):
+        print("valid")
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password')
+        user = authenticate(username=username, password=password)
+        
+        if user is not None:
+            print("valid user")
+            login(self.request, user)
+            return super().form_valid(form)
+        else:
+            print("invalid user")
+            return reverse('login')

@@ -10,12 +10,12 @@
 {% block content %}
     {{ block.super }}
 
-    <div class="container">
+    <div class="container-fluid">
         <h2>
-            Service
+            Query Service
         </h2>
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-7">
                 <div class="box box-solid">
                     <div class="box-header with-border">
                         <h3 class="box-title">
@@ -38,9 +38,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-5">
                 <form id="query-form-id" enctype="multipart/form-data" method="post" action="{% url 'service' %}">
                     {% csrf_token %}
                     <div class="box box-solid">
@@ -201,7 +199,9 @@
                 }
             }
 
-            let ws = new WebSocket('ws://' + window.location.hostname + ':5001/service');
+            //let ws = new WebSocket('ws://' + window.location.host + '/ws/service');
+            //let ws = new WebSocket('ws://' + window.location.hostname + ':5001/service');
+            let ws = new WebSocket({{ websocket_url | safe }} + 'service');
 
             ws.onmessage = function(e) {
                 let data = JSON.parse(e.data);

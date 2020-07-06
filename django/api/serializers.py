@@ -4,26 +4,21 @@ from api.models import Job
 
 import json
 
-class JobSerializer(serializers.Serializer):
+class JobListSerializer(serializers.ModelSerializer):
+    progress = serializers.JSONField()
+    
+    class Meta:
+        model = Job
+        fields = ['created', 'progress', 'callback']
+        
+        
+class JobCreateSerializer(serializers.Serializer):
     tables = serializers.JSONField()
     backend_host = serializers.CharField(max_length=200)
     backend_port = serializers.IntegerField()
     backend_token = serializers.CharField(max_length=200)
     callback = serializers.CharField(max_length=200)
-
-    """
-    def validate_backend_host(self, value):
-       if not value.startswith("http"):
-           return "http://" + value
-
-       return value
-
-    def validate_callback(self, value):
-       if not value.startswith("http"):
-           return "http://" + value
-
-       return value
-    """
+    debug = serializers.BooleanField(default=False)
     
     def get_backend(self):
         return {

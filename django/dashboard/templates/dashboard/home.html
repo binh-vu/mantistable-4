@@ -10,13 +10,13 @@
 {% block content %}
     {{ block.super }}
 
-    <div class="container">
+    <div class="container-fluid">
         <h2>
             Dashboard
             <canvas id="joke" style="width: 84.8%; height:1em"></canvas>
         </h2>
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-5">
                 <form id="import-form-id" enctype="multipart/form-data" method="post" action="{% url 'home' %}">
                     {% csrf_token %}
                     <input type='hidden' name='form' value='import'> 
@@ -48,10 +48,25 @@
                     </div>
                 </form>
             </div>
+            <div class="col-md-7">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">
+                            <i class="fa fa-check-square" aria-hidden="true"></i>
+                            Options (TODO?)
+                        </h3>
+                    </div>
+                    <div class="box-body">
+                        <p>Debug mode</p>
+                        <p>Threads (?)</p>
+                        <p>Export options (?)</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-6">
                 <div class="box box-solid">
                     <div class="box-header with-border">
                         <h3 class="box-title">
@@ -74,10 +89,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-6">
                 <div class="box box-solid">
                     <div class="box-header with-border">
                         <h3 class="box-title pull-left">
@@ -107,7 +119,7 @@
                         </div>
 
                         <div class="box-footer">
-                            <span id="no-lamapi-selected" class="text-muted">Select a LAMApi Backend to process</span>
+                            <span id="no-lamapi-selected" class="text-muted">Select a LAMApi Backend to process a dataset</span>
                             <div class="btn-wrapper">
                                 <a id="process-selected-btn" href="#" class="btn btn-warning">
                                     Process selected <span class="badge badge-light selected-count"></span> <span id="last-status-code" class="badge badge-light"></span>
@@ -255,13 +267,6 @@
 
             function floatFormatter(value, row, index) {
                 return (value).toFixed(1);
-            }
-
-            function boolFormatter(value, row, index) {
-                if (value) {
-                    return '<i class="fa fa-check" aria-hidden="true"></i>'
-                } 
-                return '<i class="fa fa-times" aria-hidden="true"></i>'
             }
 
             function prefixFormatter(value, row, index) {
@@ -426,12 +431,6 @@
                             sortable: true,
                             align: 'right',
                             formatter: floatFormatter
-                        },
-                        {
-                            field: "has_annotations",
-                            title: "Has annotations",
-                            align: 'center',
-                            formatter: boolFormatter
                         },
                     ]
                 ]
@@ -619,8 +618,6 @@
                 if (command == "UPDATE") {
                     if (resource == "progress") {
                         $('#job-table').bootstrapTable("refresh");
-                    } else if (resource == "datasets") {
-                        $('#dataset-table').bootstrapTable("refresh");
                     }
                 }
             };

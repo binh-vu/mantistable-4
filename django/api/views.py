@@ -1,10 +1,10 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from rest_framework.exceptions import ValidationError
 
 from api.process.utils.mongo.repository import Repository
-from api.serializers import JobSerializer
+from api.serializers import JobListSerializer, JobCreateSerializer
 from api.models import Job
 import api.tasks as tasks
 from api.process.utils.lamapi import LamAPIWrapper
@@ -12,11 +12,24 @@ from api.process.utils.lamapi import LamAPIWrapper
 import requests
 import json
 
-class JobView(generics.ListCreateAPIView):
+"""
+class JobView(generics.ListAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+"""
+
+class JobView(generics.ListCreateAPIView):
+    queryset = Job.objects.all()
+    #serializer_class = JobListSerializer
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return JobCreateSerializer
+        
+        return JobListSerializer
     
     def perform_create(self, serializer):
+        print("Creating job")
         backend = serializer.get_backend()
         self._check_backend(backend)
 

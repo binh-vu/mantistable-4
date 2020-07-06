@@ -18,8 +18,6 @@ services:
       - mongo
       - redis
       - celery
-    env_file:
-      - ./django/.env-dev
       
   frontend:
     container_name: mantistable4_frontend
@@ -45,8 +43,6 @@ services:
     depends_on:
       - redis
       - mongo
-    env_file:
-      - ./django/.env-dev
       
   tornado:
     container_name: mantistable4_tornado

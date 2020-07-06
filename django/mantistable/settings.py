@@ -47,7 +47,7 @@ PORT = os.environ.get("PORT", "80")
 LAMAPI_BACKENDS = config["mantistable"].get("lamapi", {})
 
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web", "0.0.0.0"]
 if HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(HOST)
 
@@ -96,6 +96,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dashboard.context.websocket_url'
             ],
         },
     },
@@ -212,19 +213,7 @@ STATICFILES_DIRS = [
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # Account app settings
-LOGIN_URL = "/login"
-ACCOUNT_SETTINGS = {
-    "registration": {
-        "redirect": "index",
-        "mail_subject": "ToolName Account Activation"
-    },
-    "login": {
-        "redirect": "index",
-    },
-    "logout": {
-        "redirect": "index",
-    }
-}
+LOGIN_URL = "login"
 
 # Mantistable settings
 # Private resource directory (Domain specific resources)

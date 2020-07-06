@@ -1,0 +1,101 @@
+{% extends "dashboard/base-dashboard.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Debug |  {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+
+    <div class="container-fluid">
+        <h2>
+            Debug
+        </h2>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-solid">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                            Logs
+                        </h3>
+                    </div>
+                    <div class="box-body">
+                        TODO
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+
+    <script>
+
+        $(function () {
+            var csrftoken = getCookie('csrftoken');
+  
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script>
+        $(function() {
+            let ws = new WebSocket('ws://' + window.location.hostname + ':5001/service');
+
+            ws.onmessage = function(e) {
+                let data = JSON.parse(e.data);
+                let command = data["command"];
+                let resource = data["resource"];
+                let payload = data["payload"]
+
+                if (command == "UPDATE") {
+                    if (resource == "results") {
+                        console.log(payload);
+                        let linkages = payload.linkages;
+                        let confidence = payload.confidence;
+
+                        let results = $("#results");
+                        let resultBlock = $("<div></div>")
+                        results.empty();
+                        linkages.forEach(function(item) {
+                            console.log(item);
+                            let subject = item["subject"];
+                            let predicate = item["predicate"];
+                            let object = item["object"];
+                            let confidence = item["confidence"];
+
+                            let subjectTemplate = "<span class='badge badge-primary'>" + subject + "</span>";
+                            let predicateTemplate = "<span class='badge badge-primary'>" + predicate + "</span>";
+                            let objectTemplate = "<span class='badge badge-primary'>" + object + "</span>";
+                            let arrowTemplate = " <i class='fa fa-arrow-right' aria-hidden='true'></i> "
+
+                            resultBlock.append("<p>" + subjectTemplate + arrowTemplate + predicateTemplate + arrowTemplate + objectTemplate + ' <i class="fas fa-equals"></i> ' + evalConfidence(confidence) + "</p>")
+                        });
+                        results.append(resultBlock);
+                        results.append("<p>" + evalConfidence(confidence) + "</>");
+                        results.append("<hr>");
+                    }
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("Close connection");
+            };
+        });
+    </script>
+
+{% endblock %}

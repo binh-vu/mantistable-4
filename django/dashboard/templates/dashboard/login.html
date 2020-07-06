@@ -1,0 +1,59 @@
+{% extends "dashboard/base-dashboard.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Login |  {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+
+    <div class="login-box">
+        <div class="login-logo">
+            <span><b>Mantis</b>Table Dashboard</span>
+        </div>
+        <div class="login-box-body">
+            <p class="login-box-msg">This module is private</p>
+    
+            <form action="{% url 'login' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group has-feedback">
+                    {{ form.username }}
+                    <!--<input type="username" class="form-control" placeholder="Username">!-->
+                    <span class="glyphicon glyphicon-user form-control-feedback"></span>
+                    <div>
+                        {{ form.username.errors }}
+                    </div>
+                </div>
+                <div class="form-group has-feedback">
+                    {{ form.password }}
+                    <!--<input type="password" class="form-control" placeholder="Password">!-->
+                    <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+                </div>
+                <div class="row">
+                    <div class="col-xs-8"></div>
+                    <div class="col-xs-4">
+                        <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
+                    </div>
+                </div>
+            </form>
+
+            {% if form.non_field_errors %}
+                <hr/>
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+
+{% endblock %}
