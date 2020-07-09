@@ -123,18 +123,19 @@ class ExportView(View):
         tables = []
         for dataset in datasets:
             for table in dataset.table_set.all():
-                tables.append((table.name, table.linkages))
+                tables.append((table.name, table.linkages, table.cols))
 
         csv_export = ""
-        for name, linkages in tables:
+        for name, linkages, cols in tables:
             table_name = name[0:-5]
             prefix = "http://dbpedia.org/resource/"
             for row_idx, row in enumerate(linkages):
                 subject = None
                 for col_idx, col in enumerate(row):
-                    if col["confidence"] > 0.0:
-                        content = f"\"{table_name}\",\"{col_idx+1}\",\"{row_idx+1}\",\"{prefix}{col['object']}\""
-                        csv_export += content + "\n"
+                    if list(cols.values())[col_idx+1]["tags"]["col_type"] == "NE":
+                        if col["confidence"] > 0.0:
+                            content = f"\"{table_name}\",\"{col_idx+1}\",\"{row_idx+1}\",\"{prefix}{col['object']}\""
+                            csv_export += content + "\n"
                     subject = col['subject']
                 
                 if subject is not None:
@@ -156,7 +157,7 @@ class ServiceView(FormView):
         print(query)
 
         callback_url = _build_url(self.request, "search-result")
-        backend = settings.LAMAPI_BACKENDS["local-dbpedia"]
+        backend = settings.LAMAPI_BACKENDS["dbpedia"]
         data = {
             "tables": [
                 (

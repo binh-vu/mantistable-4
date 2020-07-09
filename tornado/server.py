@@ -54,7 +54,7 @@ class ClientHandler(WebSocketHandler):
 class FrontSyncApplication(Application):
     def __init__(self, **kwargs):
         routes = [
-            (r'/(?P<channel>[a-z0-9]+)', ClientHandler),
+            (r'/ws/(?P<channel>[a-z0-9]+)', ClientHandler),
         ]
         super().__init__(routes, **kwargs)
         self.subscriptions = {}
