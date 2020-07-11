@@ -608,7 +608,7 @@
 
     <script>
         $(function() {
-            let ws = new WebSocket('ws://' + window.location.hostname + ':5001/main');
+            let ws = new WebSocket({{ websocket_url | safe }} + 'main');
 
             ws.onmessage = function(e) {
                 let data = JSON.parse(e.data);

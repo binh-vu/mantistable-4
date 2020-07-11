@@ -1,5 +1,6 @@
 from django.db import models
 from djongo.models.json import JSONField
+from django.utils.timezone import now
 import json
 
 # NOTE: MongoDB does not allow '.' character in the document's keys (to avoid nasty NoSQL injection attacks). PyMongo
@@ -91,3 +92,8 @@ class Table(models.Model):
     cols_count = models.PositiveIntegerField()
 
     has_annotations = models.BooleanField(default=False)
+
+
+class Log(models.Model):
+    publish_date = models.DateTimeField(default=now)
+    message = models.TextField(editable=False)

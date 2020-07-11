@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
-from django.views.generic import TemplateView
+from django.views.generic.list import ListView
 from django.urls import reverse, reverse_lazy, get_script_prefix
 from django.contrib import messages
 from django.contrib.auth import (
@@ -12,7 +12,7 @@ from django.contrib.auth import (
 )
 
 from api.models import Job
-from dashboard.models import Table, Dataset
+from dashboard.models import Table, Dataset, Log
 from dashboard.imports.dataset import DatasetImport
 from dashboard.forms import ImportForm, QueryServiceForm, LoginForm
 import mantistable.settings as settings
@@ -66,6 +66,7 @@ class HomeView(FormView):
 
         return context
 
+
 @method_decorator(login_required, name='dispatch')
 class ProcessView(View):
     def post(self, request):
@@ -110,6 +111,7 @@ class ProcessView(View):
             "message": response.json()
         })
 
+
 @method_decorator(login_required, name='dispatch')
 class ExportView(View):
     def get(self, request):
@@ -146,6 +148,7 @@ class ExportView(View):
         response['Content-Disposition'] = f'inline; filename=CEA.csv'
         return response
 
+
 @method_decorator(login_required, name='dispatch')
 class ServiceView(FormView):
     template_name = 'dashboard/service.html'
@@ -157,7 +160,7 @@ class ServiceView(FormView):
         print(query)
 
         callback_url = _build_url(self.request, "search-result")
-        backend = settings.LAMAPI_BACKENDS["dbpedia"]
+        backend = settings.LAMAPI_BACKENDS["wikidata"]
         data = {
             "tables": [
                 (
@@ -183,9 +186,13 @@ class ServiceView(FormView):
 
         return super().form_valid(form)
 
+
 @method_decorator(login_required, name='dispatch')
-class DebugLogsView(TemplateView):
+class DebugLogsView(ListView):
     template_name = "dashboard/debug-logs.html"
+    model = Log
+    paginate_by = 2000
+    queryset = model.objects.order_by('-publish_date')
 
 
 class LoginView(FormView):

@@ -20,11 +20,25 @@
                     <div class="box-header with-border">
                         <h3 class="box-title">
                             <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-                            Logs
+                            Logs <span class="badge badge-primary">{{object_list|length}}</span>
                         </h3>
                     </div>
                     <div class="box-body">
-                        TODO
+                        
+                        <table class="logs-table">
+                            <tr>
+                                <th>#</th>
+                                <th>at</th>
+                                <th>message</th>
+                            </tr>
+                            {% for log in object_list %}
+                                <tr>
+                                    <td>{{ log.id }}</td>
+                                    <td>{{ log.publish_date | date:'Y/m/d - H:i:s' }}</td>
+                                    <td>{{ log.message }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
                     </div>
                 </div>
             </div>
@@ -88,6 +102,29 @@
                         results.append(resultBlock);
                         results.append("<p>" + evalConfidence(confidence) + "</>");
                         results.append("<hr>");
+                    }
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("Close connection");
+            };
+        });
+    </script>
+
+    <script>
+        $(function() {
+            let ws = new WebSocket({{ websocket_url | safe }} + 'logs');
+
+            ws.onmessage = function(e) {
+                let data = JSON.parse(e.data);
+                let command = data["command"];
+                let payload = data["payload"];
+
+                if (command == "DEBUG") {
+
+                    if (resource == "progress") {
+                        $('#job-table').bootstrapTable("refresh");
                     }
                 }
             };

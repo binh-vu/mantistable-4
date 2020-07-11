@@ -384,6 +384,18 @@ table th.empty {
   vertical-align: middle !important;
 }
 
+.logs-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.logs-table th, .logs-table td {
+  text-align: left;
+  padding: 8px;
+}
+.logs-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
 .handsontable .htCheckboxRendererInput {
   margin: 0;
 }

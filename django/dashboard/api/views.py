@@ -6,7 +6,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from api.models import Job
-from dashboard.models import Table, Dataset
+from dashboard.models import Table, Dataset, Log
 from dashboard.api.serializers import JobSerializer, MantisHookSerializer
 
 from celery import current_app
@@ -193,8 +193,9 @@ class MainResultView(generics.GenericAPIView):
                         }
                     })
             elif header == "debug":
+                Log(message=payload).save()
                 requests.post("http://mantistable4_tornado:5000", json={
-                    "channel": "0",
+                    "channel": "logs",
                     "payload": {
                         "command": "DEBUG",
                         "payload": payload
@@ -258,8 +259,9 @@ class SearchResultView(generics.GenericAPIView):
                     }
                 })
             elif header == "debug":
+                Log(message=payload).save()
                 requests.post("http://mantistable4_tornado:5000", json={
-                    "channel": "0",
+                    "channel": "logs",
                     "payload": {
                         "command": "DEBUG",
                         "payload": payload

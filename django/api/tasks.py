@@ -220,8 +220,8 @@ def data_retrieval_group_phase(job_id, chunk):
     print("Clean solr results")
     data_retrieval_result = {}
     for cell in solr_result.keys():
-        #if len(solr_result[cell]) == 0:
-        #    client_callback(Job.objects.get(id=job_id), -1, "debug", cell)
+        if len(solr_result[cell]) == 0:
+            client_callback(Job.objects.get(id=job_id), -1, "debug", f"No candidates for '{cell}'")
 
         for res in solr_result[cell]:
             label = res["label"]
