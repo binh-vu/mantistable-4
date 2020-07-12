@@ -16,24 +16,18 @@ from api.process.utils.math_utils import edit_distance, step
 import api.process.cea.literals_confidence as lit_utils
 import mantistable.settings
 
-#from multiprocessing import Manager
-
-#manager = Manager()
-
-# TODO: Caches are sooo bugged...
-#candidates_confidence_cache = manager.dict()
-#lamapi_literals_cache = manager.dict()
 
 class Linkage:
-    def __init__(self, row, lamapi_backend, lamapi_literals_cache, lamapi_candidates_cache):
+    def __init__(self, row, triples, lamapi_backend):#, lamapi_literals_cache, lamapi_candidates_cache):
         self.row = row
+        self.triples = triples
         self.lamapi = LamAPIWrapper(
             lamapi_backend["host"],
             lamapi_backend["port"],
             lamapi_backend["accessToken"]
         )
-        self.lamapi_literals_cache = lamapi_literals_cache
-        self.lamapi_candidates_cache = lamapi_candidates_cache
+        #self.lamapi_literals_cache = lamapi_literals_cache
+        #self.lamapi_candidates_cache = lamapi_candidates_cache
 
     def get_links(self):
         """
@@ -90,11 +84,11 @@ class Linkage:
         """       
         links = []
         
+        """
         cand_subjects = {}
         cand_objects = set()
 
         # Get candidates objects from lamapi service
-        print(f"{subj_cell.content} | {cell2.content} | {len(subj_cell.candidates_entities())}")
         cand_lamapi_objects, cand_lamapi_predicates = self._get_candidates_objects(subj_cell.candidates_entities())
         for cand1_uri, candidates_objects in cand_lamapi_objects.items():
             for sub_obj in candidates_objects:
@@ -105,25 +99,17 @@ class Linkage:
                 cand_subjects[sub_obj].append(cand1_uri)
         
         # Intersection between subject candidates objects and object's candidates
-        """
-        candidates_pair = []
-        for candidate_obj in cand_objects.intersection(set(cell2.candidates_entities())):
-            for candidate_subj in cand_subjects[candidate_obj]:
-                candidates_pair.append((candidate_subj, candidate_obj))
-        
-
-        # TODO: Check if I can reuse predicates from lamapi objects endpoint
-        for s, p, o in cand_lamapi_predicates.get(candidates_pair, []):
-            confidence = _get_candidate_confidence(o, cell2)
-            links.append( Link(triple=(s, p, o), confidence=confidence) )
-        """
-
         for candidate_obj in cand_objects.intersection(set(cell2.candidates_entities())):
             for candidate_subj in cand_subjects[candidate_obj]:
                 p = cand_lamapi_predicates.get((candidate_subj, candidate_obj), None)
                 if p is not None:
                     confidence = self._get_candidate_confidence(candidate_obj, cell2)
                     links.append( Link(triple=(candidate_subj, p, candidate_obj), confidence=confidence) )
+        """
+
+        for triple in self.triples.get(str(hash((subj_cell.content, cell2.content))), []):
+            confidence = self._get_candidate_confidence(triple[2], cell2)
+            links.append( Link(triple=tuple(triple), confidence=confidence) )
 
         # Calculate max confidence for the same triple (different labels)
         max_conf_links = {}
@@ -145,6 +131,7 @@ class Linkage:
         """
             Get triples between Subject and Literal cell
         """
+        """
         links = [
             Link(triple=triple, confidence=0.0)
             for triple in self._get_candidates_literals(cell1.candidates_entities())
@@ -160,6 +147,21 @@ class Linkage:
                 link
                 for link in links
                 if datatype.get_datatype(link.object()).get_xsd_type().label() == xsd_datatype.label()
+            ],
+            key=lambda item: item.subject()
+        )
+        """
+
+
+        datatype_cell = datatype.get_datatype(cell2.normalized)
+        xsd_datatype = datatype_cell.get_xsd_type()
+        cell_python_value = datatype_cell.to_python()
+        links_same_datatype = self.triples.get(str(hash((cell1.content, cell2.content))), [])
+
+        links_same_datatype = sorted(
+            [
+                Link(triple=link, confidence=0.0)
+                for link in links_same_datatype
             ],
             key=lambda item: item.subject()
         )
@@ -214,30 +216,29 @@ class Linkage:
                 )
 
         return triples
-    """
 
     def _get_candidates_objects(self, candidates):
-        """
-            Get objects from Lamapi service
-        """
+        #Get objects from Lamapi service
         cand_lamapi_objects = {}
         cand_lamapi_predicates = {}
-        for candidate, po in self.lamapi.objects(candidates).items():
-            cand_lamapi_objects[candidate] = []
-            for pred, objs in po.items():
-                cand_lamapi_objects[candidate].extend(objs)
+        try:
+            for candidate, po in self.lamapi.objects(candidates).items():
+                cand_lamapi_objects[candidate] = []
+                for pred, objs in po.items():
+                    cand_lamapi_objects[candidate].extend(objs)
 
-                for obj in objs:
-                    cand_lamapi_predicates[(candidate, obj)] = pred
-            
-            cand_lamapi_objects[candidate] = set(cand_lamapi_objects[candidate])
+                    for obj in objs:
+                        cand_lamapi_predicates[(candidate, obj)] = pred
+                
+                cand_lamapi_objects[candidate] = set(cand_lamapi_objects[candidate])
+        except:
+            print("Error", candidates)
+
 
         return cand_lamapi_objects, cand_lamapi_predicates
 
     def _get_candidates_literals(self, candidates):
-        """
-            Get literal triples from Lamapi service
-        """
+        #Get literal triples from Lamapi service
         cand_lamapi_triples = []
         buffer = set(candidates)
 
@@ -259,6 +260,7 @@ class Linkage:
                 ])
 
         return list(set(cand_lamapi_triples))
+    """
 
     def _get_candidate_confidence(self, candidate, cell):
         """
@@ -270,9 +272,7 @@ class Linkage:
         else:
             candidate_label = cell.normalized
 
-        key = (candidate, candidate_label)
-        if key in self.lamapi_candidates_cache:
-            return self.lamapi_candidates_cache[key]
+        #key = (candidate, candidate_label)
 
         winning_conf = 0.0
         for normalized_label in cell.candidates_labels(candidate):
@@ -281,5 +281,4 @@ class Linkage:
             if confidence > winning_conf:
                 winning_conf = confidence
 
-        self.lamapi_candidates_cache[key] = winning_conf
         return winning_conf

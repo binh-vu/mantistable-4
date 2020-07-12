@@ -6,9 +6,11 @@ from api.process.utils.mongo.repository import Repository
 
 from api.process.normalization import normalizer, cleaner
 from api.process.column_analysis import column_classifier
-from api.process.data_retrieval import cells as data_retrieval
+from api.process.data_retrieval import cells as cells_data_retrieval
+from api.process.data_retrieval import links as links_data_retrieval
 
 from api.process.cea import cea
+from api.process.cea.models.cell import Cell
 from api.process.cpa import cpa
 from api.process.revision import revision
 
@@ -43,73 +45,6 @@ def job_slot(job_id: int):
     #data_preparation_phase(tables, job_id)
     workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
     return workflow.apply_async()
-    return 0
-
-"""
-def job_slot(job_id: int):
-    job = Job.objects.get(id=job_id)
-
-    tables = [
-        (item[0], item[1])
-        for item in job.tables
-    ]
-
-    workflow = data_preparation_phase.s(tables, job_id)# | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
-    return workflow.apply_async()
-
-@app.task(name="data_preparation_phase", bind=True)
-def data_preparation_phase(self, tables, job_id):
-    CHUNK_SIZE = int(math.ceil(len(tables) / THREADS))
-    chunks = generate_chunks(tables, CHUNK_SIZE)
-
-    self.replace(
-        group([
-            data_preparation_chunk_phase.si(job_id, chunk)
-            for chunk in chunks
-        ])
-    )
-
-@app.task(name="data_preparation_table_phase")
-def data_preparation_chunk_phase(job_id, tables):
-    results = []
-    for table in tables:
-        results = _data_preparation_table_phase(job_id, *table)
-
-    return results
-
-def _data_preparation_table_phase(job_id, table_id, table_data):
-    job = Job.objects.get(id=job_id)
-
-    print(f"Normalization")
-    normalization_result = _normalization_phase(table_id, table_data)
-    client_callback(job, table_id, "normalization", normalization_result)
-    
-    print(f"Column Analysis")
-    col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
-    client_callback(job, table_id, "column analysis", col_analysis_result)
-
-    return table_id, table_data, col_analysis_result
-
-def _normalization_phase(table_id, data):
-    table_model = table.Table(table_id=table_id, table=data)
-    metadata = normalizer.Normalizer(table_model).normalize()
-    return metadata
-
-def _column_analysis_phase(table_id, table, data):
-    stats = {
-        col_name: d["stats"]
-        for col_name, d in data.items()
-    }
-    cc = column_classifier.ColumnClassifier(stats)
-    tags = cc.get_columns_tags()
-    
-    metadata = {
-        col_name: {**prev_meta, **tags[col_name]}
-        for col_name, prev_meta in data.items()
-    }
-
-    return metadata
-"""
 
 @app.task(name="data_preparation_phase", bind=True)
 def data_preparation_phase(self, tables, job_id):
@@ -152,9 +87,6 @@ def _column_analysis_phase(table_id, table, data):
 
     return metadata
 
-
-
-
 @app.task(name="data_retrieval_phase", bind=True)
 def data_retrieval_phase(self, tables, job_id):
     job = Job.objects.get(id=job_id)
@@ -183,11 +115,10 @@ def data_retrieval_phase(self, tables, job_id):
                     else:
                         query = values["normalized"]
 
-                    cells_content.add(query)
+                    cells_content.add((query, values["original"]))
     
     cells_content = list(cells_content)
 
-    # TODO: Extract constants
     CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
     chunks = generate_chunks(cells_content, CHUNK_SIZE)
 
@@ -195,35 +126,21 @@ def data_retrieval_phase(self, tables, job_id):
         group([
             data_retrieval_group_phase.si(job_id, chunk)
             for chunk in chunks
-        ]) | dummy_phase.si(tables)
-    )
-
-@app.task(name="computation_phase", bind=True)
-def computation_phase(self, info, job_id):
-    job = Job.objects.get(id=job_id)
-    job.progress["current"] = 2
-    job.save()
-
-    print("Computation")
-    self.replace(
-        group([
-            computation_table_phase.s(job_id, *table)
-            for table in info
-        ])
+        ]) | data_retrieval_links_phase.si(job_id, tables)
     )
 
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
     job = Job.objects.get(id=job_id)
-    solr_result = data_retrieval.CandidatesRetrieval(chunk, job.backend).get_candidates()
+    elastic_result = cells_data_retrieval.CandidatesRetrieval(chunk, job.backend).get_candidates()
 
     print("Clean solr results")
     data_retrieval_result = {}
-    for cell in solr_result.keys():
-        if len(solr_result[cell]) == 0:
+    for cell in elastic_result.keys():
+        if len(elastic_result[cell]) == 0:
             client_callback(Job.objects.get(id=job_id), -1, "debug", f"No candidates for '{cell}'")
 
-        for res in solr_result[cell]:
+        for res in elastic_result[cell]:
             label = res["label"]
             entity = res["uri"]
 
@@ -235,16 +152,110 @@ def data_retrieval_group_phase(job_id, chunk):
     
     shared_memory.update(data_retrieval_result)
 
+
+@app.task(name="data_retrieval_links_phase", bind=True)
+def data_retrieval_links_phase(self, job_id, tables):
+    print(f"Data retrieval links")
+    candidates = shared_memory
+
+    def get_candidates(raw_cell, norm_cell):
+        rule = rules.PersonRule(raw_cell)
+        if rule.match():
+            query = rule.build_query()
+        else:
+            query = norm_cell
+
+        return candidates.get(query, [])
+
+    pairs = []
+    for table in tables:
+        metadata = table[2]
+        tags = [
+            col_val["tags"]["col_type"]
+            for col_val in metadata.values()
+        ]
+
+        rows = []
+        pairs = {}
+        for row_idx in range(0, len(metadata[list(metadata.keys())[0]]["values"])):
+            rows.append([])
+            for col_idx in range(0, len(metadata.keys())):
+                values = metadata[list(metadata.keys())[col_idx]]["values"][row_idx]
+                rows[-1].append(values)
+
+        for values in rows:
+            subject_cell_raw = values[0]["original"]
+            subject_norm = values[0]["normalized"]
+            subject_candidates = get_candidates(subject_cell_raw, subject_norm)
+            object_cells = values[1:]
+
+            for idx, obj_cell in enumerate(object_cells):
+                obj_raw = obj_cell["original"]
+                
+                if tags[idx + 1] != "LIT":
+                    obj_norm = obj_cell["normalized"]
+                else:
+                    obj_norm = obj_raw
+
+                obj_candidates = get_candidates(obj_raw, obj_norm)
+
+                pair = (
+                    (subject_cell_raw, subject_norm, subject_candidates, False),
+                    (obj_raw, obj_norm, obj_candidates, tags[idx + 1] == "LIT"),
+                )
+                pairs[(subject_cell_raw, obj_raw)] = pair
+
+    CHUNK_SIZE = 20
+    chunks = generate_chunks(list(pairs.values()), CHUNK_SIZE)
+
+    self.replace(
+        group([
+            data_retrieval_links_group_phase.si(job_id, chunk)
+            for chunk in chunks
+        ]) | dummy_phase.s(tables)
+    )
+
+@app.task(name="data_retrieval_links_group_phase")
+def data_retrieval_links_group_phase(job_id, chunk):
+    job = Job.objects.get(id=job_id)
+    links = links_data_retrieval.LinksRetrieval(chunk, job.backend).get_links()
+
+    links = {
+        hash(k): v
+        for k,v in links.items()
+    }
+
+    return links
+
 @app.task(name="dummy_phase")
-def dummy_phase(info):
-    return info
+def dummy_phase(triples, tables):
+    joined_triples = {}
+    for triple in triples:
+        joined_triples.update(triple)
+
+    return tables, joined_triples
+
+@app.task(name="computation_phase", bind=True)
+def computation_phase(self, info, job_id):
+    tables, triples = info
+    job = Job.objects.get(id=job_id)
+    job.progress["current"] = 2
+    job.save()
+
+    print("Computation")
+    print(triples, tables)
+    self.replace(
+        group([
+            computation_table_phase.s(job_id, triples, *table)
+            for table in tables
+        ])
+    )
 
 @app.task(name="computation_table_phase")
-def computation_table_phase(job_id, table_id, table_data, columns):
+def computation_table_phase(job_id, triples, table_id, table_data, columns):
     job = Job.objects.get(id=job_id)
 
     print("Computation table")
-    candidates = shared_memory
     tags = [
         col_val["tags"]["col_type"]
         for col_val in columns.values()
@@ -256,9 +267,15 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         for values in col_val["values"]
     }
 
+    candidates = {
+        norm: shared_memory.get(norm, {})
+        for norm in normalized.values()
+    }
+
     print ("CEA")
     cea_results = cea.CEAProcess(
         table.Table(table_id=table_id, table=table_data),
+        triples=triples,
         tags=tags,
         normalized_map=normalized,
         candidates_map=candidates

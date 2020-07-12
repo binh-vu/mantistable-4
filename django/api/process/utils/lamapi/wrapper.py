@@ -5,10 +5,11 @@ from api.process.utils.decorators import retry_on_exception
 
 
 class LamAPIWrapper:
-    def __init__(self, endpoint, port, access_token):
+    def __init__(self, endpoint, port, access_token, timeout=120):
         self._endpoint = endpoint
         self._port = port
         self._access_token = access_token
+        self._timeout = timeout
 
     def infos(self):
         return self._make_request(
@@ -19,21 +20,15 @@ class LamAPIWrapper:
         )
 
     @retry_on_exception(max_retries=5)
-    def labels(self, query):
-        if len(query) == 0:
+    def labels(self, norm, original):
+        if len(norm) == 0 or len(original) == 0:
             return []
 
-        self._log("labels", query)
+        self._log("labels", f"{norm}, {original}")
 
-        query_tokens = query.split(' ')
-        query = " ".join([
-            f'{token}'          # TODO: solr injection
-            for token in query_tokens
-        ])
+        return self._labels_impl(norm, original)
 
-        return self._labels_impl(query)
-
-    @retry_on_exception(max_retries=5)
+    @retry_on_exception(max_retries=5, default={})
     def predicates(self, data):
         if len(data) == 0:
             return {}
@@ -44,11 +39,11 @@ class LamAPIWrapper:
                 self._api_url("predicates"),
                 json={"json": data},
                 params={"token": self._access_token},
-                timeout=30
+                timeout=self._timeout
             )
         )
 
-    @retry_on_exception(max_retries=5)
+    @retry_on_exception(max_retries=5, default={})
     def objects(self, subjects):
         if len(subjects) == 0:
             return {}
@@ -59,11 +54,11 @@ class LamAPIWrapper:
                 self._api_url("objects"),
                 json={"json": subjects},
                 params={"token": self._access_token},
-                timeout=30
+                timeout=self._timeout
             )
         )
 
-    @retry_on_exception(max_retries=5)
+    @retry_on_exception(max_retries=5, default={})
     def literals(self, subjects):
         if len(subjects) == 0:
             return {}
@@ -74,11 +69,11 @@ class LamAPIWrapper:
                 self._api_url("literals"),
                 json={"json": subjects},
                 params={"token": self._access_token},
-                timeout=30
+                timeout=self._timeout
             )
         )
 
-    @retry_on_exception(max_retries=5)
+    @retry_on_exception(max_retries=5, default={})
     def concepts(self, entities):
         if len(entities) == 0:
             return {}
@@ -89,7 +84,7 @@ class LamAPIWrapper:
                 self._api_url("concepts"),
                 json={"json": entities},
                 params={"token": self._access_token},
-                timeout=30 
+                timeout=self._timeout
             )
         )
 
@@ -109,12 +104,13 @@ class LamAPIWrapper:
             query = query[0:20] + '...'
         print(f"LAMAPI {endpoint_name} {query}")
 
-    def _labels_impl(self, query, results=None, cursor=None):
+    def _labels_impl(self, norm, original, results=None, cursor=None):
         if results is None:
             results = []
 
         params = {
-            "query": query,
+            "norm": norm,
+            "original": original,
             "token": self._access_token
         }
 
@@ -127,7 +123,7 @@ class LamAPIWrapper:
             lambda: requests.get(
                 self._api_url("labels"),
                 params=params, 
-                timeout=60
+                timeout=self._timeout
             )
         )
 
@@ -136,7 +132,7 @@ class LamAPIWrapper:
 
             if "cursor" in response and response["count"] > 0:
                 cursor = response["cursor"]
-                results = self._labels_impl(query, results, cursor)
+                results = self._labels_impl(norm, original, results, cursor)
             
             return results
         

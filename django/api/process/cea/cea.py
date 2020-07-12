@@ -4,26 +4,24 @@ from api.process.utils.table import Table
 from api.process.utils.rules import person_rule as rules
 
 class CEAProcess:
-    def __init__(self, table, tags: list, normalized_map: dict, candidates_map: dict):
+    def __init__(self, table, triples: dict, tags: list, normalized_map: dict, candidates_map: dict): #normalized_map: dict, candidates_map: dict):
         self._table = table
+        self._triples = triples
         self._normalized_map = normalized_map   # { <original_cell>: <norm_cell> }
         self._candidates_map = candidates_map   # { <norm_cell>: [(<label>, <entity>), (<label>, <entity>),...] }
         self._tags = tags                       # e.g. [SUBJ, NE, LIT, NE]
-        self._lit_cache = {}
-        self._cands_cache = {}
 
     def compute(self, lamapi_backend):
         results = []
-
-        # TODO: Do I really need enumeration??
-        for _, table_row in enumerate(self._table.get_rows()):
+        
+        for table_row in self._table.get_rows():
             row = self._build_row(table_row)
             if row.get_subject_cell() is None:
                 # TODO: This is a serious error. What should I do?
                 print("WARNING: row has no subject column. Ignoring...")
                 continue
                     
-            table_rm = Linkage(row, lamapi_backend, self._lit_cache, self._cands_cache)
+            table_rm = Linkage(row, self._triples, lamapi_backend)
             links = table_rm.get_links()
             subjects = table_rm.get_subjects(links)
             results.append(
@@ -50,7 +48,8 @@ class CEAProcess:
                 row.add_ne_cell(cell, norm, cands, is_subject=is_subject)
             else:
                 # TODO: Is cands always empty list???
-                row.add_lit_cell(cell, cell, cands)
+                #row.add_lit_cell(cell, cell, cands)
+                row.add_lit_cell(cell, cell, [])
 
         return row
 
