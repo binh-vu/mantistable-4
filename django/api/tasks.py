@@ -167,7 +167,7 @@ def data_retrieval_links_phase(self, job_id, tables):
 
         return candidates.get(query, [])
 
-    pairs = []
+    pairs = {}
     for table in tables:
         metadata = table[2]
         tags = [
@@ -176,7 +176,6 @@ def data_retrieval_links_phase(self, job_id, tables):
         ]
 
         rows = []
-        pairs = {}
         for row_idx in range(0, len(metadata[list(metadata.keys())[0]]["values"])):
             rows.append([])
             for col_idx in range(0, len(metadata.keys())):
@@ -230,6 +229,7 @@ def data_retrieval_links_group_phase(job_id, chunk):
 @app.task(name="dummy_phase")
 def dummy_phase(triples, tables):
     joined_triples = {}
+    print(triples)
     for triple in triples:
         joined_triples.update(triple)
 
