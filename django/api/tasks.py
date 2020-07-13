@@ -20,6 +20,7 @@ from multiprocessing import Manager
 import requests
 import json
 import math
+import concurrent.futures
 
 # TODO: EXtract constants
 THREADS = 4
@@ -204,18 +205,32 @@ def data_retrieval_links_phase(self, job_id, tables):
                 )
                 pairs[(subject_cell_raw, obj_raw)] = pair
 
-    CHUNK_SIZE = 20
+    CHUNK_SIZE = (2 * THREADS) + 1
     chunks = generate_chunks(list(pairs.values()), CHUNK_SIZE)
 
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(data_retrieval_links_group_phase, (job_id, chunk))
+            for chunk in chunks
+        ]
+        results = [f.result() for f in futures]
+
+    self.replace(
+        dummy_phase.s(results, tables)
+    )
+
+    """
     self.replace(
         group([
             data_retrieval_links_group_phase.si(job_id, chunk)
             for chunk in chunks
         ]) | dummy_phase.s(tables)
     )
+    """
 
-@app.task(name="data_retrieval_links_group_phase")
-def data_retrieval_links_group_phase(job_id, chunk):
+#@app.task(name="data_retrieval_links_group_phase")
+def data_retrieval_links_group_phase(thread_input):
+    job_id, chunk = thread_input
     job = Job.objects.get(id=job_id)
     links = links_data_retrieval.LinksRetrieval(chunk, job.backend).get_links()
 
@@ -229,7 +244,6 @@ def data_retrieval_links_group_phase(job_id, chunk):
 @app.task(name="dummy_phase")
 def dummy_phase(triples, tables):
     joined_triples = {}
-    print(triples)
     for triple in triples:
         joined_triples.update(triple)
 
