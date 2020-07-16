@@ -135,7 +135,7 @@ def data_retrieval_group_phase(job_id, chunk):
     job = Job.objects.get(id=job_id)
     elastic_result = cells_data_retrieval.CandidatesRetrieval(chunk, job.backend).get_candidates()
 
-    print("Clean solr results")
+    print("Clean lamapi results")
     data_retrieval_result = {}
     for cell in elastic_result.keys():
         if len(elastic_result[cell]) == 0:
@@ -205,30 +205,14 @@ def data_retrieval_links_phase(self, job_id, tables):
                 )
                 pairs[(subject_cell_raw, obj_raw)] = pair
 
-    CHUNK_SIZE = (2 * THREADS) + 1
-    chunks = generate_chunks(list(pairs.values()), CHUNK_SIZE)
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(data_retrieval_links_group_phase, (job_id, chunk))
-            for chunk in chunks
-        ]
-        results = [f.result() for f in futures]
-
-    self.replace(
-        dummy_phase.s(results, tables)
-    )
-
-    """
     self.replace(
         group([
             data_retrieval_links_group_phase.si(job_id, chunk)
             for chunk in chunks
         ]) | dummy_phase.s(tables)
     )
-    """
 
-#@app.task(name="data_retrieval_links_group_phase")
+@app.task(name="data_retrieval_links_group_phase")
 def data_retrieval_links_group_phase(thread_input):
     job_id, chunk = thread_input
     job = Job.objects.get(id=job_id)
@@ -328,10 +312,11 @@ def clean_up(job_id):
     job.delete()
 
 
+# TODO: Unused, remove
 def _data_retrieval_phase(cells):
     solr_result = data_retrieval.CandidatesRetrieval(cells).get_candidates()
 
-    print("Clean solr results")
+    print("Clean lamapi results")
     results = {}
     for cell in solr_result.keys():
         for res in solr_result[cell]:
