@@ -204,6 +204,9 @@ def data_retrieval_links_phase(self, job_id, tables):
                     (obj_raw, obj_norm, obj_candidates, tags[idx + 1] == "LIT"),
                 )
                 pairs[(subject_cell_raw, obj_raw)] = pair
+    
+    CHUNK_SIZE = 20
+    chunks = generate_chunks(list(pairs.values()), CHUNK_SIZE)
 
     self.replace(
         group([
@@ -213,8 +216,7 @@ def data_retrieval_links_phase(self, job_id, tables):
     )
 
 @app.task(name="data_retrieval_links_group_phase")
-def data_retrieval_links_group_phase(thread_input):
-    job_id, chunk = thread_input
+def data_retrieval_links_group_phase(job_id, chunk):
     job = Job.objects.get(id=job_id)
     links = links_data_retrieval.LinksRetrieval(chunk, job.backend).get_links()
 
