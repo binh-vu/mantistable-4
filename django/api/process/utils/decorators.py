@@ -15,6 +15,7 @@ def retry_on_exception(max_retries=5, default=[], raise_exception=False):
                     return func(*args, **kwargs)
                 except Exception as e:  #TODO: Use a more specific exception??
                     retries += 1
+                    print(f"Raised exception: {e}")
                     last_except = e
 
             if last_except is not None:

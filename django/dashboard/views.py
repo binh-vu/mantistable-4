@@ -160,7 +160,7 @@ class ServiceView(FormView):
         print(query)
 
         callback_url = _build_url(self.request, "search-result")
-        backend = settings.LAMAPI_BACKENDS["dbpedia"]
+        backend = settings.LAMAPI_BACKENDS["wikidata"]
         data = {
             "tables": [
                 (

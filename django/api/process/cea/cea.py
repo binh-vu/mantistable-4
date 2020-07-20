@@ -4,9 +4,9 @@ from api.process.utils.table import Table
 from api.process.utils.rules import person_rule as rules
 
 class CEAProcess:
-    def __init__(self, table, triples: dict, tags: list, normalized_map: dict, candidates_map: dict): #normalized_map: dict, candidates_map: dict):
+    def __init__(self, table, tags: list, normalized_map: dict, candidates_map: dict): #normalized_map: dict, candidates_map: dict):
         self._table = table
-        self._triples = triples
+        #self._triples = triples
         self._normalized_map = normalized_map   # { <original_cell>: <norm_cell> }
         self._candidates_map = candidates_map   # { <norm_cell>: [(<label>, <entity>), (<label>, <entity>),...] }
         self._tags = tags                       # e.g. [SUBJ, NE, LIT, NE]
@@ -21,7 +21,7 @@ class CEAProcess:
                 print("WARNING: row has no subject column. Ignoring...")
                 continue
                     
-            table_rm = Linkage(row, self._triples, lamapi_backend)
+            table_rm = Linkage(row, lamapi_backend)
             links = table_rm.get_links()
             subjects = table_rm.get_subjects(links)
             results.append(
@@ -35,11 +35,15 @@ class CEAProcess:
         for pos, cell in enumerate(table_row.values()):
             norm = self._normalized_map.get(cell, None)
 
+
+            """ TODO
             rule = rules.PersonRule(cell)
             if rule.match():
                 query = rule.build_query()
             else:
                 query = norm
+            """
+            query = norm
 
             cands = self._candidates_map.get(query, [])
 

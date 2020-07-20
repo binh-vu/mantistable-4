@@ -4,7 +4,7 @@ from api.process.utils import table
 from api.process.utils.rules import person_rule as rules
 from api.process.utils.mongo.repository import Repository
 
-from api.process.normalization import normalizer, cleaner
+from api.process.normalization import normalizer, cleaner, cleaner_light
 from api.process.column_analysis import column_classifier
 from api.process.data_retrieval import cells as cells_data_retrieval
 from api.process.data_retrieval import links as links_data_retrieval
@@ -110,16 +110,25 @@ def data_retrieval_phase(self, tables, job_id):
                 if tags[col_idx] != "LIT":
                     # Apply rules
                     # TODO:
+                    """
                     rule = rules.PersonRule(values["original"])
                     if rule.match():
                         query = rule.build_query()
                     else:
                         query = values["normalized"]
+                    """
+                    query = values["normalized"]
 
-                    cells_content.add((query, values["original"]))
+                    cells_content.add(query)
     
     cells_content = list(cells_content)
 
+    self.replace(
+        data_retrieval_group_phase.si(job_id, cells_content) |
+        dummy_phase.si(tables)
+    )
+
+    """
     CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
     chunks = generate_chunks(cells_content, CHUNK_SIZE)
 
@@ -129,6 +138,7 @@ def data_retrieval_phase(self, tables, job_id):
             for chunk in chunks
         ]) | data_retrieval_links_phase.si(job_id, tables)
     )
+    """
 
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
@@ -138,14 +148,16 @@ def data_retrieval_group_phase(job_id, chunk):
     print("Clean lamapi results")
     data_retrieval_result = {}
     for cell in elastic_result.keys():
+        """ TODO: Implement
         if len(elastic_result[cell]) == 0:
             client_callback(Job.objects.get(id=job_id), -1, "debug", f"No candidates for '{cell}'")
+        """
 
         for res in elastic_result[cell]:
             label = res["label"]
             entity = res["uri"]
 
-            norm_label = cleaner.Cleaner(label).clean()
+            norm_label = cleaner_light.CleanerLight(label).clean()
             if cell not in data_retrieval_result:
                 data_retrieval_result[cell] = []
             
@@ -227,6 +239,7 @@ def data_retrieval_links_group_phase(job_id, chunk):
 
     return links
 
+"""
 @app.task(name="dummy_phase")
 def dummy_phase(triples, tables):
     joined_triples = {}
@@ -234,25 +247,29 @@ def dummy_phase(triples, tables):
         joined_triples.update(triple)
 
     return tables, joined_triples
+"""
+
+@app.task(name="dummy_phase")
+def dummy_phase(tables):
+    return tables
 
 @app.task(name="computation_phase", bind=True)
 def computation_phase(self, info, job_id):
-    tables, triples = info
+    tables = info
     job = Job.objects.get(id=job_id)
     job.progress["current"] = 2
     job.save()
 
     print("Computation")
-    print(triples, tables)
     self.replace(
         group([
-            computation_table_phase.s(job_id, triples, *table)
+            computation_table_phase.s(job_id, *table)
             for table in tables
         ])
     )
 
 @app.task(name="computation_table_phase")
-def computation_table_phase(job_id, triples, table_id, table_data, columns):
+def computation_table_phase(job_id, table_id, table_data, columns):
     job = Job.objects.get(id=job_id)
 
     print("Computation table")
@@ -275,7 +292,7 @@ def computation_table_phase(job_id, triples, table_id, table_data, columns):
     print ("CEA")
     cea_results = cea.CEAProcess(
         table.Table(table_id=table_id, table=table_data),
-        triples=triples,
+        #triples=triples,
         tags=tags,
         normalized_map=normalized,
         candidates_map=candidates
@@ -312,26 +329,6 @@ def clean_up(job_id):
 
     # TODO: For now just delete job
     job.delete()
-
-
-# TODO: Unused, remove
-def _data_retrieval_phase(cells):
-    solr_result = data_retrieval.CandidatesRetrieval(cells).get_candidates()
-
-    print("Clean lamapi results")
-    results = {}
-    for cell in solr_result.keys():
-        for res in solr_result[cell]:
-            label = res["label"]
-            entity = res["uri"]
-
-            norm_label = cleaner.Cleaner(label).clean()
-            if cell not in results:
-                results[cell] = []
-
-            results[cell].append((norm_label, entity))
-
-    return results
 
 # ====================================================
 

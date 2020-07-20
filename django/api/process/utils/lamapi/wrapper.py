@@ -5,7 +5,7 @@ from api.process.utils.decorators import retry_on_exception
 
 
 class LamAPIWrapper:
-    def __init__(self, endpoint, port, access_token, timeout=120):
+    def __init__(self, endpoint: str, port: int, access_token: str, timeout=120):
         self._endpoint = endpoint
         self._port = port
         self._access_token = access_token
@@ -19,14 +19,31 @@ class LamAPIWrapper:
             )
         )
 
-    @retry_on_exception(max_retries=5)
-    def labels(self, norm, original):
-        if len(norm) == 0 or len(original) == 0:
+    @retry_on_exception(max_retries=5, default=None)
+    async def labels(self, label: str, session):
+        def _elastic_url(suburl):
+            return f"http://{self._endpoint}:19200/{suburl}"
+
+
+        if len(label) == 0:
             return []
 
-        self._log("labels", f"{norm}, {original}")
+        self._log("labels", f"{label}")
 
-        return self._labels_impl(norm, original)
+        """
+        params = {
+            "norm": label,
+            "original": label, # Unused
+            "token": self._access_token
+        }
+        """
+        params = {
+            "q": f"label:{label}",
+            "size": 10000
+        }
+
+        async with session.get(_elastic_url("mantis/_search"), params=params, timeout=self._timeout) as response:
+            return await response.json()
 
     @retry_on_exception(max_retries=5, default={})
     def predicates(self, data):
@@ -104,6 +121,9 @@ class LamAPIWrapper:
             query = query[0:20] + '...'
         print(f"LAMAPI {endpoint_name} {query}")
 
+
+    # Deprecated for now
+    """
     def _labels_impl(self, norm, original, results=None, cursor=None):
         if results is None:
             results = []
@@ -137,11 +157,14 @@ class LamAPIWrapper:
             return results
         
         return response
+    """
+
 
 """
 if __name__ == "__main__":
-    lapiw = LamAPIWrapper("149.132.176.50", 8093)
+    lapiw = LamAPIWrapper("149.132.176.50", 8097)
     res = lapiw.labels("batman")
     print(json.dumps(res, indent=4))
     print(len(res))
+
 """

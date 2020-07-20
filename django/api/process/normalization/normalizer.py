@@ -1,4 +1,5 @@
 from api.process.normalization.cleaner import Cleaner
+from api.process.normalization.cleaner_light import CleanerLight
 from api.process.utils.datatype import DataTypeEnum
 from api.process.utils.table import Table
 from api.process.utils.validator import Validator
@@ -43,7 +44,7 @@ class Normalizer:
         return metadata
 
     def _get_clean_text(self, value):
-        return Cleaner(value).clean()
+        return CleanerLight(value).clean()
 
     def _get_uniform_datatype(self, value_datatype):
         return str(value_datatype.to_python())
