@@ -17,6 +17,9 @@ from api.process.revision import revision
 from celery import group
 from multiprocessing import Manager
 
+import mantistable.settings
+import os
+import mmap
 import requests
 import json
 import math
@@ -25,8 +28,7 @@ import concurrent.futures
 # TODO: EXtract constants
 THREADS = 4
 manager = Manager()
-shared_memory = manager.dict()
-literals_memory = manager.dict()
+#candidates_index = manager.dict()
 
 # TODO: Extract to utils
 def generate_chunks(iterable, n):
@@ -162,10 +164,20 @@ def data_retrieval_group_phase(job_id, chunk):
                 data_retrieval_result[cell] = []
             
             data_retrieval_result[cell].append((norm_label, entity))
-    
-    shared_memory.update(data_retrieval_result)
 
+    candidates_index = {}
+    with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.map"), "w") as f:
+        last_offset = 0
+        for cell in data_retrieval_result:
+            content = json.dumps(data_retrieval_result[cell])
+            content = content + "\n"
+            f.write(content)
+            candidates_index[cell] = (last_offset, len(content))
+            last_offset += len(content)
 
+    with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.index"), "w") as f_idx:
+        json.dump(candidates_index, f_idx)
+"""
 @app.task(name="data_retrieval_links_phase", bind=True)
 def data_retrieval_links_phase(self, job_id, tables):
     print(f"Data retrieval links")
@@ -226,6 +238,7 @@ def data_retrieval_links_phase(self, job_id, tables):
             for chunk in chunks
         ]) | dummy_phase.s(tables)
     )
+"""
 
 @app.task(name="data_retrieval_links_group_phase")
 def data_retrieval_links_group_phase(job_id, chunk):
@@ -272,6 +285,8 @@ def computation_phase(self, info, job_id):
 def computation_table_phase(job_id, table_id, table_data, columns):
     job = Job.objects.get(id=job_id)
 
+
+
     print("Computation table")
     tags = [
         col_val["tags"]["col_type"]
@@ -284,10 +299,20 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         for values in col_val["values"]
     }
 
-    candidates = {
-        norm: shared_memory.get(norm, {})
-        for norm in normalized.values()
-    }
+    candidates_index = {}
+    with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.index"), "r") as f_idx:
+        candidates_index = json.loads(f_idx.read())
+
+    candidates = {}
+    with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.map"), "r") as f:
+        candidates_map = mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ)
+        for norm in normalized.values():
+            info = candidates_index.get(norm, None)
+            if info is not None:
+                offset = info[0]
+                size = info[1]
+                candidates_map.seek(offset)
+                candidates[norm] = json.loads(candidates_map.read(size))
 
     print ("CEA")
     cea_results = cea.CEAProcess(
