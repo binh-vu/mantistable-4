@@ -5,7 +5,7 @@ from aiohttp import ClientSession, TCPConnector
 
 class CandidatesRetrieval:
     def __init__(self, cells, lamapi_backend):
-        self._cells = cells
+        self._cells = set(cells)
 
         self._wrapper = LamAPIWrapper(
             lamapi_backend["host"],
@@ -20,6 +20,8 @@ class CandidatesRetrieval:
         return self._cells
 
     async def _get_candidates(self):
+        lock = asyncio.Lock()
+
         candidates = {}
         connector = TCPConnector(limit=200)
         async with ClientSession(connector=connector) as session:
@@ -42,7 +44,8 @@ class CandidatesRetrieval:
                 else:
                     result = []
                 """
-                candidates[cell] = result
+                async with lock:
+                    candidates[cell] = result
 
         return candidates
 
