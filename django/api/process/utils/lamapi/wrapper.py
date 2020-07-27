@@ -61,7 +61,7 @@ class LamAPIWrapper:
                         }
                     }
                 }
-            }
+            },
             timeout=self._timeout
         ) as response:
             return await response.json()
