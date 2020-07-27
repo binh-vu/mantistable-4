@@ -30,13 +30,20 @@ class CandidatesRetrieval:
                 print(f"{idx}/{total}")
                 response = await self._wrapper.labels(f'{cell}', session)
                 
+                result = []
                 if "hits" in response:
                     result = [
                         item["_source"]
                         for item in response["hits"]["hits"]
                     ]
-                else:
-                    result = []
+                    
+                    if len(result) == 0:
+                        response = await self._wrapper.labels_fuzzy(f'{cell}', session)
+                        if "hits" in response:
+                            result = [
+                                item["_source"]
+                                for item in response["hits"]["hits"]
+                            ]
                 
                 """
                 if "results" in response:

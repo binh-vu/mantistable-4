@@ -18,7 +18,7 @@ class LamAPIWrapper:
                 timeout=2
             )
         )
-
+            
     @retry_on_exception(max_retries=5, default=None)
     async def labels(self, label: str, session):
         def _elastic_url(suburl):
@@ -37,18 +37,33 @@ class LamAPIWrapper:
             "token": self._access_token
         }
         """
-        """
         params = {
-            "q": f"label:{label}",
+            "q": f'label:"{label}"',
             "size": 10000
         }
-        """
-        size = 10000
+
+        async with session.get(
+            _elastic_url("mantis/_search"),
+            params=params,
+            timeout=self._timeout
+        ) as response:
+            return await response.json()
+
+    @retry_on_exception(max_retries=5, default=None)
+    async def labels_fuzzy(self, label: str, session):
+        def _elastic_url(suburl):
+            return f"http://{self._endpoint}:19200/{suburl}"
+
+
+        if len(label) == 0:
+            return []
+
+        self._log("labelsF", f"{label}")
 
         async with session.get(
             _elastic_url("mantis/_search"),
             params={
-                "size": size,
+                "size": 10000,
                 "filter_path": "took,hits.hits._source"
             },
             json={
