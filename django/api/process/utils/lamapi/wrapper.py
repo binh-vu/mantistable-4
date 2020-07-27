@@ -55,7 +55,7 @@ class LamAPIWrapper:
                 "query": {
                     "match": {
                         "label": {
-                            "query": query,
+                            "query": label,
                             "fuzziness": "AUTO",
                             "zero_terms_query": "all"
                         }

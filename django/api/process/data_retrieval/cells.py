@@ -28,7 +28,7 @@ class CandidatesRetrieval:
             total = len(self._cells)
             for idx, cell in enumerate(self._cells):
                 print(f"{idx}/{total}")
-                response = await self._wrapper.labels(f'"{cell}"', session)
+                response = await self._wrapper.labels(f'{cell}', session)
                 
                 if "hits" in response:
                     result = [
