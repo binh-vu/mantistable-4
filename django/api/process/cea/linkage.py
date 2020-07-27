@@ -245,6 +245,7 @@ class Linkage:
                 cand_lamapi_triples.extend([
                     (s, p, l)
                     for l in lits
+                    if not isinstance(l, dict)  # TODO: HACK! Remove it
                 ])
 
         return list(set(cand_lamapi_triples))

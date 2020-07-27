@@ -37,12 +37,33 @@ class LamAPIWrapper:
             "token": self._access_token
         }
         """
+        """
         params = {
             "q": f"label:{label}",
             "size": 10000
         }
+        """
+        size = 10000
 
-        async with session.get(_elastic_url("mantis/_search"), params=params, timeout=self._timeout) as response:
+        async with session.get(
+            _elastic_url("mantis/_search"),
+            params={
+                "size": size,
+                "filter_path": "took,hits.hits._source"
+            },
+            json={
+                "query": {
+                    "match": {
+                        "label": {
+                            "query": query,
+                            "fuzziness": "AUTO",
+                            "zero_terms_query": "all"
+                        }
+                    }
+                }
+            }
+            timeout=self._timeout
+        ) as response:
             return await response.json()
 
     @retry_on_exception(max_retries=5, default={})
