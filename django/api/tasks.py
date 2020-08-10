@@ -14,6 +14,8 @@ from api.process.cea.models.cell import Cell
 from api.process.cpa import cpa
 from api.process.revision import revision
 
+from api.process.utils.assets import Assets
+
 from celery import group
 from multiprocessing import Manager
 
@@ -41,8 +43,8 @@ def job_slot(job_id: int):
     job = Job.objects.get(id=job_id)
 
     tables = [
-        (item[0], item[1])
-        for item in job.tables
+        (table_id, table_name, table_data)
+        for table_id, table_name, table_data in job.tables
     ]
 
     #data_preparation_phase(tables, job_id)
@@ -57,7 +59,7 @@ def data_preparation_phase(self, tables, job_id):
     ]))
 
 @app.task(name="data_preparation_table_phase")
-def data_preparation_table_phase(job_id, table_id, table_data):
+def data_preparation_table_phase(job_id, table_id, table_name, table_data):
     job = Job.objects.get(id=job_id)
 
     print(f"Normalization")
@@ -65,7 +67,7 @@ def data_preparation_table_phase(job_id, table_id, table_data):
     client_callback(job, table_id, "normalization", normalization_result)
     
     print(f"Column Analysis")
-    col_analysis_result = _column_analysis_phase(table_id, table_data, normalization_result)
+    col_analysis_result = _column_analysis_phase(table_id, table_name, table_data, normalization_result)
     client_callback(job, table_id, "column analysis", col_analysis_result)
 
     return table_id, table_data, col_analysis_result
@@ -75,12 +77,16 @@ def _normalization_phase(table_id, data):
     metadata = normalizer.Normalizer(table_model).normalize()
     return metadata
 
-def _column_analysis_phase(table_id, table, data):
+def _column_analysis_phase(table_id, table_name, table, data):
     stats = {
         col_name: d["stats"]
         for col_name, d in data.items()
     }
-    cc = column_classifier.ColumnClassifier(stats)
+
+    cea_targets = Assets().get_json_asset("ne_cols.json")
+    targets = cea_targets[table_name]
+
+    cc = column_classifier.ColumnClassifierTargets(stats, targets)
     tags = cc.get_columns_tags()
     
     metadata = {

@@ -246,7 +246,7 @@ class SearchResultView(generics.GenericAPIView):
                             })
                     cols = {
                         "linkages": linkages,
-                        "confidence": confidence / len(linkages)
+                        "confidence": confidence / max(len(linkages), 1)
                     }
 
                 # TODO: Implement better websocket wrapper

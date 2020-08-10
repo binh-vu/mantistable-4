@@ -10,4 +10,16 @@ class CleanerLight(Cleaner):
 
         clean_text = clean_text.strip().lower()
         clean_text = nlp.remove_extra_spaces(clean_text)
-        return json.dumps(clean_text)[1:-1]
+        
+        # For elastic should escape
+        # + - && || ! ( ) { } [ ] ^ " ~ * ? : \
+        # TODO Remove json.dumps()
+        #return json.dumps(clean_text)[1:-1]
+        
+        for ch in ['\\', '+', '-', '&', '|', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':']:
+            if ch in clean_text:
+                clean_text = clean_text.replace(ch, "\\" + ch)
+                
+        return clean_text
+        
+        

@@ -90,7 +90,7 @@ class ProcessView(View):
         tables = []
         for dataset in datasets:
             for table in dataset.table_set.all():
-                tables.append((table.id, table.original))
+                tables.append((table.id, table.name[0:-5], table.original))
         
         data = {
             "tables": tables,
