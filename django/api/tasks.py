@@ -85,8 +85,12 @@ def _column_analysis_phase(table_id, table_name, table, data):
 
     cea_targets = Assets().get_json_asset("ne_cols.json")
     targets = cea_targets[table_name]
-
-    cc = column_classifier.ColumnClassifierTargets(stats, targets)
+    
+    if len(targets) > 0:
+        cc = column_classifier.ColumnClassifierTargets(stats, targets)
+    else:
+        cc = column_classifier.ColumnClassifier(stats)
+    
     tags = cc.get_columns_tags()
     
     metadata = {
