@@ -130,18 +130,18 @@ class ExportView(View):
         csv_export = ""
         for name, linkages, cols in tables:
             table_name = name[0:-5]
-            prefix = "http://dbpedia.org/resource/"
+            prefix = "" #"http://dbpedia.org/resource/"
             for row_idx, row in enumerate(linkages):
                 subject = None
                 for col_idx, col in enumerate(row):
                     if list(cols.values())[col_idx+1]["tags"]["col_type"] == "NE":
                         if col["confidence"] > 0.0:
-                            content = f"\"{table_name}\",\"{col_idx+1}\",\"{row_idx+1}\",\"{prefix}{col['object']}\""
+                            content = f"\"{table_name}\",\"{row_idx+1}\",\"{col_idx+1}\",\"{prefix}{col['object']}\""
                             csv_export += content + "\n"
                     subject = col['subject']
                 
                 if subject is not None:
-                    content = f"\"{table_name}\",\"0\",\"{row_idx+1}\",\"{prefix}{subject}\""
+                    content = f"\"{table_name}\",\"{row_idx+1}\",\"0\",\"{prefix}{subject}\""
                     csv_export += content + "\n"
         
         response = HttpResponse(csv_export, content_type="text/csv")
@@ -165,6 +165,7 @@ class ServiceView(FormView):
             "tables": [
                 (
                     -1, # Null id
+                    "query",
                     [
                         {
                             f"col_{idx}": value

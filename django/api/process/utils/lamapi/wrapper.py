@@ -22,7 +22,8 @@ class LamAPIWrapper:
     @retry_on_exception(max_retries=5, default=None)
     async def labels(self, label: str, session):
         def _elastic_url(suburl):
-            return f"http://mantistable4_api_elastic:9200/{suburl}"
+            #return f"http://mantistable4_api_elastic:9200/{suburl}"
+            return f"http://149.132.176.50:19200/{suburl}"
 
 
         if len(label) == 0:
@@ -52,7 +53,8 @@ class LamAPIWrapper:
     @retry_on_exception(max_retries=5, default=None)
     async def labels_fuzzy(self, label: str, session):
         def _elastic_url(suburl):
-            return f"http://mantistable4_api_elastic:9200/{suburl}"
+            #return f"http://mantistable4_api_elastic:9200/{suburl}"
+            return f"http://149.132.176.50:19200/{suburl}"
 
 
         if len(label) == 0:

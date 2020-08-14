@@ -84,7 +84,7 @@ def _column_analysis_phase(table_id, table_name, table, data):
     }
 
     cea_targets = Assets().get_json_asset("ne_cols.json")
-    targets = cea_targets[table_name]
+    targets = cea_targets.get(table_name, [])
     
     if len(targets) > 0:
         cc = column_classifier.ColumnClassifierTargets(stats, targets)
@@ -155,38 +155,8 @@ def data_retrieval_phase(self, tables, job_id):
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
     job = Job.objects.get(id=job_id)
-    elastic_result = cells_data_retrieval.CandidatesRetrieval(chunk, job.backend).get_candidates()
+    cells_data_retrieval.CandidatesRetrieval(chunk, job.backend).write_candidates_cache()
 
-    print("Clean lamapi results")
-    data_retrieval_result = {}
-    for cell in elastic_result.keys():
-        """ TODO: Implement
-        if len(elastic_result[cell]) == 0:
-            client_callback(Job.objects.get(id=job_id), -1, "debug", f"No candidates for '{cell}'")
-        """
-
-        for res in elastic_result[cell]:
-            label = res["label"]
-            entity = res["uri"]
-
-            norm_label = cleaner_light.CleanerLight(label).clean()
-            if cell not in data_retrieval_result:
-                data_retrieval_result[cell] = []
-            
-            data_retrieval_result[cell].append((norm_label, entity))
-
-    candidates_index = {}
-    with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.map"), "w") as f:
-        last_offset = 0
-        for cell in data_retrieval_result:
-            content = json.dumps(data_retrieval_result[cell])
-            content = content + "\n"
-            f.write(content)
-            candidates_index[cell] = (last_offset, len(content))
-            last_offset += len(content)
-
-    with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.index"), "w") as f_idx:
-        json.dump(candidates_index, f_idx)
 """
 @app.task(name="data_retrieval_links_phase", bind=True)
 def data_retrieval_links_phase(self, job_id, tables):

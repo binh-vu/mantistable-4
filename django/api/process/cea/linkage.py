@@ -146,6 +146,19 @@ class Linkage:
             ],
             key=lambda item: item.subject()
         )
+
+        if xsd_datatype.label() == "xsd:date":
+            links_same_datatype.extend(
+                [
+                    Link(triple=(link.triple[0], link.triple[1], f"{int(datatype.get_datatype(link.object()).to_python())}-01-01"), confidence=link.get_confidence())
+                    for link in links
+                    if datatype.get_datatype(link.object()).get_xsd_type().label() == "xsd:float"
+                    if datatype.get_datatype(f"{int(datatype.get_datatype(link.object()).to_python())}-01-01").get_xsd_type().label() == "xsd:date"
+                ]
+            )
+            links_same_datatype = sorted(links_same_datatype, key=lambda item: item.subject())
+
+
         #--------------
 
         """
@@ -189,7 +202,8 @@ class Linkage:
                 return []
             
             # Compute the confidence score
-            res.extend(lit_utils.literal_confidence(xsd_datatype, cell_python_value, candidates_value))
+            triples = lit_utils.literal_confidence(xsd_datatype, cell_python_value, candidates_value)
+            res.extend(triples)
 
         return res
 
