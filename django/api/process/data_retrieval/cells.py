@@ -71,6 +71,7 @@ class CandidatesRetrieval:
             total = len(self._cells)
             for idx, cell in enumerate(self._cells):
                 print(f"{idx}/{total}")
+                """
                 response = await self._wrapper.labels_fuzzy(f'{cell}', session)
                 if "hits" in response:
                     result = [
@@ -96,7 +97,10 @@ class CandidatesRetrieval:
                                 item["_source"]
                                 for item in response["hits"]["hits"]
                             ]
-                """
+                        else:
+                            result = []
+                else:
+                    result = []
                 """
                 if "results" in response:
                     result = response["results"]
