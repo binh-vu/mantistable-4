@@ -148,6 +148,27 @@ class Linkage:
         )
 
         if xsd_datatype.label() == "xsd:date":
+            possible_dates = []
+            
+            for link in links:
+                if datatype.get_datatype(link.object()).get_xsd_type().label() == "xsd:float":
+                    obj = datatype.get_datatype(link.object()).to_python()
+                    
+                    try:
+                        int(obj)                            
+                    except:
+                        break
+                    
+                    if datatype.get_datatype(f"{int(obj)}-01-01").get_xsd_type().label() == "xsd:date":
+                        possible_dates.append(
+                            Link(
+                                triple=(link.triple[0], link.triple[1], f"{int(obj)}-01-01"),
+                                confidence=link.get_confidence()
+                            )
+                        )
+            
+            
+            """
             links_same_datatype.extend(
                 [
                     Link(triple=(link.triple[0], link.triple[1], f"{int(datatype.get_datatype(link.object()).to_python())}-01-01"), confidence=link.get_confidence())
@@ -156,6 +177,9 @@ class Linkage:
                     if datatype.get_datatype(f"{int(datatype.get_datatype(link.object()).to_python())}-01-01").get_xsd_type().label() == "xsd:date"
                 ]
             )
+            """
+                
+            links_same_datatype.extend(possible_dates)
             links_same_datatype = sorted(links_same_datatype, key=lambda item: item.subject())
 
 
