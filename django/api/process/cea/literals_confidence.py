@@ -75,7 +75,7 @@ def literal_numeric_match(cell_value: float, candidates_value: list):
                         links.append( Link(triple=lower_triple, confidence=conf) )
 
                 if idx + 1 < len(comparation_line) - 1 and confidence_upper > 0.0:
-                    conf = float(numeric_confidence(Decimal(cell_value), Decimal(upper_value))
+                    conf = float(numeric_confidence(Decimal(cell_value), Decimal(upper_value)))
                     if conf > 0.0001:
                         links.append( Link(triple=upper_triple, confidence=conf) )
                 
