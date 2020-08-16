@@ -1,4 +1,5 @@
 from functools import singledispatch
+from decimal import Decimal
 from datatype import xsd, validators
 
 import sys
@@ -20,8 +21,11 @@ from api.process.utils.math_utils import edit_distance
 #           Standard deviation could be adjusted to reflect the column distribution.
 def numeric_confidence(a, b):
     #return 1.0 - (abs(a - b) / max(a, b, 1.0))
-    sigma = 100 # TODO: adjust this to reflect column distribution??
-    return math.e**(-0.5*((a - b) / sigma)**2)
+    try:
+        sigma = Decimal(100) # TODO: adjust this to reflect column distribution??
+        return Decimal(math.e)**( Decimal(-0.5)*((Decimal(a) - Decimal(b)) / sigma)**Decimal(2))
+    except:
+        return 0.0
 
 def literal_exact_match(cell_value, candidates_value: list):
     links = []
@@ -57,24 +61,27 @@ def literal_numeric_match(cell_value: float, candidates_value: list):
         lower_value = lower_triple[2]
         upper_value = upper_triple[2]
         
-        if lower_value == upper_value and cell_value == lower_value:
-            links.append(Link(triple=lower_triple, confidence=1.0))
-        elif cell_value >= lower_value and cell_value < upper_value:
-            confidence_lower = (cell_value - upper_value) / (lower_value - upper_value)
-            confidence_lower = min(max(confidence_lower, 0.0), 1.0)
-            confidence_upper = 1.0 - confidence_lower
+        try:
+            if lower_value == upper_value and cell_value == lower_value:
+                links.append(Link(triple=lower_triple, confidence=1.0))
+            elif cell_value >= lower_value and cell_value < upper_value:
+                confidence_lower = float((Decimal(cell_value) - Decimal(upper_value)) / (Decimal(lower_value) - Decimal(upper_value)))
+                confidence_lower = min(max(confidence_lower, 0.0), 1.0)
+                confidence_upper = 1.0 - confidence_lower
 
-            if lower_triple[1] != "dummy_predicate":
-                conf = numeric_confidence(cell_value, lower_value)
-                if conf > 0.0001:
-                    links.append( Link(triple=lower_triple, confidence=conf) )
+                if lower_triple[1] != "dummy_predicate":
+                    conf = float(numeric_confidence(Decimal(cell_value), Decimal(lower_value)))
+                    if conf > 0.0001:
+                        links.append( Link(triple=lower_triple, confidence=conf) )
 
-            if idx + 1 < len(comparation_line) - 1 and confidence_upper > 0.0:
-                conf = numeric_confidence(cell_value, upper_value)
-                if conf > 0.0001:
-                    links.append( Link(triple=upper_triple, confidence=conf) )
-            
-            break
+                if idx + 1 < len(comparation_line) - 1 and confidence_upper > 0.0:
+                    conf = float(numeric_confidence(Decimal(cell_value), Decimal(upper_value))
+                    if conf > 0.0001:
+                        links.append( Link(triple=upper_triple, confidence=conf) )
+                
+                break
+        except:
+            pass
 
     return links
 
