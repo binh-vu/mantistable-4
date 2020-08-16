@@ -63,7 +63,7 @@ def literal_numeric_match(cell_value: float, candidates_value: list):
         
         try:
             if lower_value == upper_value and cell_value == lower_value:
-                links.append(Link(triple=lower_triple, confidence=1.0))
+                links.append(Link(triple=(lower_triple[0], lower_triple[1], str(lower_triple[2])), confidence=1.0))
             elif cell_value >= lower_value and cell_value < upper_value:
                 confidence_lower = float((Decimal(cell_value) - Decimal(upper_value)) / (Decimal(lower_value) - Decimal(upper_value)))
                 confidence_lower = min(max(confidence_lower, 0.0), 1.0)
@@ -72,12 +72,12 @@ def literal_numeric_match(cell_value: float, candidates_value: list):
                 if lower_triple[1] != "dummy_predicate":
                     conf = float(numeric_confidence(Decimal(cell_value), Decimal(lower_value)))
                     if conf > 0.0001:
-                        links.append( Link(triple=lower_triple, confidence=conf) )
+                        links.append( Link(triple=(lower_triple[0], lower_triple[1], str(lower_triple[2])), confidence=conf) )
 
                 if idx + 1 < len(comparation_line) - 1 and confidence_upper > 0.0:
                     conf = float(numeric_confidence(Decimal(cell_value), Decimal(upper_value)))
                     if conf > 0.0001:
-                        links.append( Link(triple=upper_triple, confidence=conf) )
+                        links.append( Link(triple=(upper_triple[0], upper_triple[1], str(upper_triple[2])), confidence=conf) )
                 
                 break
         except:
