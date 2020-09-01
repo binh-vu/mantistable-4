@@ -36,10 +36,10 @@ class Linkage:
         links = []
         for cell in cells:
             if cell != subj_cell:
-                if not cell.is_lit_cell:
-                    link = self._match_ne_cells(subj_cell, cell)
-                else:
+                if cell.is_lit_cell:
                     link = self._match_lit_cells(subj_cell, cell)
+                else:
+                    link = self._match_ne_cells(subj_cell, cell)
                 
                 links.append(link)
 

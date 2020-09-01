@@ -51,8 +51,6 @@ class CEAProcess:
                 is_subject = self._is_subject(self._table, pos)
                 row.add_ne_cell(cell, norm, cands, is_subject=is_subject)
             else:
-                # TODO: Is cands always empty list???
-                #row.add_lit_cell(cell, cell, cands)
                 row.add_lit_cell(cell, cell, [])
 
         return row
@@ -63,5 +61,4 @@ class CEAProcess:
 
     def _is_subject(self, table, pos):
         assert (pos >= 0 and pos < len(self._tags))
-        #return  self._tags[pos] == "SUBJ"      # TODO
-        return pos == 0
+        return  self._tags[pos] == "SUBJ"

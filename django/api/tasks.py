@@ -5,7 +5,7 @@ from api.process.utils.rules import person_rule as rules
 from api.process.utils.mongo.repository import Repository
 
 from api.process.normalization import normalizer, cleaner, cleaner_light
-from api.process.column_analysis import column_classifier
+from api.process.column_analysis import column_classifier, subject_detection
 from api.process.data_retrieval import cells as cells_data_retrieval
 from api.process.data_retrieval import links as links_data_retrieval
 
@@ -47,7 +47,6 @@ def job_slot(job_id: int):
         for table_id, table_name, table_data in job.tables
     ]
 
-    #data_preparation_phase(tables, job_id)
     workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
     return workflow.apply_async()
 
@@ -68,8 +67,12 @@ def data_preparation_table_phase(job_id, table_id, table_name, table_data):
     
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_name, table_data, normalization_result)
+
+    print(f"Subject detection")
+    col_analysis_result = _subject_detection_phase(table_id, table_name, table_data, col_analysis_result)
     client_callback(job, table_id, "column analysis", col_analysis_result)
 
+    print(col_analysis_result)
     return table_id, table_data, col_analysis_result
 
 def _normalization_phase(table_id, data):
@@ -77,19 +80,20 @@ def _normalization_phase(table_id, data):
     metadata = normalizer.Normalizer(table_model).normalize()
     return metadata
 
-def _column_analysis_phase(table_id, table_name, table, data):
+def _column_analysis_phase(table_id, table_name, table_data, data):
     stats = {
         col_name: d["stats"]
         for col_name, d in data.items()
     }
 
+    table_model = table.Table(table_id=table_id, table=table_data)
     cea_targets = Assets().get_json_asset("ne_cols.json")
     targets = cea_targets.get(table_name, [])
     
     if len(targets) > 0:
-        cc = column_classifier.ColumnClassifierTargets(stats, targets)
+        cc = column_classifier.ColumnClassifierTargets(table_model.get_cols(), stats, targets)
     else:
-        cc = column_classifier.ColumnClassifier(stats)
+        cc = column_classifier.ColumnClassifier(table_model.get_cols(), stats)
     
     tags = cc.get_columns_tags()
     
@@ -99,6 +103,28 @@ def _column_analysis_phase(table_id, table_name, table, data):
     }
 
     return metadata
+
+def _subject_detection_phase(table_id, table_name, table_data, metadata):
+    table_model = table.Table(table_id=table_id, table=table_data)
+
+    subject_idx = subject_detection.get_subject_col_idx(table_model, list(metadata.values()))
+
+    for idx, (col_name, meta) in enumerate(metadata.items()):
+        if idx == subject_idx:
+            metadata[col_name]["tags"]["col_type"] = "SUBJ"
+
+    """
+    metadata = {
+        col_name: {
+            **meta,
+            "is_subject": idx == subject_idx
+        }
+        for idx, (col_name, meta) in enumerate(metadata.items())
+    }
+    """
+
+    return metadata
+
 
 @app.task(name="data_retrieval_phase", bind=True)
 def data_retrieval_phase(self, tables, job_id):
