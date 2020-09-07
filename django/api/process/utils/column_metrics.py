@@ -50,4 +50,4 @@ def df(col_idx: int, first_ne_idx: int) -> float:
     """
         Distance from the first NE-column
     """
-    return float(col_idx - first_ne_idx)
+    return abs(float(col_idx - first_ne_idx))

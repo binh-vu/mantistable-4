@@ -86,6 +86,8 @@ services:
     command: mongod --port 27017
     ports:
       - "27017:27017"
+    logging:
+      driver: "none" # Remove mongo logs  
     networks:
       - default
       

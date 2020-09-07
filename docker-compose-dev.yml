@@ -60,7 +60,9 @@ services:
   mongo:
     container_name: mantistable4_mongo
     image: mongo
-    command: mongod --port 27017
+    command: mongod --port 27017 --quiet
+    logging:
+      driver: "none" # Remove mongo logs 
     ports:
       - "27017:27017"
       
