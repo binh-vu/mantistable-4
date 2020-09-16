@@ -22,7 +22,11 @@ class Normalizer:
                 'values': []
             }
             for value in cells:
-                value_datatype = self._get_datatype(value)
+                try:
+                    value_datatype = self._get_datatype(value)
+                except:
+                    value_datatype = self._get_datatype(str(value))
+                      
                 if value_datatype.get_xsd_type().label() == "xsd:string":
                     clean_text = self._get_clean_text(value)
                     value_datatype = self._get_datatype(clean_text)

@@ -50,7 +50,11 @@ class DatasetImport:
         return [(table_name, f)]
 
     def _load_json(self, table_name, content):
-        return [(table_name, json.loads(content))]
+        data = json.loads(content)
+        for row in data:
+            for key in data[0].keys():
+                row[key] = str(row[key])
+        return [(table_name, data)]
 
     def _load_zip(self, zipfile):
         content = []
