@@ -28,22 +28,23 @@ class CandidatesRetrieval:
         return self._cells
 
     async def _get_candidates(self):
-        lock = asyncio.Lock()
-
         candidates = {}
         connector = TCPConnector(limit=200)
         async with ClientSession(connector=connector) as session:
             total = len(self._cells)
             for idx, cell in enumerate(self._cells):
                 print(f"{idx}/{total}")
-                response = await self._wrapper.labels(f'{cell}', session)
+                # TODO: Fuzzy!!!
+                response = await self._wrapper.labels_fuzzy(f'{cell}', session)
                 
                 result = []
+                print(response)
                 if "hits" in response:
                     result = [
                         item["_source"]
                         for item in response["hits"]["hits"]
                     ]
+                    print(len(results))
                     
                     if len(result) == 0:
                         response = await self._wrapper.labels_fuzzy(f'{cell}', session)
@@ -59,8 +60,7 @@ class CandidatesRetrieval:
                 else:
                     result = []
                 """
-                async with lock:
-                    candidates[cell] = result
+                candidates[cell] = result
 
         return candidates
 
@@ -81,6 +81,7 @@ class CandidatesRetrieval:
                 else:
                     result = []
                 """
+                # TODO: Fuzzy!!!
                 response = await self._wrapper.labels(f'{cell}', session)
                 
                 result = []

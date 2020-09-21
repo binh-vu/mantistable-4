@@ -181,7 +181,10 @@ class MainResultView(generics.GenericAPIView):
                 if table is not None:
                     table.linkages = cols
                     table.has_annotations = True
-                    table.save()
+                    try:
+                        table.save()
+                    except Exception as e:
+                        print(e)
 
                     # TODO: Implement better websocket wrapper
                     requests.post("http://mantistable4_tornado:5000", json={

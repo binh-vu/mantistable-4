@@ -60,7 +60,6 @@ class LamAPIWrapper:
             else:
                 return f"http://149.132.176.50:19200/{suburl}"
 
-
         if len(label) == 0:
             return []
 
@@ -85,6 +84,7 @@ class LamAPIWrapper:
             },
             timeout=self._timeout
         ) as response:
+            print(response.status)
             return await response.json()
 
     @retry_on_exception(max_retries=5, default={})

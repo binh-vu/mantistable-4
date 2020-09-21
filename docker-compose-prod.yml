@@ -22,11 +22,11 @@ services:
                       echo 'Migrating...' &&
                       python manage.py migrate &&
                       echo 'Running server...' &&
-                      gunicorn -w4 mantistable.wsgi:application --bind 0.0.0.0:8000"
+                      gunicorn -w8 mantistable.wsgi:application --bind 0.0.0.0:8000 --timeout 500"
     volumes:
       - ./django:/mantistable
     ports:
-        - "8001:8000"
+        - "8000"
     depends_on:
       - mongo
       - redis
@@ -35,7 +35,6 @@ services:
     networks:
       - default
       - mantis
-
       
   frontend:
     container_name: mantistable4_frontend
@@ -44,7 +43,7 @@ services:
     volumes:
         - ./frontend:/reactapp
     ports:
-        - "3000:3000"
+        - "3000"
     environment:
         - NODE_ENV=development
     depends_on:
@@ -75,8 +74,8 @@ services:
     volumes:
       - ./tornado:/app
     ports:
-      - "5000:5000"     # Remove in production
-      - "5001:5001"
+      - "5000"     # Remove in production
+      - "5001"
     networks:
       - default
       
@@ -85,11 +84,13 @@ services:
     image: mongo
     command: mongod --port 27017
     ports:
-      - "27017:27017"
+      - "27024:27017"
     logging:
       driver: "none" # Remove mongo logs  
     networks:
       - default
+    volumes:
+      - ./mongo:/data/db
       
   redis:
     container_name: mantistable4_redis
@@ -101,4 +102,4 @@ networks:
   default:
   mantis:
     external:
-      name: label-matching-api_mantis
+      name: lamapi_mantis

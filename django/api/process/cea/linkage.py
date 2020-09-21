@@ -93,12 +93,12 @@ class Linkage:
                     cand_subjects[sub_obj] = []
                     
                 cand_subjects[sub_obj].append(cand1_uri)
-        
+
         # Intersection between subject candidates objects and object's candidates
         for candidate_obj in cand_objects.intersection(set(cell2.candidates_entities())):
             for candidate_subj in cand_subjects[candidate_obj]:
-                p = cand_lamapi_predicates.get((candidate_subj, candidate_obj), None)
-                if p is not None:
+                preds_set = cand_lamapi_predicates.get((candidate_subj, candidate_obj), set())
+                for p in preds_set:
                     confidence = self._get_candidate_confidence(candidate_obj, cell2)
                     links.append( Link(triple=(candidate_subj, p, candidate_obj), confidence=confidence) )
 
@@ -264,7 +264,10 @@ class Linkage:
                     cand_lamapi_objects[candidate].extend(objs)
 
                     for obj in objs:
-                        cand_lamapi_predicates[(candidate, obj)] = pred
+                        if (candidate, obj) not in cand_lamapi_predicates:
+                            cand_lamapi_predicates[(candidate, obj)] = set()
+                        
+                        cand_lamapi_predicates[(candidate, obj)].add(pred)
                 
                 cand_lamapi_objects[candidate] = set(cand_lamapi_objects[candidate])
         except:
@@ -286,6 +289,10 @@ class Linkage:
                     if not isinstance(l, dict)  # TODO: HACK! Remove it
                 ])
 
+        for c in cand_lamapi_triples:
+            s, p, l = c
+            if isinstance(l, dict):
+                print("l", s, p, l)
         return list(set(cand_lamapi_triples))
 
     def _get_candidate_confidence(self, candidate, cell):

@@ -28,9 +28,8 @@ import math
 import concurrent.futures
 
 # TODO: EXtract constants
-THREADS = 4
+THREADS = 15
 manager = Manager()
-#candidates_index = manager.dict()
 
 # TODO: Extract to utils
 def generate_chunks(iterable, n):
@@ -160,23 +159,23 @@ def data_retrieval_phase(self, tables, job_id):
                     cells_content.add(query)
     
     cells_content = list(cells_content)
-
     self.replace(
-        data_retrieval_group_phase.si(job_id, cells_content) |
-        dummy_phase.si(tables)
+        data_retrieval_group_phase.si(job_id, cells_content) | dummy_phase.si(tables)
     )
 
-    """
-    CHUNK_SIZE = int(math.ceil(len(cells_content) / THREADS))
-    chunks = generate_chunks(cells_content, CHUNK_SIZE)
+@app.task(name="computation_phase", bind=True)
+def computation_phase(self, info, job_id):
+    job = Job.objects.get(id=job_id)
+    job.progress["current"] = 2
+    job.save()
 
+    print("Computation")
     self.replace(
         group([
-            data_retrieval_group_phase.si(job_id, chunk)
-            for chunk in chunks
-        ]) | data_retrieval_links_phase.si(job_id, tables)
+            computation_table_phase.s(job_id, *table)
+            for table in info
+        ])
     )
-    """
 
 @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):

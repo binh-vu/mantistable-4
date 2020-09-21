@@ -30,7 +30,6 @@ class Cleaner:
 
         i = 0
         token = self._get_token(tokens, i)
-
         while token is not None:
             value = token.value
             tag = token.tag
