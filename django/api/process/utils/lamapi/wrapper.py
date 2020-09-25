@@ -56,7 +56,7 @@ class LamAPIWrapper:
     async def labels_fuzzy(self, label: str, session):
         def _elastic_url(suburl):
             if os.environ.get("LAMAPI", False):
-                return f"http://mantistable4_api_elastic:19200/{suburl}"
+                return f"http://mantistable4_api_elastic:9200/{suburl}"
             else:
                 return f"http://149.132.176.50:19200/{suburl}"
 

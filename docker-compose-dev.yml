@@ -20,7 +20,6 @@ services:
       - celery
     networks:
       - default
-      - mantis
       
   frontend:
     container_name: mantistable4_frontend
@@ -47,7 +46,6 @@ services:
       - redis
       - mongo
     networks:
-      - mantis
       - default
       
   tornado:
@@ -73,7 +71,7 @@ services:
     logging:
       driver: "none" # Remove mongo logs 
     ports:
-      - "27023:27017"
+      - "27017:27017"
     networks:
       - default
   
@@ -82,9 +80,3 @@ services:
     image: redis:alpine
     networks:
       - default
-
-networks:
-  default:
-  mantis:
-    external:
-      name: lamapi_mantis

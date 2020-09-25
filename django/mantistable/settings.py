@@ -47,7 +47,7 @@ PORT = os.environ.get("PORT", "80")
 LAMAPI_BACKENDS = config["mantistable"].get("lamapi", {})
 
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web", "0.0.0.0", "149.132.176.50"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web", "0.0.0.0", "149.132.176.50", "51.144.177.47"]
 if HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(HOST)
 
@@ -192,9 +192,9 @@ USE_L10N = True
 USE_TZ = True
 
 # CELERY settings
-CELERY_BROKER_URL = 'redis://redis'
+CELERY_BROKER_URL = 'redis://mantistable4_redis'
 # BROKER_URL = 'redis://redis:6379'
-CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_RESULT_BACKEND = 'redis://mantistable4_redis:6379'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
