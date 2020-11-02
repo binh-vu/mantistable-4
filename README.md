@@ -53,7 +53,15 @@ Check line 50. In this file you can also change username and password for the da
 The main interface is currently under development, you can reach a small admin dashboard on `http://localhost:PORT/dashboard/`.
 The default username is `admin` and the default password is `mantis4`.
 
-
+## Usage
+![Mantis4](mantis4.png)
+As you can see in the picture above the interface is quite basic.
+Under LamAPI backends you should see an online endpoint in order to annotate a table or a dataset.
+Under the "import" box you can select a table as json file or zip file (containing only json files without folders) and put a "dataset name". 
+If you reuse the same name in multiple uploads it will merge the files.
+You can now select a dataset and process it by pressing "process selected". Now the chart should move with processes allocated.
+After the processing of the dataset the chart should show 0 running and you can press "Export selected" in order to Download the CEA annotations for that dataset.
+CPA and CTA download from the GUI is WIP.
 
 ## License
 
