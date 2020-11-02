@@ -159,13 +159,9 @@ def data_retrieval_phase(self, tables, job_id):
                     cells_content.add(query)
     
     cells_content = list(cells_content)
-    """
     self.replace(
         data_retrieval_group_phase.si(job_id, cells_content) | dummy_phase.si(tables)
     )
-    """
-    # TODO: Bypass dataret
-    self.replace(dummy_phase.si(tables))
 
 @app.task(name="computation_phase", bind=True)
 def computation_phase(self, info, job_id):
@@ -321,9 +317,7 @@ def computation_table_phase(job_id, table_id, table_data, columns):
                 offset = info[0]
                 size = info[1]
                 candidates_map.seek(offset)
-                # TODO: format for bypass
-                #candidates[norm] = json.loads(candidates_map.read(size))
-                candidates[norm] = list(json.loads(candidates_map.read(size)).values())[0]
+                candidates[norm] = json.loads(candidates_map.read(size))
 
     print ("CEA")
     cea_results = cea.CEAProcess(
