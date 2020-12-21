@@ -1,6 +1,4 @@
 CTA/export_graph_di.json filter=lfs diff=lfs merge=lfs -text
 CTA/concepts.json filter=lfs diff=lfs merge=lfs -text
-*.json filter=lfs diff=lfs merge=lfs -text
-CTA/*.json filter=lfs diff=lfs merge=lfs -text
 *.json !text !filter !merge !diff
 *.backup !text !filter !merge !diff
