@@ -44,6 +44,8 @@ class JobView(generics.ListCreateAPIView):
         )
         job.save()
 
+        print("Going into job slot!")
+
         job.task_id = tasks.job_slot(job.id)
         job.save()
 

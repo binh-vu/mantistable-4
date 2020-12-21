@@ -26,7 +26,7 @@ from django.utils.decorators import method_decorator
 
 
 def _build_url(request, view_name):
-    return "http://web:8000" + reverse(view_name)
+    return "http://localhost:8000" + reverse(view_name)
 
 
 @method_decorator(login_required, name='dispatch')

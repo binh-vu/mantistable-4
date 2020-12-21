@@ -114,16 +114,16 @@ def literal_url_confidence(xsd_type: xsd.anyURI.XsdUri, cell_value, candidates_v
 @literal_confidence.register
 def literal_geocoord_confidence(xsd_type: xsd.geo.XsdGeo, cell_value: validators.geocoord.Point, candidates_value: list):
     lat_candidates_value = [
-        o.latitude()
+        (s, p, o.latitude)
         for s, p, o in candidates_value
     ]
     lng_candidates_value = [
-        o.longitude()
+        (s, p, o.longitude)
         for s, p, o in candidates_value
     ]
     
-    lat_conf = literal_numeric_match(cell_value.latitude(), lat_candidates_value)
-    lng_conf = literal_numeric_match(cell_value.longitude(), lng_candidates_value)
+    lat_conf = literal_numeric_match(cell_value.latitude, lat_candidates_value)
+    lng_conf = literal_numeric_match(cell_value.longitude, lng_candidates_value)
 
     assert len(lat_conf) == len(lng_conf)
 

@@ -28,7 +28,7 @@ services:
     volumes:
       - ./django:/mantistable
     ports:
-        - "8000"
+        - "8000:8000"
     depends_on:
       - mongo
       - redis
@@ -45,7 +45,7 @@ services:
     volumes:
         - ./frontend:/reactapp
     ports:
-        - "3000"
+        - "3000:3000"
     environment:
         - NODE_ENV=development
     depends_on:
@@ -78,8 +78,8 @@ services:
     volumes:
       - ./tornado:/app
     ports:
-      - "5000"     # Remove in production
-      - "5001"
+      - "5000:5000"     # Remove in production
+      - "5001:5001"
     networks:
       - default
       

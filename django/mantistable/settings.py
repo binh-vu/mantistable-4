@@ -47,7 +47,7 @@ PORT = os.environ.get("PORT", "80")
 LAMAPI_BACKENDS = config["mantistable"].get("lamapi", {})
 
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web", "0.0.0.0", "149.132.176.50", "51.144.177.47"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "web", "0.0.0.0", "149.132.176.50", "51.144.177.47", "35.236.42.69"]
 if HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(HOST)
 

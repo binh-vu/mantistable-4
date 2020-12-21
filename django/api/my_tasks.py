@@ -1,5 +1,6 @@
-from mantistable.celery import app
-from api.models import Job
+# TODO: just for testing
+# from mantistable.celery import app
+# from api.models import Job
 from api.process.utils import table
 from api.process.utils.rules import person_rule as rules
 from api.process.utils.mongo.repository import Repository
@@ -16,7 +17,7 @@ from api.process.revision import revision
 
 from api.process.utils.assets import Assets
 
-from celery import group
+# from celery import group
 from multiprocessing import Manager
 
 import mantistable.settings
@@ -26,21 +27,28 @@ import requests
 import json
 import math
 import concurrent.futures
+from collections import OrderedDict 
 
-# TODO: EXtract constants
-THREADS = 15
-manager = Manager()
+JOB_BACKEND = OrderedDict(
+    [
+        ('host', 'mantistable4_api_rest'), ('port', 5000), ('accessToken', 'ee4ba0c4f8db0eb3580cb3b7b5536c54')
+    ]
+)
 
-# TODO: Extract to utils
-def generate_chunks(iterable, n):
-    assert (n > 0)
-    for i in range(0, len(iterable), n):
-        yield iterable[i:i + n]
+# # TODO: EXtract constants
+# THREADS = 15
+# manager = Manager()
+
+# # TODO: Extract to utils
+# def generate_chunks(iterable, n):
+#     assert (n > 0)
+#     for i in range(0, len(iterable), n):
+#         yield iterable[i:i + n]
 
 
 def job_slot(job_id: int):
     print(f"Inside job_slot: params are: {job_id}")
-    job = Job.objects.get(id=job_id)
+    # job = Job.objects.get(id=job_id)
 
     tables = [
         (table_id, table_name, table_data)
@@ -50,31 +58,34 @@ def job_slot(job_id: int):
     workflow = data_preparation_phase.s(tables, job_id) | data_retrieval_phase.s(job_id) | computation_phase.s(job_id) | clean_up.si(job_id)
     return workflow.apply_async()
 
-@app.task(name="data_preparation_phase", bind=True)
-def data_preparation_phase(self, tables, job_id):
+# @app.task(name="data_preparation_phase", bind=True)
+def data_preparation_phase(tables, job_id):
+    print("AM I INSIDE MY TASK?")
     print(f"Inside data_preparation_phase: params are: {tables}, {job_id}")
-    self.replace(group([
-        data_preparation_table_phase.s(job_id, *table)
+    # self.replace(group([
+    #     data_preparation_table_phase.s(job_id, *table)
+    #     for table in tables
+    # ]))
+    return [
+        data_preparation_table_phase(job_id, *table)
         for table in tables
-    ]))
+    ]
 
-@app.task(name="data_preparation_table_phase")
+# @app.task(name="data_preparation_table_phase")
 def data_preparation_table_phase(job_id, table_id, table_name, table_data):
     print(f"Inside data_preparation_table_phase: params are: {job_id}, {table_id}, {table_name}, {table_data}")
-    job = Job.objects.get(id=job_id)
-    print(f"lamAPI access token is {job.backend}")
-    print("AM I IN RIGHT PLACE")
+    # job = Job.objects.get(id=job_id)
 
     print(f"Normalization")
     normalization_result = _normalization_phase(table_id, table_data)
-    client_callback(job, table_id, "normalization", normalization_result)
+    # client_callback(job, table_id, "normalization", normalization_result)
     
     print(f"Column Analysis")
     col_analysis_result = _column_analysis_phase(table_id, table_name, table_data, normalization_result)
 
     print(f"Subject detection")
     col_analysis_result = _subject_detection_phase(table_id, table_name, table_data, col_analysis_result)
-    client_callback(job, table_id, "column analysis", col_analysis_result)
+    # client_callback(job, table_id, "column analysis", col_analysis_result)
 
     print(col_analysis_result)
     return table_id, table_data, col_analysis_result
@@ -130,12 +141,12 @@ def _subject_detection_phase(table_id, table_name, table_data, metadata):
     return metadata
 
 
-@app.task(name="data_retrieval_phase", bind=True)
-def data_retrieval_phase(self, tables, job_id):
+# @app.task(name="data_retrieval_phase", bind=True)
+def data_retrieval_phase(tables, job_id):
     print(f"Inside data_retrieval_phase: params are: {tables}, {job_id}")
-    job = Job.objects.get(id=job_id)
-    job.progress["current"] = 1
-    job.save()
+    # job = Job.objects.get(id=job_id)
+    # job.progress["current"] = 1
+    # job.save()
 
 
     print(f"Data retrieval")
@@ -165,31 +176,38 @@ def data_retrieval_phase(self, tables, job_id):
                     cells_content.add(query)
     
     cells_content = list(cells_content)
-    self.replace(
-        data_retrieval_group_phase.si(job_id, cells_content) | dummy_phase.si(tables)
-    )
+    print("Data retrieval result!")
+    # NOTE: this func will not return anything
+    data_retrieval_group_phase(job_id, cells_content)
 
-@app.task(name="computation_phase", bind=True)
-def computation_phase(self, info, job_id):
-    print(f"Inside computation_phase: params are: {info}, {job_id}")
-    job = Job.objects.get(id=job_id)
-    job.progress["current"] = 2
-    job.save()
+# TODO: duplicate? 
+# # @app.task(name="computation_phase", bind=True)
+# def computation_phase(info, job_id):
+#     print(f"Inside computation_phase: params are: {info}, {job_id}")
+#     # job = Job.objects.get(id=job_id)
+#     # job.progress["current"] = 2
+#     # job.save()
 
-    print("Computation")
-    self.replace(
-        group([
-            computation_table_phase.s(job_id, *table)
-            for table in info
-        ])
-    )
+#     print("Computation")
+#     # self.replace(
+#     #     group([
+#     #         computation_table_phase.s(job_id, *table)
+#     #         for table in info
+#     #     ])
+#     # )
+#     return [
+#         computation_table_phase(job_id, *table)
+#         for table in info
+#     ]
 
-@app.task(name="data_retrieval_group_phase")
+# @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
     print(f"Inside data_retrieval_group_phase: params are: {chunk}, {job_id}")
-    job = Job.objects.get(id=job_id)
-    print(f"lamAPI access token is {job.backend}")
-    cells_data_retrieval.CandidatesRetrieval(chunk, job.backend).write_candidates_cache()
+    # job = Job.objects.get(id=job_id)
+    # TODO: this is where lamAPI is accessed: django/api/process/data_retrieval/cells.py
+    job_backend = JOB_BACKEND
+    # NOTE: this func does not return anything: simply update candidate.index in media/
+    cells_data_retrieval.CandidatesRetrieval(chunk, job_backend).write_candidates_cache()
 
 """
 @app.task(name="data_retrieval_links_phase", bind=True)
@@ -254,11 +272,13 @@ def data_retrieval_links_phase(self, job_id, tables):
     )
 """
 
-@app.task(name="data_retrieval_links_group_phase")
+# @app.task(name="data_retrieval_links_group_phase")
 def data_retrieval_links_group_phase(job_id, chunk):
     print(f"Inside data_retrieval_links_group_phase: params are: {chunk}, {job_id}")
-    job = Job.objects.get(id=job_id)
-    links = links_data_retrieval.LinksRetrieval(chunk, job.backend).get_links()
+    # TODO: access lamAPI here
+    # job = Job.objects.get(id=job_id)
+    job_backend = JOB_BACKEND
+    links = links_data_retrieval.LinksRetrieval(chunk, job_backend).get_links()
 
     links = {
         hash(k): v
@@ -277,30 +297,34 @@ def dummy_phase(triples, tables):
     return tables, joined_triples
 """
 
-@app.task(name="dummy_phase")
+# @app.task(name="dummy_phase")
 def dummy_phase(tables):
     return tables
 
-@app.task(name="computation_phase", bind=True)
-def computation_phase(self, info, job_id):
+# @app.task(name="computation_phase", bind=True)
+def computation_phase(info, job_id):
     print(f"Inside computation_phase: params are: {info}, {job_id}")
     tables = info
-    job = Job.objects.get(id=job_id)
-    job.progress["current"] = 2
-    job.save()
+    # job = Job.objects.get(id=job_id)
+    # job.progress["current"] = 2
+    # job.save()
 
     print("Computation")
-    self.replace(
-        group([
-            computation_table_phase.s(job_id, *table)
-            for table in tables
-        ])
-    )
+    # self.replace(
+    #     group([
+    #         computation_table_phase.s(job_id, *table)
+    #         for table in tables
+    #     ])
+    # )
+    return [
+      computation_table_phase(job_id, *table)
+      for table in tables
+    ]
 
-@app.task(name="computation_table_phase")
+# @app.task(name="computation_table_phase")
 def computation_table_phase(job_id, table_id, table_data, columns):
     print(f"Inside computation_table_phase: params are: {job_id}, {table_id}, {table_data}, {columns}")
-    job = Job.objects.get(id=job_id)
+    # job = Job.objects.get(id=job_id)
 
 
 
@@ -338,7 +362,7 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         tags=tags,
         normalized_map=normalized,
         candidates_map=candidates
-    ).compute(job.backend)
+    ).compute(JOB_BACKEND)
 
     print(cea_results)
 
@@ -354,24 +378,24 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         cea_results, 
         cpa_results
     ).compute()
-    client_callback(job, table_id, "computation", revision_results)
+    # client_callback(job, table_id, "computation", revision_results)
 
-    #print(revision_results)
+    print(revision_results)
 
     #return table_id, table_data, revision_results
 
 
-@app.task(name="clean_up")
+# @app.task(name="clean_up")
 def clean_up(job_id):
     print(f"Inside clean_up: params are: {job_id}")
-    job = Job.objects.get(id=job_id)
-    job.progress["current"] = 3
-    job.save()
+    # job = Job.objects.get(id=job_id)
+    # job.progress["current"] = 3
+    # job.save()
 
-    client_callback(job, -1, "end", {})
+    # client_callback(job, -1, "end", {})
 
     # TODO: For now just delete job
-    job.delete()
+    # job.delete()
 
 # ====================================================
 

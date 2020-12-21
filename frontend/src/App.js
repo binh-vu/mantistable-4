@@ -73,7 +73,7 @@ class App extends React.Component {
     
     componentDidMount() {
         // Fetch simple api endpoint
-        fetch("/webapi/tables/")
+        fetch("http://web:8000/webapi/tables/")
         .then(res => res.json())
         .then(
             (data) => {
@@ -81,12 +81,14 @@ class App extends React.Component {
                     tables: data.results,
                     count: data.count
                 });
+                console.log(data)
             },
             (error) => {
                 this.setState({
                     tables: [],      // Just an empty result...
                     count: 0
                 });
+                console.log(error)
             }
         );
     }

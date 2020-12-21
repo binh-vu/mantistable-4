@@ -1,0 +1,26 @@
+[
+  {
+    "MOUNTAIN": "Mount Everest",
+    "HEIGHT IN METERS": "8,848",
+    "RANGE": "Himalayas",
+    "CONQUERED ON": "May 29, 1953",
+    "COORDINATES": "27.98785, 86.92502609999997",
+    "URL": "https://en.wikipedia.org/wiki/Mount_Everest"
+  },
+  {
+    "MOUNTAIN": "K-2 (Godwin Austin)",
+    "HEIGHT IN METERS": "8,611",
+    "RANGE": "Karakoram",
+    "CONQUERED ON": "July 31, 1954",
+    "COORDINATES": "35.8799875,76.51510009999993",
+    "URL": "https://en.wikipedia.org/wiki/K2"
+  },
+  {
+    "MOUNTAIN": "Kanchenjunga",
+    "HEIGHT IN METERS": "8,597",
+    "RANGE": "Himalayas",
+    "CONQUERED ON": "May 25, 1955",
+    "COORDINATES": "27.7024914,88.14753500000006",
+    "URL": "https://en.wikipedia.org/wiki/Kangchenjunga"
+  }
+]
