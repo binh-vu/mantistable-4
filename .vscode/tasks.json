@@ -18,8 +18,8 @@
 			"dockerRun": {
 				"volumes": [
 					{
-						"localPath": "${workspaceFolder}/django",
-						"containerPath": "/mantistable"
+						"localPath": "/home/summ7t/mantistable-4/django",
+						"containerPath": "/home/summ7t/mantistable-4/django"
 					}
 				],
 				"network": "lamapi_mantis"
@@ -28,7 +28,7 @@
 				"docker-build"
 			],
 			"python": {
-				"file": "/mantistable/cmdline.py"
+				"file": "/home/summ7t/mantistable-4/django/eval_main.py"
 			}
 		}
 	]

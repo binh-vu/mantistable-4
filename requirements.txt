@@ -1,0 +1,20 @@
+# Rest api
+djangorestframework
+django-rest-swagger
+django-cors-headers
+requests
+aiohttp
+
+# Utils
+Pillow
+celery[redis]
+django-crispy-forms
+python-dateutil
+nltk
+isbnlib
+editdistance
+https://bitbucket.org/Cilium/datatype-validator/get/0.4.2.tar.gz
+pyyaml
+
+# Deployment
+gunicorn

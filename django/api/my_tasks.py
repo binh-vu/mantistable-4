@@ -14,7 +14,7 @@ from api.process.cea import cea
 from api.process.cea.models.cell import Cell
 from api.process.cpa import cpa
 from api.process.revision import revision
-
+from api.process.utils.lamapi.my_wrapper import LamAPIWrapper as MyLamAPIWrapper
 from api.process.utils.assets import Assets
 
 # from celery import group
@@ -148,7 +148,6 @@ def data_retrieval_phase(tables, job_id):
     # job.progress["current"] = 1
     # job.save()
 
-
     print(f"Data retrieval")
 
     cells_content = set()
@@ -159,8 +158,9 @@ def data_retrieval_phase(tables, job_id):
             for col_val in metadata.values()
         ]
 
-        for col_idx, col_val in enumerate(metadata.values()):
-            for values in col_val["values"]:
+        for col_idx, (col_name, col_val) in enumerate(metadata.items()):
+            assert MyLamAPIWrapper.column_name2index[col_name] == col_idx
+            for row_idx, values in enumerate(col_val["values"]):
                 if tags[col_idx] != "LIT":
                     # Apply rules
                     # TODO:
@@ -172,6 +172,9 @@ def data_retrieval_phase(tables, job_id):
                         query = values["normalized"]
                     """
                     query = values["normalized"]
+
+                    # telling our lamAPI that this query belong to which cell
+                    MyLamAPIWrapper.track_normed_cell(row_idx, col_idx, query)
 
                     cells_content.add(query)
     
@@ -205,9 +208,8 @@ def data_retrieval_group_phase(job_id, chunk):
     print(f"Inside data_retrieval_group_phase: params are: {chunk}, {job_id}")
     # job = Job.objects.get(id=job_id)
     # TODO: this is where lamAPI is accessed: django/api/process/data_retrieval/cells.py
-    job_backend = JOB_BACKEND
     # NOTE: this func does not return anything: simply update candidate.index in media/
-    cells_data_retrieval.CandidatesRetrieval(chunk, job_backend).write_candidates_cache()
+    cells_data_retrieval.CandidatesRetrieval(chunk, JOB_BACKEND).write_candidates_cache()
 
 """
 @app.task(name="data_retrieval_links_phase", bind=True)
@@ -272,13 +274,13 @@ def data_retrieval_links_phase(self, job_id, tables):
     )
 """
 
+# TODO: this function is never called ?
 # @app.task(name="data_retrieval_links_group_phase")
 def data_retrieval_links_group_phase(job_id, chunk):
     print(f"Inside data_retrieval_links_group_phase: params are: {chunk}, {job_id}")
     # TODO: access lamAPI here
     # job = Job.objects.get(id=job_id)
-    job_backend = JOB_BACKEND
-    links = links_data_retrieval.LinksRetrieval(chunk, job_backend).get_links()
+    links = links_data_retrieval.LinksRetrieval(chunk, JOB_BACKEND).get_links()
 
     links = {
         hash(k): v
@@ -340,6 +342,10 @@ def computation_table_phase(job_id, table_id, table_data, columns):
         for values in col_val["values"]
     }
 
+    # NOTE: see CacheWriter in django/api/process/data_retrieval/cells.py
+    # candidates.index is a dict of label (key): [offset, size] (value)
+    # candidates.map is the real data stored as list(queried_label, uri)\n
+
     candidates_index = {}
     with open(os.path.join(mantistable.settings.MEDIA_ROOT, "candidates.index"), "r") as f_idx:
         candidates_index = json.loads(f_idx.read())
@@ -380,6 +386,7 @@ def computation_table_phase(job_id, table_id, table_data, columns):
     ).compute()
     # client_callback(job, table_id, "computation", revision_results)
 
+    print("\n\n\n Final Result:")
     print(revision_results)
 
     #return table_id, table_data, revision_results

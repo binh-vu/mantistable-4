@@ -1,4 +1,5 @@
-from api.process.utils.lamapi.wrapper import LamAPIWrapper
+# from api.process.utils.lamapi.wrapper import LamAPIWrapper
+from api.process.utils.lamapi import LamAPIWrapper
 import asyncio
 import aiohttp
 from aiohttp import ClientSession, TCPConnector
@@ -81,7 +82,7 @@ class CandidatesRetrieval:
                 else:
                     result = []
                 """
-                # TODO: Fuzzy!!!
+                # NOTE: will return the annotated entity (ground truth)
                 response = await self._wrapper.labels(f'{cell}', session)
                 
                 result = []

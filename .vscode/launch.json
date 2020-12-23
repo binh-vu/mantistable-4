@@ -12,8 +12,8 @@
             "python": {
                 "pathMappings": [
                     {
-                        "localRoot": "${workspaceFolder}/django",
-                        "remoteRoot": "/mantistable"
+                        "localRoot": "/home/summ7t/mantistable-4/django",
+                        "remoteRoot": "/home/summ7t/mantistable-4/django"
                     }
                 ],
                 "projectType": "general"

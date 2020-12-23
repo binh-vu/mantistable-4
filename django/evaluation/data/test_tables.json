@@ -1,0 +1,123 @@
+{
+    "table": {
+        "columns": [
+            {
+                "index": 0,
+                "name": "MOUNTAIN",
+                "values": [
+                    "Mount Everest",
+                    "K-2 (Godwin Austin)",
+                    "Kanchenjunga"
+                ]
+            },
+            {
+                "index": 1,
+                "name": "HEIGHT IN METERS",
+                "values": [
+                    "8,848",
+                    "8,611",
+                    "8,597"
+                ]
+            },
+            {
+                "index": 2,
+                "name": "RANGE",
+                "values": [
+                    "Himalayas",
+                    "Karakoram",
+                    "Himalayas"
+                ]
+            },
+            {
+                "index": 3,
+                "name": "CONQUERED ON",
+                "values": [
+                    "May 29, 1953",
+                    "July 31, 1954",
+                    "May 25, 1955"
+                ]
+            },
+            {
+                "index": 4,
+                "name": "COORDINATES",
+                "values": [
+                    "27.98785, 86.92502609999997",
+                    "35.8799875,76.51510009999993",
+                    "27.7024914,88.14753500000006"
+                ]
+            },
+            {
+                "index": 5,
+                "name": "URL",
+                "values": [
+                    "https://en.wikipedia.org/wiki/Mount_Everest",
+                    "https://en.wikipedia.org/wiki/K2",
+                    "https://en.wikipedia.org/wiki/Kangchenjunga"
+                ]
+            }
+        ],
+        "metadata": {
+            "table_id": "",
+            "page_title": "",
+            "table_name": "",
+            "text_before": "",
+            "text_after": ""
+        }
+    },
+    "links": [
+        [
+            [
+                0,
+                0
+            ],
+            [
+                "Q513"
+            ]
+        ],
+        [
+            [
+                1,
+                0
+            ],
+            [
+                "Q43512"
+            ]
+        ],
+        [
+            [
+                2,
+                0
+            ],
+            [
+                "Q82019"
+            ]
+        ],
+        [
+            [
+                0,
+                2
+            ],
+            [
+                "Q5451"
+            ]
+        ],
+        [
+            [
+                1,
+                2
+            ],
+            [
+                "Q5469"
+            ]
+        ],
+        [
+            [
+                2,
+                2
+            ],
+            [
+                "Q5451"
+            ]
+        ]
+    ]
+}

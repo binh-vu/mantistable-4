@@ -63,7 +63,7 @@ class LamAPIWrapper:
         if len(label) == 0:
             return []
 
-        self._log("labelsF", f"{label}")
+        self._log("labels", f"{label}")
 
         async with session.get(
             _elastic_url("mantis/_search"),
