@@ -18,3 +18,11 @@ pyyaml
 
 # Deployment
 gunicorn
+
+# missing dependencies
+pymongo
+pandas
+orjson
+ujson
+rdflib
+ruamel.yaml

@@ -25,7 +25,7 @@ class LamAPIWrapper:
             if os.environ.get("LAMAPI", False):
                 return f"http://mantistable4_api_elastic:9200/{suburl}"
             else:
-                return f"http://149.132.176.50:19200/{suburl}"
+                return f"http://35.236.42.69:9200/{suburl}"
 
 
         if len(label) == 0:
@@ -58,7 +58,7 @@ class LamAPIWrapper:
             if os.environ.get("LAMAPI", False):
                 return f"http://mantistable4_api_elastic:9200/{suburl}"
             else:
-                return f"http://149.132.176.50:19200/{suburl}"
+                return f"http://35.236.42.69:9200/{suburl}"
 
         if len(label) == 0:
             return []

@@ -44,7 +44,7 @@ class LamAPIWrapper:
             )
         )
             
-    @retry_on_exception(max_retries=5, default=None)
+    # @retry_on_exception(max_retries=5, default=None)
     async def labels(self, label, session):
         positions = self.cell2position[label]
         qnode_ids = {qnode_id for pos in positions for qnode_id in self.position2links.get(pos, [])}
@@ -61,71 +61,64 @@ class LamAPIWrapper:
             }, 
         }
 
-    @retry_on_exception(max_retries=5, default=None)
+    # @retry_on_exception(max_retries=5, default=None)
     async def labels_fuzzy(self, label, session):
         return await self.labels(label, session)
 
     # TODO:
     # Figure out what each func do: predicates, objects, literals, concepts
-    @retry_on_exception(max_retries=5, default={})
+    # @retry_on_exception(max_retries=5, default={})
     def predicates(self, data):
-        if len(data) == 0:
-            return {}
+        assert False, "Not implemented"
 
-        self._log("predicates", data)
-        return self._make_request(
-            lambda: requests.post(
-                self._api_url("predicates"),
-                json={"json": data},
-                params={"token": self._access_token},
-                timeout=self._timeout
-            )
-        )
-
-    @retry_on_exception(max_retries=5, default={})
+    # @retry_on_exception(max_retries=5, default={})
     def objects(self, subjects):
         if len(subjects) == 0:
             return {}
 
         self._log("objects", subjects)
-        return self._make_request(
-            lambda: requests.post(
-                self._api_url("objects"),
-                json={"json": subjects},
-                params={"token": self._access_token},
-                timeout=self._timeout
-            )
-        )
+        resp = {}
+        for qnode_id in subjects:
+            qnode = self.qnodes[qnode_id]
+            resp[qnode_id] = {}
+            for prop, stmts in qnode.props.items():
+                values = []
+                for stmt in stmts:
+                    if stmt.value.is_qnode():
+                        values.append(stmt.value.as_qnode_id())
+                if len(values) > 0:
+                    resp[qnode_id][prop] = values
+        return resp
 
-    @retry_on_exception(max_retries=5, default={})
+    # @retry_on_exception(max_retries=5, default={})
     def literals(self, subjects):
         if len(subjects) == 0:
             return {}
 
         self._log("literals", subjects)
-        return self._make_request(
-            lambda: requests.post(
-                self._api_url("literals"),
-                json={"json": subjects},
-                params={"token": self._access_token},
-                timeout=self._timeout
-            )
-        )
+        resp = {}
+        for qnode_id in subjects:
+            qnode = self.qnodes[qnode_id]
+            resp[qnode_id] = {}
+            for prop, stmts in qnode.props.items():
+                values = []
+                for stmt in stmts:
+                    if stmt.value.is_qnode():
+                        continue
 
-    @retry_on_exception(max_retries=5, default={})
+                    if stmt.value.is_string() or stmt.value.is_quantity() or stmt.value.is_time() or stmt.value.is_mono_lingual_text():
+                        values.append(stmt.value.value)
+                    elif stmt.value.is_globe_coordinate():
+                        values.append(f"{stmt.value.value['latitude']}, {stmt.value.value['longitude']}")
+                    else:
+                        assert False
+                if len(values) > 0:
+                    resp[qnode_id][prop] = values
+        return resp
+
+    # @retry_on_exception(max_retries=5, default={})
     def concepts(self, entities):
-        if len(entities) == 0:
-            return {}
-
-        self._log("concepts", entities)
-        return self._make_request(
-            lambda: requests.post(
-                self._api_url("concepts"),
-                json={"json": entities},
-                params={"token": self._access_token},
-                timeout=self._timeout
-            )
-        )
+        assert False, "Not implemented"
 
     def _api_url(self, suburl):
         return f"http://{self._endpoint}:{self._port}/{suburl}"

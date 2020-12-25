@@ -31,7 +31,7 @@ from collections import OrderedDict
 
 JOB_BACKEND = OrderedDict(
     [
-        ('host', 'mantistable4_api_rest'), ('port', 5000), ('accessToken', 'ee4ba0c4f8db0eb3580cb3b7b5536c54')
+        ('host', '35.236.42.69'), ('port', 8093), ('accessToken', 'ee4ba0c4f8db0eb3580cb3b7b5536c54')
     ]
 )
 
