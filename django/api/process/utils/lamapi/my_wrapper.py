@@ -54,7 +54,8 @@ class LamAPIWrapper:
             'hits': {
                 'hits': [
                     {
-                        '_source': {'label': self.qnodes[qnode_id].label, 'uri': qnode_id}
+                        # there are some qnodes with None label
+                        '_source': {'label': self.qnodes[qnode_id].label or "", 'uri': qnode_id}
                     }
                     for qnode_id in qnode_ids
                 ], 
@@ -76,7 +77,7 @@ class LamAPIWrapper:
         if len(subjects) == 0:
             return {}
 
-        self._log("objects", subjects)
+        # self._log("objects", subjects)
         resp = {}
         for qnode_id in subjects:
             qnode = self.qnodes[qnode_id]
@@ -95,7 +96,7 @@ class LamAPIWrapper:
         if len(subjects) == 0:
             return {}
 
-        self._log("literals", subjects)
+        # self._log("literals", subjects)
         resp = {}
         for qnode_id in subjects:
             qnode = self.qnodes[qnode_id]

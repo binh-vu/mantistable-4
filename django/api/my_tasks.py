@@ -60,8 +60,6 @@ def job_slot(job_id: int):
 
 # @app.task(name="data_preparation_phase", bind=True)
 def data_preparation_phase(tables, job_id):
-    print("AM I INSIDE MY TASK?")
-    print(f"Inside data_preparation_phase: params are: {tables}, {job_id}")
     # self.replace(group([
     #     data_preparation_table_phase.s(job_id, *table)
     #     for table in tables
@@ -73,7 +71,6 @@ def data_preparation_phase(tables, job_id):
 
 # @app.task(name="data_preparation_table_phase")
 def data_preparation_table_phase(job_id, table_id, table_name, table_data):
-    print(f"Inside data_preparation_table_phase: params are: {job_id}, {table_id}, {table_name}, {table_data}")
     # job = Job.objects.get(id=job_id)
 
     print(f"Normalization")
@@ -143,7 +140,6 @@ def _subject_detection_phase(table_id, table_name, table_data, metadata):
 
 # @app.task(name="data_retrieval_phase", bind=True)
 def data_retrieval_phase(tables, job_id):
-    print(f"Inside data_retrieval_phase: params are: {tables}, {job_id}")
     # job = Job.objects.get(id=job_id)
     # job.progress["current"] = 1
     # job.save()
@@ -205,7 +201,6 @@ def data_retrieval_phase(tables, job_id):
 
 # @app.task(name="data_retrieval_group_phase")
 def data_retrieval_group_phase(job_id, chunk):
-    print(f"Inside data_retrieval_group_phase: params are: {chunk}, {job_id}")
     # job = Job.objects.get(id=job_id)
     # TODO: this is where lamAPI is accessed: django/api/process/data_retrieval/cells.py
     # NOTE: this func does not return anything: simply update candidate.index in media/
@@ -277,8 +272,6 @@ def data_retrieval_links_phase(self, job_id, tables):
 # TODO: this function is never called ?
 # @app.task(name="data_retrieval_links_group_phase")
 def data_retrieval_links_group_phase(job_id, chunk):
-    print(f"Inside data_retrieval_links_group_phase: params are: {chunk}, {job_id}")
-    # TODO: access lamAPI here
     # job = Job.objects.get(id=job_id)
     links = links_data_retrieval.LinksRetrieval(chunk, JOB_BACKEND).get_links()
 
@@ -305,7 +298,6 @@ def dummy_phase(tables):
 
 # @app.task(name="computation_phase", bind=True)
 def computation_phase(info, job_id):
-    print(f"Inside computation_phase: params are: {info}, {job_id}")
     tables = info
     # job = Job.objects.get(id=job_id)
     # job.progress["current"] = 2
@@ -325,10 +317,7 @@ def computation_phase(info, job_id):
 
 # @app.task(name="computation_table_phase")
 def computation_table_phase(job_id, table_id, table_data, columns):
-    print(f"Inside computation_table_phase: params are: {job_id}, {table_id}, {table_data}, {columns}")
     # job = Job.objects.get(id=job_id)
-
-
 
     print("Computation table")
     tags = [
@@ -386,9 +375,8 @@ def computation_table_phase(job_id, table_id, table_data, columns):
     ).compute()
     # client_callback(job, table_id, "computation", revision_results)
 
-    print("\n\n\n Final Result:")
-    print(revision_results)
-
+    # also return the tag and the order of columns to check, since python 3.7 the dictionarry keep the insert order so we don't actually need it
+    return revision_results, tags, list(columns.keys())
     #return table_id, table_data, revision_results
 
 

@@ -26,3 +26,4 @@ orjson
 ujson
 rdflib
 ruamel.yaml
+networkx

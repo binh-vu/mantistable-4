@@ -22,7 +22,7 @@ def load_cea_ann():
 
 def main():
     cea = load_cea_ann()
-    lamapi = LamAPIWrapper("mantistable4_api_rest", 5000)
+    lamapi = LamAPIWrapper("35.236.42.69", 8093)
     cache = {}
     for table in tqdm(cea):
         for col in cea[table]:
