@@ -4,7 +4,7 @@ import os
 from api.process.utils.decorators import retry_on_exception
 from typing import Dict, List, Tuple
 from sm_unk.prelude import I
-
+from kg_data.wikidata.wikidatamodels import QNode
 # with open("annotated_data/test_tables.json", "r") as f:
 #     TEST_TABLES = json.load(f)
 
@@ -14,7 +14,7 @@ class LamAPIWrapper:
     column_name2index: Dict[str, int] = None
     position2links: Dict[Tuple[str, str], List[str]] = None
     cell2position: Dict[str, List[Tuple[str, str]]] = None
-    qnodes: Dict[str, I.QNode] = None
+    qnodes: Dict[str, QNode] = None
 
     @staticmethod
     def set_table(tbl, name2index, links, qnodes):
@@ -107,12 +107,22 @@ class LamAPIWrapper:
                     if stmt.value.is_qnode():
                         continue
 
-                    if stmt.value.is_string() or stmt.value.is_quantity() or stmt.value.is_time() or stmt.value.is_mono_lingual_text():
-                        values.append(stmt.value.value)
+                    stmt_value = None
+                    if stmt.value.is_string():
+                        stmt_value = stmt.value.value
+                    elif stmt.value.is_time():
+                        stmt_value = stmt.value.value['time']
+                    elif stmt.value.is_mono_lingual_text():
+                        stmt_value = stmt.value.value['text']
+                    elif stmt.value.is_quantity():
+                        stmt_value = stmt.value.value['amount']
                     elif stmt.value.is_globe_coordinate():
-                        values.append(f"{stmt.value.value['latitude']}, {stmt.value.value['longitude']}")
+                        stmt_value = f"{stmt.value.value['latitude']}, {stmt.value.value['longitude']}"
                     else:
                         assert False
+                    assert isinstance(stmt_value, str)
+                    values.append(stmt_value)
+                    # assert not isinstance(stmt_value, dict)
                 if len(values) > 0:
                     resp[qnode_id][prop] = values
         return resp
