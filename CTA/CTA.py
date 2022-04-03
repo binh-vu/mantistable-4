@@ -130,8 +130,10 @@ def get_final_concepts(concepts):
 
 graph = read_json_file("export_graph_di.json")
 
-with open("concepts.json") as f:
-    concepts_list = json.loads(f.read())
+# Note: they use this concept list to identify missing concepts and add it to the graph
+# we can check it directly without using an additional json file, so we comment this out
+# with open("concepts.json") as f:
+#     concepts_list = json.loads(f.read())
 
 input = open("candidates_cta.json", "r")
 cta = json.loads(input.read())
@@ -145,7 +147,10 @@ with open("cta.csv", "w") as f:
             concepts = []    
             for concept in cta[id_table][id_col]:
                 if cta[id_table][id_col][concept] >= 0.90:
-                    if concept not in concepts_list:
+                    # Note: comment out the following two lines as we do not use the concept list anymore
+                    # if concept not in concepts_list:
+                    #     graph.add_node(concept)
+                    if not graph.has_node(concept):
                         graph.add_node(concept)
                     concepts.append(concept)
 
