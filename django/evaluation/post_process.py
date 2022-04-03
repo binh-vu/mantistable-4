@@ -71,7 +71,11 @@ def get_cpa(method, col_tags, linkage):
     return cpa
 
 
+<<<<<<< HEAD
 def get_cta(inputs: List[Input], qnodes: Mapping[str, QNode]):
+=======
+def get_cta(inputs: List[Input], qnodes: Dict[str, QNode]):
+>>>>>>> d894ade055da4aa7f7febb10ead3527fa6cdc57a
     """Run get cta task according to CTA/README.txt:
     1. generate cache of concepts
     2. create a file of candidate CTA
@@ -96,6 +100,10 @@ def get_cta(inputs: List[Input], qnodes: Mapping[str, QNode]):
 
     cache = {}
     for qnode_id in selected_qnode_ids:
+        if qnode_id not in qnodes:
+            if qnode_id.startswith("Q") and qnode_id[1:].isdigit():
+                raise KeyError(qnode_id)
+            continue
         qnode = qnodes[qnode_id]
         concepts = {
             stmt.value.as_qnode_id()

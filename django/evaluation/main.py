@@ -11,7 +11,12 @@ from urllib.parse import urlparse
 from tqdm.auto import tqdm
 
 
-from api.my_tasks import data_preparation_phase, data_retrieval_phase, computation_phase, clean_up
+from api.my_tasks import (
+    data_preparation_phase,
+    data_retrieval_phase,
+    computation_phase,
+    clean_up,
+)
 from api.process.utils.lamapi.my_wrapper import LamAPIWrapper
 from sm_unk.prelude import M, I
 from kg_data.wikidata.wikidatamodels import *
@@ -24,7 +29,13 @@ def get_table_id(table_id: str):
     return id + "_" + md5(table_id.encode()).hexdigest()
 
 
-def run_prediction(qnodes: Dict[str, QNode], table_idx, tbl: I.ColumnBasedTable, links: Dict[Tuple[int, int], List[str]], subjs: Optional[Set[Tuple[int, str]]]):
+def run_prediction(
+    qnodes: Dict[str, QNode],
+    table_idx,
+    tbl: I.ColumnBasedTable,
+    links: Dict[Tuple[int, int], List[str]],
+    subjs: Optional[Set[Tuple[int, str]]],
+):
     table_id = get_table_id(tbl.metadata.table_id)
 
     # convert the table into mantis format
@@ -50,22 +61,29 @@ def run_prediction(qnodes: Dict[str, QNode], table_idx, tbl: I.ColumnBasedTable,
 
     # submit the job
     job_id = str(uuid.uuid4())
-    workflow_tables = data_preparation_phase([(table_idx, table_id, mantis_table)], job_id)
+    workflow_tables = data_preparation_phase(
+        [(table_idx, table_id, mantis_table)], job_id
+    )
     assert len(workflow_tables) == 1
 
     # force the result of subject column detection to be correct if subjs is supplied
     if subjs is not None:
-        assert sum(int(cdata['tags']['col_type'] == 'SUBJ') == 1 for cname, cdata in workflow_tables[0][2].items()), "My understanding about only one subjects in the table of this method is incorrect"
-        if any(cdata['tags']['col_type'] == 'SUBJ' and name2index[cname] not in subjs
-            for cname, cdata in workflow_tables[0][2].items()):
+        assert sum(
+            int(cdata["tags"]["col_type"] == "SUBJ") == 1
+            for cname, cdata in workflow_tables[0][2].items()
+        ), "My understanding about only one subjects in the table of this method is incorrect"
+        if any(
+            cdata["tags"]["col_type"] == "SUBJ" and name2index[cname] not in subjs
+            for cname, cdata in workflow_tables[0][2].items()
+        ):
             # they incorrectly recognize the subject column, force the result to be correct
             subj = sorted(subjs)[0]
             for cname, cdata in workflow_tables[0][2].items():
                 cindex = name2index[cname]
                 if cindex == subj:
-                    cdata['tags']['col_type'] = 'SUBJ'
-                elif cdata['tags']['col_type'] in {"SUBJ", "NE"}:
-                    cdata['tags']['col_type'] = 'NE'
+                    cdata["tags"]["col_type"] = "SUBJ"
+                elif cdata["tags"]["col_type"] in {"SUBJ", "NE"}:
+                    cdata["tags"]["col_type"] = "NE"
 
     data_retrieval_phase(workflow_tables, job_id)
     result = computation_phase(workflow_tables, job_id)
@@ -73,7 +91,9 @@ def run_prediction(qnodes: Dict[str, QNode], table_idx, tbl: I.ColumnBasedTable,
 
     # get result
     linkage, column_tag, column_names = result[0]
-    assert column_names == [name for name, index in sorted(name2index.items(), key=itemgetter(1))]
+    assert column_names == [
+        name for name, index in sorted(name2index.items(), key=itemgetter(1))
+    ]
 
     # write the result
     scenario = "default"
@@ -82,49 +102,82 @@ def run_prediction(qnodes: Dict[str, QNode], table_idx, tbl: I.ColumnBasedTable,
     outfile = dataset_dir / f"predictions_{scenario}" / f"{table_id}.json"
     outfile.parent.mkdir(exist_ok=True)
     if outfile.exists():
-        assert M.deserialize_json(outfile)['table_id'] == tbl.metadata.table_id
-    M.serialize_json({
-        "table_id": tbl.metadata.table_id,
-        "linkage": linkage,
-        "column_tag": column_tag,
-    }, outfile, indent=4)
+        assert M.deserialize_json(outfile)["table_id"] == tbl.metadata.table_id
+    M.serialize_json(
+        {
+            "table_id": tbl.metadata.table_id,
+            "linkage": linkage,
+            "column_tag": column_tag,
+        },
+        outfile,
+        indent=4,
+    )
 
 
 def read_dataset(dataset_dir, oracle_subjs: bool = False):
     if dataset_dir.name == "500tables":
         args = []
         for o in M.deserialize_jl(dataset_dir / "inputs.jl"):
-            table = I.ColumnBasedTable.from_json(o['table'])
+            table = I.ColumnBasedTable.from_json(o["table"])
             links = {}
-            for ri, rlinks in enumerate(o['links']):
+            for ri, rlinks in enumerate(o["links"]):
                 for ci, clinks in enumerate(rlinks):
-                    qnode_ids = [link['qnode_id'] for link in clinks if link['qnode_id'] is not None]
+                    qnode_ids = [
+                        link["qnode_id"]
+                        for link in clinks
+                        if link["qnode_id"] is not None
+                    ]
                     if len(qnode_ids) > 0:
                         links[ri, ci] = qnode_ids
-            args.append((table, links, o['subjs'] if oracle_subjs else None))
+            args.append((table, links, o["subjs"] if oracle_subjs else None))
     elif dataset_dir.name == "250tables":
         args = []
         for o in M.deserialize_jl(dataset_dir / "inputs.jl"):
-            table = I.ColumnBasedTable.from_json(o['table'])
+            table = I.ColumnBasedTable.from_json(o["table"])
             links = {}
-            for ri, rlinks in enumerate(o['links']):
+            for ri, rlinks in enumerate(o["links"]):
                 for ci, clinks in enumerate(rlinks):
-                    qnode_ids = [link['qnode_id'] for link in clinks if link['qnode_id'] is not None]
+                    qnode_ids = [
+                        link["qnode_id"]
+                        for link in clinks
+                        if link["qnode_id"] is not None
+                    ]
                     if len(qnode_ids) > 0:
                         links[ri, ci] = qnode_ids
-            args.append((table, links, o['subjs'] if oracle_subjs else None))
-    elif dataset_dir.name == 'semtab2020_subset':
+            args.append((table, links, o["subjs"] if oracle_subjs else None))
+    elif dataset_dir.name == "semtab2020_subset":
         args = []
-        for o in M.deserialize_jl(dataset_dir / "tables.size=512.repeat=4.seed=1212.jl"):
-            o = o['table']
-            table = I.ColumnBasedTable.from_json(o['table'])
+        for o in M.deserialize_jl(
+            dataset_dir / "tables.size=512.repeat=4.seed=1212.jl"
+        ):
+            o = o["table"]
+            table = I.ColumnBasedTable.from_json(o["table"])
             links = {}
-            for ri, rlinks in enumerate(o['links']):
+            for ri, rlinks in enumerate(o["links"]):
                 for ci, clinks in enumerate(rlinks):
-                    qnode_ids = [link['qnode_id'] for link in clinks if link['qnode_id'] is not None]
+                    qnode_ids = [
+                        link["qnode_id"]
+                        for link in clinks
+                        if link["qnode_id"] is not None
+                    ]
                     if len(qnode_ids) > 0:
                         links[ri, ci] = qnode_ids
             args.append((table, links, None))
+    elif dataset_dir.name == "semtab2020":
+        args = []
+        for o in M.deserialize_jl(dataset_dir / "inputs.jl"):
+            table = I.ColumnBasedTable.from_json(o["table"])
+            links = {}
+            for ri, rlinks in enumerate(o["links"]):
+                for ci, clinks in enumerate(rlinks):
+                    qnode_ids = [
+                        link["qnode_id"]
+                        for link in clinks
+                        if link["qnode_id"] is not None
+                    ]
+                    if len(qnode_ids) > 0:
+                        links[ri, ci] = qnode_ids
+            args.append((table, links, o["subjs"] if oracle_subjs else None))
     else:
         assert False
 
@@ -138,8 +191,10 @@ def read_dataset(dataset_dir, oracle_subjs: bool = False):
 
 if __name__ == "__main__":
     from evaluation.post_process import Input, CPAMethod, get_cpa, get_cta
+
     EVAL_DIR = Path(os.path.abspath(__file__)).parent.absolute()
     dataset_dir = EVAL_DIR / "semtab2020_subset"
+    dataset_dir = EVAL_DIR / "semtab2020"
     # dataset_dir = EVAL_DIR / "500tables"
     # dataset_dir = EVAL_DIR / "250tables"
 
@@ -165,28 +220,32 @@ if __name__ == "__main__":
     inputs = []
     for tbl, links, subjs in args:
         tbl_id = tbl.metadata.table_id
-        infile = dataset_dir / f"predictions_{scenario}" / f"{get_table_id(tbl_id)}.json"
+        infile = (
+            dataset_dir / f"predictions_{scenario}" / f"{get_table_id(tbl_id)}.json"
+        )
 
         resp = M.deserialize_json(infile)
-        assert tbl_id == resp['table_id']
+        assert tbl_id == resp["table_id"]
         # norm the linkage format since json dump tuple to list
-        linkage = [tuple(r) for r in resp['linkage']]
+        linkage = [tuple(r) for r in resp["linkage"]]
 
-        inputs.append(Input(tbl, resp['column_tag'], linkage))
+        inputs.append(Input(tbl, resp["column_tag"], linkage))
 
-    (dataset_dir / f"outputs_{scenario}").mkdir(exist_ok=True)
-    for cpa_method in CPAMethod:
-        M.serialize_json({
-            input.table.metadata.table_id: get_cpa(cpa_method, input.col_tags, input.linkage)
-            for input in inputs
-        }, dataset_dir / f"outputs_{scenario}/tables.cpa.{cpa_method.value}.json")
-    M.serialize_json(get_cta(inputs, qnodes), dataset_dir / f"outputs_{scenario}/tables.cta.json")
+    # (dataset_dir / f"outputs_{scenario}").mkdir(exist_ok=True)
+    # for cpa_method in CPAMethod:
+    #     M.serialize_json({
+    #         input.table.metadata.table_id: get_cpa(cpa_method, input.col_tags, input.linkage)
+    #         for input in inputs
+    #     }, dataset_dir / f"outputs_{scenario}/tables.cpa.{cpa_method.value}.json")
+    M.serialize_json(
+        get_cta(inputs, qnodes), dataset_dir / f"outputs_{scenario}/tables.cta.json"
+    )
 
 # tables payload example
 # [
 #   [
-#     6, 
-#     'test', 
+#     6,
+#     'test',
 #     [
 #       {'MOUNTAIN': 'Mount Everest', 'HEIGHT IN METERS': '8,848', 'RANGE': 'Himalayas', 'CONQUERED ON': 'May 29, 1953', 'COORDINATES': '27.98785, 86.92502609999997', 'URL': 'https://en.wikipedia.org/wiki/Mount_Everest'}, {'MOUNTAIN': 'K-2 (Godwin Austin)', 'HEIGHT IN METERS': '8,611', 'RANGE': 'Karakoram', 'CONQUERED ON': 'July 31, 1954', 'COORDINATES': '35.8799875,76.51510009999993', 'URL': 'https://en.wikipedia.org/wiki/K2'}, {'MOUNTAIN': 'Kanchenjunga', 'HEIGHT IN METERS': '8,597', 'RANGE': 'Himalayas', 'CONQUERED ON': 'May 25, 1955', 'COORDINATES': '27.7024914,88.14753500000006', 'URL': 'https://en.wikipedia.org/wiki/Kangchenjunga'}
 #     ]
