@@ -3,10 +3,12 @@ import json
 import os
 from api.process.utils.decorators import retry_on_exception
 from typing import Dict, List, Tuple
-from sm_unk.prelude import I
+from sm.prelude import I
+from kgdata.wikidata.models import QNode
 
 # with open("annotated_data/test_tables.json", "r") as f:
 #     TEST_TABLES = json.load(f)
+
 
 class LamAPIWrapper:
     table: I.ColumnBasedTable = None
@@ -14,7 +16,7 @@ class LamAPIWrapper:
     column_name2index: Dict[str, int] = None
     position2links: Dict[Tuple[str, str], List[str]] = None
     cell2position: Dict[str, List[Tuple[str, str]]] = None
-    qnodes: Dict[str, I.QNode] = None
+    qnodes: Dict[str, QNode] = None
 
     @staticmethod
     def set_table(tbl, name2index, links, qnodes):
@@ -23,7 +25,7 @@ class LamAPIWrapper:
         LamAPIWrapper.position2links = links
         LamAPIWrapper.cell2position = {}
         LamAPIWrapper.qnodes = qnodes
-    
+
     @staticmethod
     def track_normed_cell(row_idx, col_idx, query):
         if query not in LamAPIWrapper.cell2position:
@@ -38,28 +40,32 @@ class LamAPIWrapper:
 
     def infos(self):
         return self._make_request(
-            lambda: requests.get(
-                self._api_url("infos"),
-                timeout=2
-            )
+            lambda: requests.get(self._api_url("infos"), timeout=2)
         )
-            
+
     # @retry_on_exception(max_retries=5, default=None)
     async def labels(self, label, session):
         positions = self.cell2position[label]
-        qnode_ids = {qnode_id for pos in positions for qnode_id in self.position2links.get(pos, [])}
+        qnode_ids = {
+            qnode_id
+            for pos in positions
+            for qnode_id in self.position2links.get(pos, [])
+        }
 
         # Follow this output json
         return {
-            'hits': {
-                'hits': [
+            "hits": {
+                "hits": [
                     {
                         # there are some qnodes with None label
-                        '_source': {'label': self.qnodes[qnode_id].label or "", 'uri': qnode_id}
+                        "_source": {
+                            "label": self.qnodes[qnode_id].label or "",
+                            "uri": qnode_id,
+                        }
                     }
                     for qnode_id in qnode_ids
-                ], 
-            }, 
+                ],
+            },
         }
 
     # @retry_on_exception(max_retries=5, default=None)
@@ -86,7 +92,7 @@ class LamAPIWrapper:
                 values = []
                 for stmt in stmts:
                     if stmt.value.is_qnode():
-                        values.append(stmt.value.as_qnode_id())
+                        values.append(stmt.value.as_qnode_id_safe())
                 if len(values) > 0:
                     resp[qnode_id][prop] = values
         return resp
@@ -104,15 +110,25 @@ class LamAPIWrapper:
             for prop, stmts in qnode.props.items():
                 values = []
                 for stmt in stmts:
-                    if stmt.value.is_qnode():
+                    if stmt.value.is_entity_id():
                         continue
 
-                    if stmt.value.is_string() or stmt.value.is_quantity() or stmt.value.is_time() or stmt.value.is_mono_lingual_text():
-                        values.append(stmt.value.value)
+                    stmt_value = None
+                    if stmt.value.is_string():
+                        stmt_value = stmt.value.value
+                    elif stmt.value.is_time():
+                        stmt_value = stmt.value.value["time"]
+                    elif stmt.value.is_mono_lingual_text():
+                        stmt_value = stmt.value.value["text"]
+                    elif stmt.value.is_quantity():
+                        stmt_value = stmt.value.value["amount"]
                     elif stmt.value.is_globe_coordinate():
-                        values.append(f"{stmt.value.value['latitude']}, {stmt.value.value['longitude']}")
+                        stmt_value = f"{stmt.value.value['latitude']}, {stmt.value.value['longitude']}"
                     else:
-                        assert False
+                        assert False, stmt.value
+                    assert isinstance(stmt_value, str)
+                    values.append(stmt_value)
+                    # assert not isinstance(stmt_value, dict)
                 if len(values) > 0:
                     resp[qnode_id][prop] = values
         return resp
@@ -132,11 +148,10 @@ class LamAPIWrapper:
         return response.json()
 
     def _log(self, endpoint_name, query):
-        query = str(query).replace('\n', '')
+        query = str(query).replace("\n", "")
         if len(query) > 20:
-            query = query[0:20] + '...'
+            query = query[0:20] + "..."
         print(f"LAMAPI {endpoint_name} {query}")
-
 
     # Deprecated for now
     """

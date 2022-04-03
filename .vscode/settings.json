@@ -1,8 +1,0 @@
-{
-    "python.pythonPath": "/home/summ7t/anaconda3/envs/mantis/bin/python",
-    "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": [
-        "/home/summ7t/mantistable-4/django/",
-        "/home/summ7t/mantistable-4/django/evaluation"
-    ]
-}

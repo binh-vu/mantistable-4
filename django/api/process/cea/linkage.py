@@ -270,8 +270,9 @@ class Linkage:
                         cand_lamapi_predicates[(candidate, obj)].add(pred)
                 
                 cand_lamapi_objects[candidate] = set(cand_lamapi_objects[candidate])
-        except:
-            print("Error", candidates)
+        except Exception as e:
+            print("[api.process.cea.linkage] Error", candidates)
+            raise
 
 
         return cand_lamapi_objects, cand_lamapi_predicates

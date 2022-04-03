@@ -14,7 +14,7 @@ import os
 from .config import Config
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_PATH = "mantistable.yml"
+CONFIG_PATH = os.path.join(BASE_DIR, "mantistable.yml")  # update: read config_path from the parent directory (django)
 
 config = Config(CONFIG_PATH)
 

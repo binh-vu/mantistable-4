@@ -4,10 +4,11 @@ import os
 import subprocess
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import List, Tuple, Dict
 from urllib.parse import urlparse
-from main import EVAL_DIR, I, M, get_table_id
-
+from sm_unk.prelude import M, I
+from kg_data.wikidata.wikidatamodels import QNode
 
 class CPAMethod(Enum):
     Mantis = "mantis"
@@ -70,7 +71,7 @@ def get_cpa(method, col_tags, linkage):
     return cpa
 
 
-def get_cta(inputs: List[Input], qnodes: Dict[str, I.QNode]):
+def get_cta(inputs: List[Input], qnodes: Mapping[str, QNode]):
     """Run get cta task according to CTA/README.txt:
     1. generate cache of concepts
     2. create a file of candidate CTA
@@ -107,7 +108,7 @@ def get_cta(inputs: List[Input], qnodes: Dict[str, I.QNode]):
     # M.serialize_json(cache, outfile)
 
     print(">>> CTA create candidate CTA")
-    from generate_candidates_cta import get_concetps
+    from generate_candidates_cta import get_concepts
 
     cta = {}
     for input in inputs:
@@ -146,21 +147,22 @@ def get_cta(inputs: List[Input], qnodes: Dict[str, I.QNode]):
 
         # now convert the list of entities in those CTA columns into concepts
         for real_ci in cta_cols:
-            global_concepts = get_concetps(cache, cta_cols[real_ci])
+            global_concepts = get_concepts(cache, cta_cols[real_ci])
             if len(global_concepts) == 0:
                 continue
             if input.table.metadata.table_id not in cta:
                 cta[input.table.metadata.table_id] = {}
             cta[input.table.metadata.table_id][real_ci] = global_concepts
 
-    outfile = EVAL_DIR.parent.parent / "CTA/candidates_cta.json"
+    ROOT_DIR = Path(os.path.abspath(__file__)).parent.parent.parent.absolute()
+    outfile = ROOT_DIR / "CTA/candidates_cta.json"
     M.serialize_json(cta, outfile, indent=4)
 
     print(">>> CTA run CTA")
     subprocess.check_call("python CTA.py", shell=True, cwd=outfile.parent)
 
     cta_result = {}
-    for tbl_id, column_index, concept in M.deserialize_csv(EVAL_DIR.parent.parent / "CTA/cta.csv"):
+    for tbl_id, column_index, concept in M.deserialize_csv(ROOT_DIR / "CTA/cta.csv"):
         if tbl_id not in cta_result:
             cta_result[tbl_id] = {}
         cta_result[tbl_id][column_index] = concept
@@ -168,20 +170,16 @@ def get_cta(inputs: List[Input], qnodes: Dict[str, I.QNode]):
 
 
 if __name__ == '__main__':
-    tables = M.deserialize_json(EVAL_DIR / "data/tables.json.gz")
-    qnodes = [
-        I.QNode.deserialize(s)
-        for fname in glob.glob(str(EVAL_DIR / "data/qnodes*jl.gz"))
-        for s in M.deserialize_lines(fname)
-    ]
-    qnodes = {qnode.id: qnode for qnode in qnodes}
+    from main import I, M, get_table_id, read_dataset
+    EVAL_DIR = Path(os.path.abspath(__file__)).parent.absolute()
+    dataset_dir = EVAL_DIR / "semtab2020_subset"
+    args, qnodes = read_dataset(dataset_dir)
 
     # load inputs
     inputs = []
-    for tbl in tables:
-        tbl = I.ColumnBasedTable.from_json(tbl['table'])
+    for tbl, links in args:
         tbl_id = tbl.metadata.table_id
-        infile = EVAL_DIR / "outputs" / f"{get_table_id(tbl_id)}.json"
+        infile = dataset_dir / "outputs" / f"{get_table_id(tbl_id)}.json"
 
         resp = M.deserialize_json(infile)
         assert tbl_id == resp['table_id']
@@ -190,9 +188,10 @@ if __name__ == '__main__':
 
         inputs.append(Input(tbl, resp['column_tag'], linkage))
 
+    (dataset_dir / "norm_outputs").mkdir(exist_ok=True)
     for cpa_method in CPAMethod:
         M.serialize_json({
             input.table.metadata.table_id: get_cpa(cpa_method, input.col_tags, input.linkage)
             for input in inputs
-        }, EVAL_DIR / f"tables.cpa.{cpa_method.value}.json")
-    M.serialize_json(get_cta(inputs, qnodes), EVAL_DIR / "tables.cta.json")
+        }, dataset_dir / f"norm_outputs/tables.cpa.{cpa_method.value}.json")
+    M.serialize_json(get_cta(inputs, qnodes), dataset_dir / "norm_outputs/tables.cta.json")

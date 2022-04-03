@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import json
 
-def get_concetps(cache, entities):
+def get_concepts(cache, entities):
     new_entities = {}
     for entity in entities:
         if entity in cache:
@@ -53,7 +53,7 @@ def main():
         cache = json.loads(f.read())
     for table in tqdm(cea):
         for col in cea[table]:
-            global_concepts = get_concetps(cache, cea[table][col])
+            global_concepts = get_concepts(cache, cea[table][col])
             if len(global_concepts) == 0:
                 continue
             if table not in cta:

@@ -412,7 +412,7 @@ def client_callback(job, table_id, header: str, payload=None):
         print("sent to:", job.callback)
     except Exception as e:
         # Send to morgue?
-        print("Error", e)
+        print("[api.my_tasks] Error", e)
         return
 
     if response.status_code != 200:
