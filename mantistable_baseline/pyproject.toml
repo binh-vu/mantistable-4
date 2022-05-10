@@ -8,8 +8,8 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.8"
 pymongo = "^4.0.2"
-sem-desc = "~3.3.0"
-kgdata = "^1.7.0"
+sem-desc = "~3.4.2"
+kgdata = "^1.7.2"
 isbnlib = "^3.10.10"
 datatypes-validator = {url = "https://bitbucket.org/Cilium/datatype-validator/get/0.4.2.tar.gz"}
 editdistance = "^0.6.0"
