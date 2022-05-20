@@ -7,6 +7,7 @@ from operator import itemgetter
 from typing import Dict, Tuple, List, Set, Optional
 from pathlib import Path
 from urllib.parse import urlparse
+import orjson
 
 from tqdm.auto import tqdm
 
@@ -18,8 +19,8 @@ from api.my_tasks import (
     clean_up,
 )
 from api.process.utils.lamapi.my_wrapper import LamAPIWrapper
-from sm_unk.prelude import M, I
-from kg_data.wikidata.wikidatamodels import *
+from sm.prelude import M, I
+from kgdata.wikidata.models import *
 
 
 def get_table_id(table_id: str):
@@ -30,7 +31,7 @@ def get_table_id(table_id: str):
 
 
 def run_prediction(
-    qnodes: Dict[str, QNode],
+    qnodes: Dict[str, WDEntity],
     table_idx,
     tbl: I.ColumnBasedTable,
     links: Dict[Tuple[int, int], List[str]],
@@ -182,7 +183,7 @@ def read_dataset(dataset_dir, oracle_subjs: bool = False):
         assert False
 
     qnodes = {
-        k: QNode.deserialize(v)
+        k: WDEntity.from_dict(orjson.loads(v))
         for fpath in glob.glob(str(dataset_dir / "qnodes/*.gz"))
         for k, v in M.deserialize_key_val_lines(fpath)
     }

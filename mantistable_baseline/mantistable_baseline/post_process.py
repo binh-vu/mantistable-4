@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Mapping, Tuple, Dict
 from urllib.parse import urlparse
 from sm.prelude import M, I
-from kgdata.wikidata.models import QNode
+from kgdata.wikidata.models import WDEntity
 
 
 class CPAMethod(Enum):
@@ -73,7 +73,7 @@ def get_cpa(method, col_tags, linkage) -> List[Tuple[int, int, str]]:
 
 
 def get_cta(
-    inputs: List[Input], qnodes: Mapping[str, QNode]
+    inputs: List[Input], qnodes: Mapping[str, WDEntity]
 ) -> Dict[str, Dict[str, str]]:
     """Run get cta task according to CTA/README.txt:
     1. generate cache of concepts

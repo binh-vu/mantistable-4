@@ -22,7 +22,7 @@ from api.my_tasks import (
     data_retrieval_phase,
 )
 from api.process.utils.lamapi.my_wrapper import LamAPIWrapper
-from kgdata.wikidata.models import QNode
+from kgdata.wikidata.models import WDEntity
 from sm.prelude import I, M
 from tqdm.auto import tqdm
 
@@ -50,7 +50,7 @@ Example = TypedDict(
 
 
 def predict(
-    qnodes: Mapping[str, QNode],
+    qnodes: Mapping[str, WDEntity],
     examples: List[Example],
 ) -> List[List[Output]]:
     """Predict a list of output for each example."""
@@ -95,7 +95,7 @@ def predict(
 
 
 def predict_step1(
-    qnodes: Mapping[str, QNode],
+    qnodes: Mapping[str, WDEntity],
     tbl: I.ColumnBasedTable,
     links: Dict[Tuple[int, int], List[str]],
     subj_col: Optional[Tuple[int, str]],

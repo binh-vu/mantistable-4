@@ -4,7 +4,7 @@ import os
 from api.process.utils.decorators import retry_on_exception
 from typing import Dict, List, Tuple
 from sm.prelude import I
-from kgdata.wikidata.models import QNode
+from kgdata.wikidata.models import WDEntity
 
 # with open("annotated_data/test_tables.json", "r") as f:
 #     TEST_TABLES = json.load(f)
@@ -16,7 +16,7 @@ class LamAPIWrapper:
     column_name2index: Dict[str, int] = None
     position2links: Dict[Tuple[str, str], List[str]] = None
     cell2position: Dict[str, List[Tuple[str, str]]] = None
-    qnodes: Dict[str, QNode] = None
+    qnodes: Dict[str, WDEntity] = None
 
     @staticmethod
     def set_table(tbl, name2index, links, qnodes):
