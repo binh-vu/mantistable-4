@@ -1,8 +1,11 @@
 """Generate necessary files that mantistable needs for CTA and CPA tasks"""
-import orjson
+import orjson, argparse
 from typing import Mapping
 from mantistable_baseline.config import ROOT_DIR
 from kgdata.wikidata.models import WDClass
+from kgdata.wikidata.db import get_wdclass_db
+from sm.prelude import M
+from pathlib import Path
 from tqdm import tqdm
 
 
@@ -59,11 +62,18 @@ def verify_export_graph_di_file(wdclasses: Mapping[str, WDClass]):
 
 
 if __name__ == "__main__":
-    from kgdata.wikidata.db import get_wdclass_db
-    from sm.prelude import M
-    from pathlib import Path
+    parser = argparse.ArgumentParser(
+        description="Generate a graph of parent-child classes in Wikidata"
+    )
+    parser.add_argument(
+        "-d",
+        "--db",
+        default=ROOT_DIR / "../../data/home/databases",
+        help="parent directory of wdclasses.db (generated using package kgdata)",
+    )
+    args = parser.parse_args()
 
-    dbdir = Path("/workspace/sm-dev/data/wikidata-20211213/databases")
+    dbdir = Path(args.db)
     wdclasses = get_wdclass_db(
         dbdir / "wdclasses.db",
         read_only=True,
@@ -75,5 +85,5 @@ if __name__ == "__main__":
         cls = WDClass.from_dict(record)
         wdclasses.cache[cls.id] = cls
 
-    verify_export_graph_di_file(wdclasses)
+    # verify_export_graph_di_file(wdclasses)
     gen_files(wdclasses)

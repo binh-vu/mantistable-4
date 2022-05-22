@@ -2,7 +2,7 @@ import requests
 import json
 import os
 from api.process.utils.decorators import retry_on_exception
-from typing import Dict, List, Tuple
+from typing import Dict, List, Mapping, Optional, Tuple
 from sm.prelude import I
 from kgdata.wikidata.models import WDEntity
 
@@ -11,15 +11,15 @@ from kgdata.wikidata.models import WDEntity
 
 
 class LamAPIWrapper:
-    table: I.ColumnBasedTable = None
+    table: I.ColumnBasedTable
     # column name is name of column in mantis not in the original table
-    column_name2index: Dict[str, int] = None
-    position2links: Dict[Tuple[str, str], List[str]] = None
-    cell2position: Dict[str, List[Tuple[str, str]]] = None
-    qnodes: Dict[str, WDEntity] = None
+    column_name2index: Dict[str, int]
+    position2links: Dict[Tuple[str, str], List[str]]
+    cell2position: Dict[str, List[Tuple[str, str]]]
+    qnodes: Mapping[str, WDEntity]
 
     @staticmethod
-    def set_table(tbl, name2index, links, qnodes):
+    def set_table(tbl, name2index, links, qnodes: Mapping[str, WDEntity]):
         LamAPIWrapper.table = tbl
         LamAPIWrapper.column_name2index = name2index
         LamAPIWrapper.position2links = links
@@ -91,7 +91,7 @@ class LamAPIWrapper:
             for prop, stmts in qnode.props.items():
                 values = []
                 for stmt in stmts:
-                    if stmt.value.is_qnode():
+                    if stmt.value.is_qnode(stmt.value):
                         values.append(stmt.value.as_qnode_id_safe())
                 if len(values) > 0:
                     resp[qnode_id][prop] = values
@@ -110,19 +110,19 @@ class LamAPIWrapper:
             for prop, stmts in qnode.props.items():
                 values = []
                 for stmt in stmts:
-                    if stmt.value.is_entity_id():
+                    if stmt.value.is_entity_id(stmt.value):
                         continue
 
                     stmt_value = None
-                    if stmt.value.is_string():
+                    if stmt.value.is_string(stmt.value):
                         stmt_value = stmt.value.value
-                    elif stmt.value.is_time():
+                    elif stmt.value.is_time(stmt.value):
                         stmt_value = stmt.value.value["time"]
-                    elif stmt.value.is_mono_lingual_text():
+                    elif stmt.value.is_mono_lingual_text(stmt.value):
                         stmt_value = stmt.value.value["text"]
-                    elif stmt.value.is_quantity():
+                    elif stmt.value.is_quantity(stmt.value):
                         stmt_value = stmt.value.value["amount"]
-                    elif stmt.value.is_globe_coordinate():
+                    elif stmt.value.is_globe_coordinate(stmt.value):
                         stmt_value = f"{stmt.value.value['latitude']}, {stmt.value.value['longitude']}"
                     else:
                         assert False, stmt.value
