@@ -7,4 +7,6 @@ List of local packages that this depends on:
 - `django.api.my_tasks`
 - `django.api.process.utils.lamapi.my_wrapper`
 
-It also needs the file: `CTA/export_graph_di.json`, you can generate the file by running `python -m mantistable_baseline.gen_data`.
+It needs the file: `CTA/export_graph_di.json`, you can generate the file by running `python -m mantistable_baseline.gen_data`.
+
+Also, it needs nltk stopwords resource, download it using: `poetry run python -c 'import nltk; nltk.download("stopwords")'`
