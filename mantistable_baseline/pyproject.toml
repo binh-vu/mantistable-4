@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mantistable_baseline"
-version = "2.0.1"
+version = "2.0.2"
 description = ""
 authors = ["Binh Vu <binh@toan2.com>"]
 license = "MIT"
@@ -9,7 +9,7 @@ license = "MIT"
 python = "^3.8"
 pymongo = "^4.0.2"
 sem-desc = "~3.5.2"
-kgdata = "^2.3.0"
+kgdata = "^2.3.1"
 isbnlib = "^3.10.10"
 datatypes-validator = {url = "https://bitbucket.org/Cilium/datatype-validator/get/0.4.2.tar.gz"}
 editdistance = "^0.6.0"
