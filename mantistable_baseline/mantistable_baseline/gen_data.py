@@ -80,7 +80,7 @@ if __name__ == "__main__":
         proxy=False,
     )
 
-    wdclasses = wdclasses.cache_dict()
+    wdclasses = wdclasses.cache()
     for record in M.deserialize_jl(dbdir / "wdclasses.fixed.jl"):
         cls = WDClass.from_dict(record)
         wdclasses.cache[cls.id] = cls
