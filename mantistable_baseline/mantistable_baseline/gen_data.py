@@ -83,7 +83,7 @@ if __name__ == "__main__":
     wdclasses = wdclasses.cache()
     for record in M.deserialize_jl(dbdir / "wdclasses.fixed.jl"):
         cls = WDClass.from_dict(record)
-        wdclasses.cache[cls.id] = cls
+        wdclasses._cache[cls.id] = cls
 
     # verify_export_graph_di_file(wdclasses)
     gen_files(wdclasses)
